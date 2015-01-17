@@ -512,7 +512,7 @@ C DHW systems.
 C Flags indicating whether the primary and secondary DHW systems share the
 C flue with the furnace.
         
-      H2K_DHW1_shareflue = .true. 
+      H2K_DHW1_shareflue = .false. 
       H2K_DHW2_shareflue = .true.
 
 C Flags indicating whether the primary and secondary DHW systems are located
@@ -767,7 +767,11 @@ C Read in supplementary data if blower door or quick blower door input given.
             AIM2_n = VAL
           else  ! blower_door_input_option equal to 2 or 3
             !ACH_50Pa and ELA_deltaP are needed for both option 2 and 3
-            CALL EGETWR(OUTSTR,K,VAL,0.1,30.,'F','ac/h at 50Pa',IER)
+
+C LUKAS SWAN (2008-10-09) INCREASED THE FOLLOWING VALUES RANGE FROM 
+C 30 ac/h to 55 ac/h at 50 Pa TO ACCOMODATE THE TALLEST HOUSES OF 
+C THE CSDDRD. THIS RANGE EXTENTION HAS NOT BEEN JUSTIFIED BY TESTING
+            CALL EGETWR(OUTSTR,K,VAL,0.1,55.,'F','ac/h at 50Pa',IER)
             if(IER.NE.0)then
               call edisp(IUOUT,' Cannot read ac/h at 50Pa.')
               goto 1000
@@ -875,7 +879,11 @@ C Read building eaves height.
       CALL STRIPC(IUNIT,OUTSTR,0,ND,1,' AIM-2 data',IER)
       IF(IER.NE.0)goto 1000
       K=0
-      CALL EGETWR(OUTSTR,K,VAL,1.,10.,'F',' building eaves',IER)
+
+C LUKAS SWAN (2008-10-06) INCREASED THE FOLLOWING VALUES RANGE FROM 
+C 10 m TO 12 m TO ACCOMODATE THE TALLEST HOUSES OF THE CSDDRD.
+C THIS RANGE EXTENTION HAS NOT BEEN JUSTIFIED BY TESTING
+      CALL EGETWR(OUTSTR,K,VAL,1.,12.,'F',' building eaves',IER)
       if(IER.NE.0)then
         call edisp(IUOUT,' Cannot read building eaves height.')
         goto 1000

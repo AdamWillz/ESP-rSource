@@ -2211,6 +2211,52 @@ C.... reporting purposes. 3 = scale_gen
      &  fDHW_H3K_water_draw(2) * 4106.0
      &      * ( fDHW_H3K_delivery_temp(2) - fDHW_H3K_supply_temp(2)))
 
+C     CHREM USE ONLY
+      Call AddToReport(rvPltCHREMDHWwtrDrw%Identifier,
+     &  (fDHW_H3K_water_draw(1) +
+     &  fDHW_H3K_water_draw(2)) / 2)
+
+      Call AddToReport(rvPltCHREMDHWenergyin%Identifier,
+     &  (fDHW_H3K_energy_requirement(1) +
+     &  fDHW_H3K_energy_requirement(2)) / 2)
+
+      Call AddToReport(rvPltCHREMDHWsupplytemp%Identifier,
+     &  (fDHW_H3K_supply_temp(1) +
+     &  fDHW_H3K_supply_temp(2)) / 2)
+
+
+      Call AddToReport(rvPltCHREMDHWdeliverytemp%Identifier,
+     &  (fDHW_H3K_delivery_temp(1) +
+     &  fDHW_H3K_delivery_temp(2)) / 2)
+
+
+      Call AddToReport(rvPltCHREMDHWburnerout%Identifier,
+     &  (fDHW_H3K_energy_transfer_to_water(1) +
+     &  fDHW_H3K_energy_transfer_to_water(2)) / 2)
+
+
+      Call AddToReport(rvPltCHREMDHWskinloss%Identifier,
+     &  (fDHW_H3K_skin_loss(1) +
+     &  fDHW_H3K_skin_loss(2)) / 2)
+
+      Call AddToReport(rvPltCHREMDHWflueloss%Identifier,
+     &  (fDHW_H3K_flue_loss(1) +
+     &  fDHW_H3K_flue_loss(2)) / 2)
+
+
+      Call AddToReport(rvPltCHREMDHWheattobuild%Identifier,
+     &  (fDHW_H3K_heat_xfer_to_room(1) +
+     &  fDHW_H3K_heat_xfer_to_room(2)) / 2)
+
+
+      Call AddToReport(rvPltCHREMDHWwaterheatload%Identifier,
+     &  (fDHW_H3K_water_draw(1) * 4106.0
+     &      * ( fDHW_H3K_delivery_temp(1) - fDHW_H3K_supply_temp(1)) +
+     &  fDHW_H3K_water_draw(2) * 4106.0
+     &      * ( fDHW_H3K_delivery_temp(2) - fDHW_H3K_supply_temp(2)))
+     &  / 2)
+
+
       bFirst_call_dhw = .false.
 
       return

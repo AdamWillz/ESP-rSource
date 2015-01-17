@@ -114,6 +114,9 @@ C=======================================================================
 #include "OffsiteUtilitiesPublic.h"
 #include "OffsiteUtilitiesPrivate.h"
 
+C.....Zero total energy use (for site)
+      fCHREMSiteEnUse = 0.0
+
 
 C-----------------------------------------------------------------------
 C     Loop through all components, end uses; and sum fuel consumption.
@@ -127,6 +130,7 @@ C.......Zero total enery use (by fuel) array slot
 
 C.........Zero end-use energy use (by fuel) array slot
           fEndUseEnergyUse ( iFuel, iEndUse ) = 0.0
+          if (iFuel .eq. 1) fCHREMEndUseEnUse(iEndUse) = 0.
           
           component_loop: do iSiteComp = 1, iNumOffsiteUtilComp
 
@@ -140,9 +144,14 @@ C.........Zero end-use energy use (by fuel) array slot
 
           enddo component_loop
 
-          
+          fCHREMEndUseEnUse(iEndUse) = fCHREMEndUseEnUse(iEndUse) +
+     &      fEndUseEnergyUse ( iFuel, iEndUse )
         enddo use_loop
-        
+        if (iFuel .eq. 1 .and. fCHREMSULPV .gt. 0) then 
+	     fTotalEnergyUse( iFuel ) = fTotalEnergyUse( iFuel )
+     &        - fCHREMSULPV
+	endif
+        fCHREMSiteEnUse = fCHREMSiteEnUse + fTotalEnergyUse( iFuel )
         
 
       enddo fuel_loop
@@ -167,7 +176,8 @@ C=======================================================================
 #include "OffsiteUtilitiesPublic.h"
 #include "OffsiteUtilitiesPrivate.h"
 
-      
+      fCHREMSiteGHG = 0.0
+
 
       fuel_loop: do iFuel = 1, iNumFuel
 
@@ -179,18 +189,22 @@ C.......Site-wide fuel consuption (by fuel)
         fTotalFuelUse( iFuel ) = fTotalEnergyUse( iFuel )
      &            * fFuelConversionFactor( iFuel )
 
-        
+        fTotalGHGEmissions (iFuel) = 0. ! ADD FACTOR FUNCTION HERE
+
 C.......Site-wide fuel consumption (by fuel, end-use)
         use_loop: do iEndUse = 1, iNumUses
-          
+          if (iFuel .eq. 1) fCHREMEndUseGHG(iEndUse) = 0.
           fEndUseFuelUse( iFuel, iEndUse ) =
      &                    fEndUseEnergyUse (iFuel, iEndUse)
      &                  * fFuelConversionFactor( iFuel )
 
-                    
+          fEndUseGHGEmissions( iFuel, iEndUse ) = 0. ! ADD FACTOR FUNCTION HERE
+
+          fCHREMEndUseGHG(iEndUse) = fCHREMEndUseGHG(iEndUse) + 
+     &      fEndUseGHGEmissions( iFuel, iEndUse )          
         enddo use_loop
 
-        
+        fCHREMSiteGHG = fCHREMSiteGHG + fTotalGHGEmissions (iFuel)
       enddo fuel_loop
 
       return
@@ -216,6 +230,12 @@ C=======================================================================
 
       integer iRVId     !Report Variable Identifier
       integer iRVIdCost !Report Variable Identifier for Cost
+      integer iRVIdCHREM  !Report Variable Identifier for CHREM
+      
+       ! Site energy
+      call AddToReport(rvTFuelCHREMSiteEnduse%Identifier, 
+     &  fCHREMSiteEnUse)
+     
 
 C.....Fuel loop:
       fuel_loop: do iFuel = 1, iNumFuel
@@ -231,29 +251,43 @@ C-----------------------------------------------------------------------
            SELECT CASE (iFuel)
             CASE (iElectricity)
               iRVId = rvTFuelAllEndEnergyContElec%Identifier
+              iRVIdCHREM = rvTFuelCHREMAllEndEnergyContElec%Identifier
             CASE (iNaturalGas)
               iRVId = rvTFuelAllEndEnergyContNatGas%Identifier
+              iRVIdCHREM = rvTFuelCHREMAllEndEnergyContNatGas%Identifier
             CASE (iOil)
               iRVId = rvTFuelAllEndEnergyContOil%Identifier
+              iRVIdCHREM = rvTFuelCHREMAllEndEnergyContOil%Identifier
             CASE (iPropane)
               iRVId = rvTFuelAllEndEnergyContPropane%Identifier
+            iRVIdCHREM = rvTFuelCHREMAllEndEnergyContPropane%Identifier
             CASE (iMixedWood)
               iRVId = rvTFuelAllEndEnergyContMixWood%Identifier
+            iRVIdCHREM = rvTFuelCHREMAllEndEnergyContMixWood%Identifier
             CASE (iHardWood)
               iRVId = rvTFuelAllEndEnergyContHardWood%Identifier
+            iRVIdCHREM = rvTFuelCHREMAllEndEnergyContHardWood%Identifier
             CASE (iSoftWood)
               iRVId = rvTFuelAllEndEnergyContSoftWood%Identifier
+            iRVIdCHREM = rvTFuelCHREMAllEndEnergyContSoftWood%Identifier
             CASE (iWoodPellets)
               iRVId = rvTFuelAllEndEnergyContPellets%Identifier
+             iRVIdCHREM = rvTFuelCHREMAllEndEnergyContPellets%Identifier
             CASE DEFAULT
                !Should never execute, but just in case
                iRVId = rvTFuelAllEndEnergyContent%Identifier
+               iRVIdCHREM = rvTFuelCHREMAllEndEnergyContent%Identifier
           END SELECT
 
 
           call AddToReport(
      &         iRVID,
      &         fTotalEnergyUse(iFuel))
+     
+          call AddToReport(
+     &         iRVIdCHREM,
+     &         fTotalEnergyUse(iFuel))         
+     
 
         endif
 
@@ -261,31 +295,40 @@ C-----------------------------------------------------------------------
          CASE (iElectricity)
             iRVId = rvTFuelAllEndQtyElectricity%Identifier
             iRVIdCost = rvTFuelCstAllEndElectricity%Identifier
+            iRVIdCHREM = rvTFuelCHREMAllEndQtyElectricity%Identifier
          CASE (iNaturalGas)
             iRVId = rvTFuelAllEndQtyNaturalGas%Identifier
             iRVIdCost = rvTFuelCstAllEndNaturalGas%Identifier
+            iRVIdCHREM = rvTFuelCHREMAllEndQtyNaturalGas%Identifier
          CASE (iOil)
             iRVId = rvTFuelAllEndQtyOil%Identifier
             iRVIdCost = rvTFuelCstAllEndOil%Identifier
+            iRVIdCHREM = rvTFuelCHREMAllEndQtyOil%Identifier
          CASE (iPropane)
             iRVId = rvTFuelAllEndQtyPropane%Identifier
             iRVIdCost = rvTFuelCstAllEndPropane%Identifier
+            iRVIdCHREM = rvTFuelCHREMAllEndQtyPropane%Identifier
          CASE (iMixedWood)
             iRVId = rvTFuelAllEndQtyMixedWood%Identifier
             iRVIdCost =rvTFuelCstAllEndMixedWood%Identifier
+            iRVIdCHREM = rvTFuelCHREMAllEndQtyMixedWood%Identifier
          CASE (iHardWood)
             iRVId = rvTFuelAllEndQtyHardWood%Identifier
             iRVIdCost = rvTFuelCstAllEndHardWood%Identifier
+            iRVIdCHREM = rvTFuelCHREMAllEndQtyHardWood%Identifier
          CASE (iSoftWood)
             iRVId = rvTFuelAllEndQtySoftWood%Identifier
             iRVIdCost = rvTFuelCstAllEndSoftWood%Identifier
+            iRVIdCHREM = rvTFuelCHREMAllEndQtySoftWood%Identifier
          CASE (iWoodPellets)
             iRVId = rvTFuelAllEndQtyWoodPellet%Identifier
             iRVIdCost = rvTFuelCstAllEndWoodPellet%Identifier
+            iRVIdCHREM = rvTFuelCHREMAllEndQtyWoodPellet%Identifier
          CASE DEFAULT
             !Should never execute, but just in case
             iRVId = rvTFuelAllEndQty%Identifier
             iRVIdCost = rvTFuelCstAllEnd%Identifier
+            iRVIdCHREM = rvTFuelCHREMAllEndQty%Identifier
        END SELECT
 
        call AddToReport(
@@ -298,6 +341,13 @@ C.......Total fuel cost reporting.
      &         iRVIdCost,
      &         fTotalFuelCost(iFuel))
         end if
+
+C......CHREM use only. reporting the amount of fuel used        
+        if ( .not. bCloseToZero ) then
+             call AddToReport(
+     &         iRVIdCHREM,
+     &         fTotalFuelUse(iFuel))
+        endif
 
 C-----------------------------------------------------------------------
 C         Consumption by fuel, end-use; suppress
@@ -313,37 +363,51 @@ C.......end-use loop:
                 CASE (iElectricity)
                     iRVId = rvTFuelQtyElec%Identifier
                     iRVIdCost = rvTFuelCstElec%Identifier
+                    iRVIdCHREM = rvTFuelCHREMQtyElec%Identifier
                 CASE (iNaturalGas)
                     iRVId = rvTFuelQtyNatGas%Identifier
                     iRVIdCost = rvTFuelCstNatGas%Identifier
+                    iRVIdCHREM = rvTFuelCHREMQtyNatGas%Identifier
                 CASE (iOil)
                     iRVId = rvTFuelQtyOil%Identifier
                     iRVIdCost = rvTFuelCstOil%Identifier
+                    iRVIdCHREM = rvTFuelCHREMQtyOil%Identifier
                 CASE (iPropane)
                     iRVId = rvTFuelQtyProp%Identifier
                     iRVIdCost = rvTFuelCstProp%Identifier
+                    iRVIdCHREM = rvTFuelCHREMQtyProp%Identifier
                 CASE (iMixedWood)
                     iRVId = rvTFuelQtyMixWood%Identifier
                     iRVIdCost = rvTFuelCstMixWood%Identifier
+                    iRVIdCHREM = rvTFuelCHREMQtyMixWood%Identifier
                 CASE (iHardWood)
                     iRVId = rvTFuelQtyHardWood%Identifier
                     iRVIdCost = rvTFuelCstHardWood%Identifier
+                    iRVIdCHREM = rvTFuelCHREMQtyHardWood%Identifier
                 CASE (iSoftWood)
                     iRVId = rvTFuelQtySoftWood%Identifier
                     iRVIdCost = rvTFuelCstSoftWood%Identifier
+                    iRVIdCHREM = rvTFuelCHREMQtySoftWood%Identifier
                 CASE (iWoodPellets)
                     iRVId = rvTFuelQtyPellets%Identifier
                     iRVIdCost = rvTFuelCstPellets%Identifier
+                    iRVIdCHREM = rvTFuelCHREMQtyPellets%Identifier
                 CASE DEFAULT
                     !Should never execute, but just in case
                     iRVId = rvTFuelQty%Identifier
                     iRVIdCost = rvTFuelCst%Identifier
+                    iRVIdCHREM = rvTFuelCHREMQty%Identifier
                 END SELECT
                 
             if ( .not. bCloseToZero ) then
                 !Removed the dynamic description, if needed it can be re-enable
                 call AddToReport(
      &          iRVId,
+     &          fEndUseFuelUse(iFuel,iEndUse),
+     &          cUseName(iEndUse)(1:iUseNameLen(iEndUse)))
+     
+                call AddToReport(
+     &          iRVIdCHREM,
      &          fEndUseFuelUse(iFuel,iEndUse),
      &          cUseName(iEndUse)(1:iUseNameLen(iEndUse)))
 
@@ -371,10 +435,87 @@ C...........fuel charges.
      &               fEndUseFuelCost(iFuel,iEndUse),
      &               cUseName(iEndUse)(1:iUseNameLen(iEndUse)))
             end if
+            
+C.........CHREM use only, the end use energy consumption for each fuel source
+            SELECT CASE (iFuel)
+                CASE (iElectricity)
+                  iRVIdCHREM = rvTFuelCHREMEnergyContElec%Identifier
+                CASE (iNaturalGas)
+                  iRVIdCHREM = rvTFuelCHREMEnergyContNatGas%Identifier
+                CASE (iOil)
+                  iRVIdCHREM = rvTFuelCHREMEnergyContOil%Identifier
+                CASE (iPropane)
+                  iRVIdCHREM = rvTFuelCHREMEnergyContProp%Identifier
+                CASE (iMixedWood)
+                  iRVIdCHREM = rvTFuelCHREMEnergyContMixWood%Identifier
+                CASE (iHardWood)
+                  iRVIdCHREM = rvTFuelCHREMEnergyContHardWood%Identifier
+                CASE (iSoftWood)
+                  iRVIdCHREM = rvTFuelCHREMEnergyContSoftWood%Identifier
+                CASE (iWoodPellets)
+                  iRVIdCHREM = rvTFuelCHREMEnergyContPellets%Identifier
+                CASE DEFAULT
+                    !Should never execute, but just in case
+                   iRVIdCHREM = rvTFuelCHREMEnergyCont%Identifier
+              END SELECT
+                
+            if ( .not. bCloseToZero ) then
+                !Removed the dynamic description, if needed it can be re-enable
+                call AddToReport(
+     &          iRVIdCHREM,
+     &          fEndUseEnergyUse(iFuel,iEndUse),
+     &          cUseName(iEndUse)(1:iUseNameLen(iEndUse)))
+            
+            endif
 
         enddo use_loop
 
       enddo fuel_loop
+      
+       use_loop2: do iEndUse = 1, iNumUses
+          call eclose ( fCHREMEndUseEnUse(iEndUse),
+     &                0.0, 0.01, bCloseToZero)
+
+          
+
+C.........CHREM use only, the end use energy consumption for each end use category
+            SELECT CASE (iEndUse)
+                CASE (iUseSpaceHeat)
+                    iRVIdCHREM = rvTEndUseCHREMEnergySH%Identifier
+                CASE (iUseSpaceCool)
+                    iRVIdCHREM = rvTEndUseCHREMEnergySC%Identifier
+                CASE (iUseDHW) 
+                    iRVIdCHREM = rvTEndUseCHREMEnergyDHW%Identifier
+                CASE (iUseLights) 
+                    iRVIdCHREM = rvTEndUseCHREMEnergyLights%Identifier
+                CASE (iUseEquipment) 
+                    iRVIdCHREM = rvTEndUseCHREMEnergyEqt%Identifier
+                CASE (iUseUncatagorized) 
+                    iRVIdCHREM = rvTEndUseCHREMEnergyUnCat%Identifier
+                CASE (iUseHRV) 
+                    iRVIdCHREM = rvTEndUseCHREMEnergyHRV%Identifier
+                CASE (iUseOther) 
+                    iRVIdCHREM = rvTEndUseCHREMEnergyOther%Identifier
+                CASE (iExtraBillingCharges) 
+                    iRVIdCHREM = rvTEndUseCHREMExBill%Identifier
+                CASE (iCHREM_AL) 
+                    iRVIdCHREM = rvTEndUseCHREMEnergyAL%Identifier
+                CASE DEFAULT
+                    !Should never execute, but just in case
+                   iRVIdCHREM = rvTEndUseCHREMEnergyEnd%Identifier
+              END SELECT
+                    
+            if ( .not. bCloseToZero ) then
+            
+               call AddToReport(
+     &            iRVIdCHREM,
+     &            fCHREMEndUseEnUse(iEndUse))
+            
+            endif
+            
+       enddo use_loop2
+
+
       return
       end
 

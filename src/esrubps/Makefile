@@ -7,6 +7,7 @@ MFSdir = $(SRCdir)/esrumfs
 PFSdir = $(SRCdir)/esrupfs
 PLTdir = $(SRCdir)/esruplt
 PRJdir = $(SRCdir)/esruprj
+DALdir = $(SRCdir)/dal
 CETCdir = $(SRCdir)/cetc
 SHCdir = $(SRCdir)/shocc
 COSIMdir = $(SRCdir)/co-sim
@@ -53,7 +54,7 @@ BPS_OBJECTS = bps.o adaptconf1.o adaptconf2.o adjb.o adjp.o ascii_mat.o \
 	  GCEPinput.o GCEP_load.o GCEP_SIM.o GCEP_MLAiterate.o GCEPtground.o GCEPInit.o\
 	  water_tanks.o h3k_utils.o SetDllParms.o AIMS.o TAC.o \
 	  WaterProperties.o DG_controller.o elec_net_utilities.o window_control.o \
-	  PEM_FC_pt1.o PEM_FC_pt2.o powoc_calc.o h3k_report_data.o radiant_floor.o DHW_module.o \
+	  PEM_FC_pt1.o PEM_FC_pt2.o powoc_calc.o CHREM_report_data.o h3k_report_data.o radiant_floor.o DHW_module.o \
 	  h3k_plant_postprocess.o h2_matrix_library.o h2_components.o Annex42_combustion_CHP.o \
 	  chemical_properties.o h2_comps.o compressed_cylinder.o Hydrogen_PEMFC.o \
 	  Hydrogen_MH_store.o enet_state_variable_manipulate.o Hydrogen_demand_controller.o \
@@ -67,15 +68,15 @@ BPS_OBJECTS = bps.o adaptconf1.o adaptconf2.o adjb.o adjp.o ascii_mat.o \
 
 MODULES = aim2.mod aim2_calcdata.mod aim2_h2k_dummy.mod aim2_inputdata.mod aim2_timestep.mod start_up.mod parse_command_line.mod \
           h3kmodule.f90
-PREBPS_OBJECTS = ESPrTrnsysData.o harmonizer_dummy.o
+PREBPS_OBJECTS = ESPrTrnsysData.o harmonizer_dummy.o CosimShare.o
 
 $(PROG): $(MODULE_OBJECTS) $(BPS_OBJECTS)
 	$(MFC) $(LD_FLAGS) -o $(PROG) $(FFLAGS) $(MODULE_OBJECTS) $(BPS_OBJECTS) $(ULIBS) $(F_to_C_flags)
-PREBPSDLL_OBJECTS = ESPrTrnsysData.o harmonizer.o
+PREBPSDLL_OBJECTS = ESPrTrnsysData.o harmonizer.o CosimShare.o
 
 MODULES = aim2.mod aim2_calcdata.mod aim2_h2k_dummy.mod aim2_inputdata.mod aim2_timestep.mod \
 	parse_command_line.mod start_up.mod win32interface.mod dll_functions.mod tcc.mod cosimdatatypes.mod \
-	h3kmodule.mod
+	h3kmodule.mod cosimshare.mod
 
 theEXE:  $(PREBPS_OBJECTS) $(MODULE_OBJECTS) $(BPS_OBJECTS)
 	$(MFC) $(LD_FLAGS) -o $(PROG) $(FFLAGS) $(PREBPS_OBJECTS) $(MODULE_OBJECTS) $(BPS_OBJECTS) $(ULIBS) $(F_to_C_flags)
@@ -573,6 +574,9 @@ window_control.F:
 powoc_calc.F:
 	rm -f powoc_calc.F
 	ln -s $(PFSdir)/powoc_calc.F .
+CHREM_report_data.F:
+	rm -f CHREM_report_data.F
+	ln -s $(DALdir)/CHREM_report_data.F .
 h3k_report_data.F:
 	rm -f h3k_report_data.F
 	ln -s $(CETCdir)/h3k_report_data.F .
@@ -717,6 +721,9 @@ stratified_tank_2HX.F:
 AirFlowModelRoutines.F:
 	rm -f AirFlowModelRoutines.F
 	ln -s $(BLDdir)/AirFlowModelRoutines.F .
+CosimShare.F:
+	rm -f CosimShare.F
+	ln -s $(COSIMdir)/CosimShare.F .	
 TCC.F:
 	rm -f TCC.F
 	ln -s $(COSIMdir)/TCC.F .
@@ -775,9 +782,9 @@ clean:
 	FC_components.F FC_functions.F water_tanks.F h3k_utils.F SetDllParms.F \
 	AIMS.F TAC.F WaterProperties.F DG_controller.F elec_net_utilities.F \
 	window_control.F PEM_FC_pt1.F PEM_FC_pt2.F powoc_calc.F \
-	h3k_report_data.F radiant_floor.F DHW_module.F h3k_plant_postprocess.F RE-H2-ctl.F \
+	CHREM_report_data.F h3k_report_data.F radiant_floor.F DHW_module.F h3k_plant_postprocess.F RE-H2-ctl.F \
 	ADS_storage_tanks.F ADS_storage_unit.F ADS_controller.F solar_collectors.F \
 	ground_temp_mains.F readTrnsys.F trnsys_wrapper.F trnsys_lib.F \
 	tank_intank_hx.F mains_temp_draw_profiles.F stratified_tank.F \
 	CFC_opt_props.F CFC_thermal_and_aux.F editCFC.F NCHE.F stratified_tank_1HX.F stratified_tank_2HX.F \
-	AirFlowModelRoutines.F Res_elec_Ctl.F h3kmodule.f90 qrun.F azalt.F
+	AirFlowModelRoutines.F Res_elec_Ctl.F h3kmodule.f90 qrun.F azalt.F CosimShare.F

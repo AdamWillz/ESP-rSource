@@ -6,6 +6,7 @@ MFSdir = $(SRCdir)/esrumfs
 PRJdir = $(SRCdir)/esruprj
 CETCdir = $(SRCdir)/cetc
 BLDdir = $(SRCdir)/esrubld
+COSIMdir = $(SRCdir)/co-sim
 PROG = dbm$(EXE)
 
 .SUFFIXES: .o .F
@@ -16,7 +17,7 @@ PROG = dbm$(EXE)
 	$(MCC) $(FFLAGS) -c $<
 
 
-MODULE_OBJECTS = h3kmodule.o aim2_module.o
+MODULE_OBJECTS = h3kmodule.o aim2_module.o CosimShare.o
 
 OBJECTS = jdbm.o ascii_mat.o basesimp.o basesimp_inputs.o bscoeff.o bscoeff_extended.o \
 	bcffile.o c2fdum.o ctlexp.o ctread.o dbmedit.o dossupport.o edprof.o \
@@ -28,7 +29,7 @@ OBJECTS = jdbm.o ascii_mat.o basesimp.o basesimp_inputs.o bscoeff.o bscoeff_exte
 
 
 MODULES = aim2.mod aim2_calcdata.mod aim2_h2k_dummy.mod aim2_inputdata.mod \
-          h3kmodule.mod
+          h3kmodule.mod cosimshare.mod
 
 $(PROG) : $(MODULE_OBJECTS) $(OBJECTS)
 	$(MFC) $(FFLAGS) -o $(PROG) $(FFLAGS) $(MODULE_OBJECTS) $(OBJECTS) $(ULIBS)
@@ -102,6 +103,9 @@ mfcdat.F:
 nwkrewr.F:
 	rm -f nwkrewr.F
 	ln -s $(COMdir)/nwkrewr.F .
+CosimShare.F:
+	rm -f CosimShare.F
+	ln -s $(COSIMdir)/CosimShare.F .
 pltcfg.F:
 	rm -f pltcfg.F
 	ln -s $(COMdir)/pltcfg.F .
@@ -130,4 +134,4 @@ clean :
 	CDBPlugins.F CDBCommon.F CDBExplore.F \
 	c2fdum.F ctlexp.F ctread.F dossupport.F edatabase.F \
 	egeometry.F emfnetw.F emkcfgg.F eroper.F esru_misc.F filelist.F item.F mfcdat.F nwkrewr.F \
-	pltcfg.F sort.F tdfile.F readTrnsys.F h3kmodule.f90
+	pltcfg.F sort.F tdfile.F readTrnsys.F h3kmodule.f90 CosimShare.F

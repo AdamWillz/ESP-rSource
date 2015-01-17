@@ -53,6 +53,8 @@ C----------------------------------------------------------------------
 #include "building.h"
 #include "plant.h"
 #include "control.h"
+#include "dhw_common.h"
+#include "dhw_parameters.h"
 
 C----------------------------------------------------------------------
 C     ESP-r commons 
@@ -97,7 +99,7 @@ C     References
 C-----------------------------------------------------------------------                                 
       real fConvert_current_TS_to_DAY ! Fn converting current timestep to day
       real fGet_BC_data_by_col        ! Fn collecting value of BC 
-
+      real fGet_BC_data_by_name ! return the data for the timestep 
 
 
 
@@ -111,18 +113,29 @@ C-----------------------------------------------------------------------
 C     Collect control inputs
 C-----------------------------------------------------------------------      
 C.....# of data expected - should be 2.
+C.....# of data for CHREM usage is 3 (name of the column, Int. method and multiplier)
       iData_Count    = int( pmiscd( icfp, idtypp, iperp, 1) )
+      if (iData_count .eq. 2) then 
 C.....Column containing boundary condition data     
       iBC_column     = int( pmiscd( icfp, idtypp, iperp, 2) )
 C.....Interpolation method (step/linear)      
       iInterp_Method = int( pmiscd( icfp, idtypp, iperp, 3) )
+      else 
+C.....Column name containing boundary condition data
+         cDHW_BCD_col    = "DHW"
+         iBC_column     = int( pmiscd( icfp, idtypp, iperp, 2) )
+C.....Interpolation method (step/linear)      
+         iInterp_Method = int( pmiscd( icfp, idtypp, iperp, 3) )
+C.....fDayDrawMultiplier which adjust the dhw load for CHREM bcd files in liter
+         fDayDrawMultiplier = real (pmiscd( icfp, idtypp, iperp, 4))
+      endif
 
 C-----------------------------------------------------------------------
 C     Error trap # of data. Note: function fGet_BC_data_by_col will
 C     error trap the other inputs.
 C-----------------------------------------------------------------------
 
-      if ( iData_Count .ne. 2 ) then
+      if (( iData_Count .ne. 2 ) .AND. (iData_Count .ne. 3) ) then
 
 C........Context buffer
          write (cContext, '(A,A,I2)') 'Boundry_Condition_Control(): ',
@@ -146,13 +159,33 @@ C-----------------------------------------------------------------------
       
 C-----------------------------------------------------------------------
 C     Use function fGet_BC_data_by_col to return current value of
-C     requested boundary condition column.
+C     requested boundary condition column.In this case the values
+C     is in kg/s.
+C     For CHREM models the data will be read by column name
+C     In this case the dhw load is in l/h.
 C-----------------------------------------------------------------------
-
+       if (  iData_Count .eq. 2  ) then 
        fBC_value = fGet_BC_data_by_col( iBC_column,
      &                                  fDay,
      &                                  iInterp_Method,
      &                                  cContext          )
+                                      
+       elseif ( iData_Count .eq. 3 ) then
+          cContext = "Determining the DHW profile"
+C     Changing from L/h to kg/second for water with assuming density 1000 kg/m3
+C     kg/s = L/h (from data) / timestep/h * ratio of actual DHW usage to BCD file usage
+C                 *timestep/h * h/3600 s * m3 /1000 l * 1000 kg/ m3 
+          fBC_value = fGet_BC_data_by_name(
+     &                                cDHW_BCD_col,
+     &                                fDay,
+     &                                iInterp_method,
+     &                                cContext  )
+     &                  * fDayDrawMultiplier
+     &                  / 3600
+
+       endif
+                                  
+     
 
 C----------------------------------------------------------------------
 C     Set plant component control signal 

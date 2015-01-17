@@ -947,24 +947,24 @@ C restore last one.
 C Don't use correlation if artificial emissivity used (>1)
         IF(ABS(QELWF(I)).GT.495.0.AND.EE(ICOMP,I).LE.1.)THEN
           call zsid(icomp,I,ZSDES,ZSDESC,ZSDESS)
-          write(outs,'(A,F9.1,A,A,A,F5.1,A,I6)')
-     &    ' MZELWE: a longwave flux of',QELWF(I),
-     &    ' W/m^2 has been calculated for ',ZSDESC(1:lnblnk(ZSDESC)),
-     &    ' (T=',TFC(ICOMP,I,1)+ZEROK,'K) @ increment',NSINC
-          call edisp(iuout,outs)
-          write(outs,'(A,F7.1,A,F5.1,A,F7.1,A,F5.1,A,F7.1,A,F5.1,A)')
-     &    '  Components: sky = ',QELWFK(I),' (T=',TSKY,
-     &    '), buildings = ',QELWFB(I),' (T=',TBLD(I),'), ground = ',
-     &    QELWFG(I),' (T=',TGRD,')'
-          call edisp(iuout,outs)
+C          write(outs,'(A,F9.1,A,A,A,F5.1,A,I6)')
+C     &    ' MZELWE: a longwave flux of',QELWF(I),
+C     &    ' W/m^2 has been calculated for ',ZSDESC(1:lnblnk(ZSDESC)),
+C     &    ' (T=',TFC(ICOMP,I,1)+ZEROK,'K) @ increment',NSINC
+C          call edisp(iuout,outs)
+C          write(outs,'(A,F7.1,A,F5.1,A,F7.1,A,F5.1,A,F7.1,A,F5.1,A)')
+C     &    '  Components: sky = ',QELWFK(I),' (T=',TSKY,
+C     &    '), buildings = ',QELWFB(I),' (T=',TBLD(I),'), ground = ',
+C     &    QELWFG(I),' (T=',TGRD,')'
+C          call edisp(iuout,outs)
 
 !         CORRELATION?
           QELWF(I)=(3.0+1.7*VF)*(TF-TFC(ICOMP,I,1))
 
-          write(outs,'(A,F9.1,A)')
-     &    '  A correlation long wave flux value of',QELWF(I),
-     &    ' W/m^2 will be used instead.'
-          call edisp(iuout,outs)
+C          write(outs,'(A,F9.1,A)')
+C     &    '  A correlation long wave flux value of',QELWF(I),
+C     &    ' W/m^2 will be used instead.'
+C          call edisp(iuout,outs)
         ENDIF
    49   QELWS(ICOMP,I)=QELWF(I)
         QELWB(ICOMP,I)=QELWFB(I)
@@ -1230,6 +1230,14 @@ c Mechanical ventilation systems.
 C Declare local variables used to store the conductances caused by
 C mechanical ventilation and infiltration.
       REAL ZONE_mechvent_cond,ZONE_infil_cond
+	  
+C     Declare a common to store CHREM ambient-zone heat advection conductances
+C     These are intended to seperate the uncontrolled (i.e infiltration) and 
+C     controlled (i.e. mechanical ventilation) for energy constituent analysis
+      Common /CHREM_AF/ 
+     &  fAF_AZ_Infil_Cond(MCOM,2), fAF_AZ_MechVent_Cond(MCOM,2)
+      Real fAF_AZ_Infil_Cond, fAF_AZ_MechVent_Cond
+      
 c --- 27-08-2014: Patrice Pinel: Added parameters to the mechanical ventilation model
 c --- Equivalent ambient air flow rate corresponding to moisture flow rate tntering the zone
       REAL ZONE_mechvent_moistFlow
@@ -1279,7 +1287,7 @@ c      real rTempnotioOverheat
 C      CHARACTER*2   cZone_Chars ! Padded zone number (two digits)
       
 C Logical flags for indicating which air flow model is in use.      
-      logical :: bOPR, bAFN, bAIM2, bNoFlow
+      logical :: bOPR, bAFN, bAIM2, bNoFlow, bAFNInfil
       
 C      Used to check if windows are open or not for AIM
       LOGICAL AreWindowsOpen
@@ -1662,14 +1670,22 @@ C to the above priority table.
         bOPR    = .false. 
         bNoFlow = .false. 
         
+        if (fAfnCondInfil(iComp) == 0.) then
+		! No infiltration is being calculated by the AFN
+            bAFNInfil = .false.
+        else
+		! There is infiltration for the zone calculated by the AFN
+            bAFNInfil = .true.
+        endif			
+        
         CheckAirflowMethod: select case (iAirFlowModel(iComp)) 
         
           case ( iAIM2model )
             ! Make sure AIM2 model is defined: otherwise revert to 
             ! afn/opr
-            if ( iAIM2 == 1 .and. .not. AreWindowsOpen(iComp) ) then
+            if ( iAIM2 == 1 .and. .not. bAFNInfil) then
               bAIM2 = .true. 
-            elseif ( bAfnZoneActive(iComp) ) then
+            elseif (bAfnZoneActive(iComp) .and. bAFNInfil) then
               bAFN = .true. 
             else
               bOPR = .true. 
@@ -1678,7 +1694,7 @@ C to the above priority table.
           case ( iFlowNetwork ) 
             ! Make sure air-flow network is active for this zone, 
             ! otherwise revert to aim2/opr.
-            if ( bAfnZoneActive(iComp) ) then 
+            if (bAfnZoneActive(iComp) .and. bAFNInfil) then 
               bAfn = .true. 
             elseif ( iAIM2 == 1 ) then 
               bAIM2 = .true. 
@@ -1767,6 +1783,16 @@ C========================================================================
         
         endif AssignInfil
         
+
+        ! For CHREM use only - at this point the AFN or AIM2 has been used to determine the uncontrolled 
+        ! ambient-zone heat advection (i.e. infiltration)
+        ! either through AFN open windows or AIM2 cracks
+        ! Now store this information as such
+        ! Set the present equal to the previous timestep's future
+        fAF_AZ_Infil_Cond(iComp,1) = fAF_AZ_Infil_Cond(iComp,2)
+        ! Set the future equal to the future infiltration conductance CVIF
+        fAF_AZ_Infil_Cond(iComp,2) = CVIF		           
+        
 C If the mechanical ventilation model is active
 C then add this infiltration conductance to the CVIF.
 C Note that this mechanical ventilation is added to the CVIF regardless of 
@@ -1787,11 +1813,25 @@ c --- 27-08-2014: Patrice Pinel: Added a parameter to the mechanical ventilation
           CVIF = CVIF + ZONE_mechvent_cond
         ENDIF
 
+        ! For CHREM use only - at this point the Mechanical Ventilation model has been used to 
+        ! calculate controlled ambient-zone heat advection (mechanical ventilation)
+        ! Now store this information as such
+        ! Set the present equal to the previous timestep's future
+        fAF_AZ_MechVent_Cond(iComp,1) = fAF_AZ_MechVent_Cond(iComp,2)
+        ! Set the future equal to the future mechanical ventilation conductance
+        fAF_AZ_MechVent_Cond(iComp,2) = ZONE_mechvent_cond		
+
 C When there is an outdoor air flow through the HVAC  (air source heat pump) system, this is accounted for 
 c through its effect on space infiltration. Initially the conductance for outdoor air flow
 c is set to zero, then when this value is greater than 0., it's effect on the infiltration of the
 c space is accounted for here.
         CVIF = CVIF + outdoor_air_inf_cond(ICOMP)
+
+		! For CHREM use only
+        ! Add this HVAC conductance to the controlled ambient-zone heat advection (mechanical ventilation)
+        ! as it is intended by the HVAC system as opposed to cracks or leaks
+        fAF_AZ_MechVent_Cond(iComp,2) = fAF_AZ_MechVent_Cond(iComp,2)
+     &    + outdoor_air_inf_cond(ICOMP)      
 
 C Now zone-coupling advection.
 C N.B. TIA? holds the normalised (to external air temperature)
@@ -1808,7 +1848,7 @@ C that contain another fluid.
         IF(znotair(ICOMP))xmod=cvother/cvair	 ! zone is not air filled
 
 C Computation of ventilation depends on wether the air flow network is active.      
-        AssignVent: if ( bAFN ) then 
+        AssignVent: if ( fAfnCondVent(iComp) /= 0. ) then 
 
 C Collect data from air flow module.         
           CF   = fAfnCondVent(iComp) * xmod
@@ -1816,7 +1856,7 @@ C Collect data from air flow module.
           ICF = iAfnIndex(iComp)
           TAF = fAfnCondNorm(iComp)
 
-        elseif ( bOPR .or. bAIM2 ) then 
+        else
 
 C Impose computed conductance for scheduled ventilation for .opr or 
 C .aim2 case. 
@@ -1914,14 +1954,24 @@ C         mass flow rate and moisture content; 3= product of
 C         mechanical system mass flow rate and moisture content;
 C         4= total mass flow rate lost from the zone (no moisture
 C         included).
-      MoistureByMethod: IF( bAFN ) THEN
+      MoistureByMethod: IF( bAFN .and. bAFNInfil ) THEN
 C........Read moisture balance data from air-flow network.
-         ZMBI(ICOMP,1) = fZoneMassBalance(ICOMP,1)
+         IF( iMech.eq.1) THEN
+C...........Include moisture from ventilation system        
+            ZMBI(ICOMP,1) = fZoneMassBalance(ICOMP,1)
+     &                      + ZONE_mechvent_moistFlow
+            ZMBI(ICOMP,4) = fZoneMassBalance(ICOMP,4)
+     &                      + ZONE_mechvent_airFlow
+         ELSE
+C...........No mechanical ventilation file
+            ZMBI(ICOMP,1) = fZoneMassBalance(ICOMP,1)
+            ZMBI(ICOMP,4) = fZoneMassBalance(ICOMP,4)
+         ENDIF
          ZMBI(ICOMP,2) = fZoneMassBalance(ICOMP,2)
          ZMBI(ICOMP,3) = fZoneMassBalance(ICOMP,3)
-         ZMBI(ICOMP,4) = fZoneMassBalance(ICOMP,4)    
-      else 
-C No air-flow network. Establish air and moisture balance based
+             
+      ELSE 
+C No air-flow network infiltration. Establish air and moisture balance based
 C on infiltration.  First initialize if there is no flow network or 
 C no node in the current zone.
 
@@ -1935,7 +1985,7 @@ c --- 27-08-2014: Patrice Pinel: Replace ZONE_mechvent_cond/1006 by ZONE_mechven
            !ZMBI(ICOMP,1)=CVIF/1006.
            ZMBI(ICOMP,1) = (CVIF-ZONE_mechvent_cond)/1006. 
      &                      + ZONE_mechvent_moistFlow
-c --- 27-08-2014: Patrice Pinel: This is the flow rate of dry air coming out of the zone and so should reflect the real vantilation flow rate
+c --- 27-08-2014: Patrice Pinel: This is the flow rate of dry air coming out of the zone and so should reflect the real ventilation flow rate
            ZMBI(ICOMP,4)=ZMBI(ICOMP,4)+ZMBI(ICOMP,1) 
      &                                - ZONE_mechvent_moistFlow
      &                                + ZONE_mechvent_airFlow
@@ -1943,7 +1993,13 @@ c --- 27-08-2014: Patrice Pinel: This is the flow rate of dry air coming out of 
 
 C Check zone coupled ventilation, If no zone coupled ventilation
 C reset ZCVENT.
-         IF(ICF.GT.0) THEN
+         IF ( fAfnCondVent(iComp) /= 0. ) THEN
+C........Read moisture balance data from air-flow network and discard .opr data.
+         ZMBI(ICOMP,2) = fZoneMassBalance(ICOMP,2)
+         ZMBI(ICOMP,3) = fZoneMassBalance(ICOMP,3)
+         ZMBI(ICOMP,4)=ZMBI(ICOMP,4)+fZoneMassBalance(ICOMP,4)
+         ELSE IF(ICF.GT.0) THEN
+		 ! Only consider moisture contribution from .OPR
            ZMBI(ICOMP,2)=CVVF/1006.
            ZCVENT(ICOMP)=ZMBI(ICOMP,2)
            ZMBI(ICOMP,4)=ZMBI(ICOMP,4)+ZMBI(ICOMP,2)
@@ -1954,7 +2010,7 @@ C reset ZCVENT.
       ENDIF MoistureByMethod
 
 C Modify to relate to outside temperature.
-      IF( bAFN )THEN
+      IF( fAfnCondVent(iComp) /= 0. )THEN
 
 C In the case of a flow network.
         XX=TF

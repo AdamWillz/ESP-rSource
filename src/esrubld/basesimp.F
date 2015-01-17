@@ -184,7 +184,10 @@ c-----BASESIMP foundations allow widths from 1 to 20 m and lengths from 1 to 100
         fMinFoundLength = 1.0   ! meter
         fMaxFoundLength = 100.0 ! meter
         fMinFoundWidth = 1.0    ! meter
-        fMaxFoundWidth = 20.0   ! meter 
+C LUKAS SWAN (2008-12-17) INCREASED THE MAXIMUM LENGTH RANGE FROM 
+C 20 m TO 25 m TO ACCOMODATE THE LARGEST FOUNDATION HOUSES OF THE
+C CSDDRD. THIS RANGE EXTENTION HAS NOT BEEN JUSTIFIED BY TESTING
+        fMaxFoundWidth = 25.0   ! meter 
         fMinInsulRSI = 0.0      ! m2K/W
         fMaxInsulRSI = 9.0      ! m2K/W
         fMinSoilCond = 0.85     ! W/mK

@@ -2408,6 +2408,10 @@ C...........Report interpolated values: Step interpolation
      &         fBC_Value,
      &         cBC_names(iCount)(1:iNameLength))
 
+C..........Report interpolated values for CHREM: Step interpolation 
+            call AddToReport(rvBndCndCHREMStpInt%Identifier,
+     &         fBC_Value,
+     &         cBC_names(iCount)(1:iNameLength))
 
 C...........Report interpolated values: Step interpolation
             fBC_Value = fGet_BC_data_by_col( iCount,
@@ -2418,6 +2422,10 @@ C...........Report interpolated values: Step interpolation
      &         fBC_Value,
      &         cBC_names(iCount)(1:iNameLength))
 
+C..........Report interpolated values for CHREM: Linear interpolation 
+            call AddToReport(rvBndCndCHREMLnInt%Identifier,
+     &         fBC_Value,
+     &         cBC_names(iCount)(1:iNameLength))
 
          if ( .not. bInitialized ) then
             iUnitsLength = lnblnk(cBC_units(iCount))
@@ -2427,8 +2435,13 @@ C...........Store the variables' description
      &         'units',
      &         '(' // cBC_units(iCount)(1:iUnitsLength) // ')',
      &         'Boundary condition data: step-interpolated values')
+            Call AddToReportDetails(rvBndCndCHREMStpInt%Identifier,
+     &         cBC_names(iCount)(1:iNameLength),
+     &         'units',
+     &         '(' // cBC_units(iCount)(1:iUnitsLength) // ')',
+     &         'Boundary condition data: step-interpolated values')
 
-            Call AddToReportDetails(rvBndCndLnInt%Identifier,
+            Call AddToReportDetails(rvBndCndCHREMLnInt%Identifier,
      &         cBC_names(iCount)(1:iNameLength),
      &         'units',
      &         '(' // cBC_units(iCount)(1:iUnitsLength) // ')',
@@ -2527,5 +2540,3 @@ C.....I/O
 
       return
       end
-
-

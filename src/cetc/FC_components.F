@@ -1742,11 +1742,12 @@ C-------------------------------------------------------------------------------
       INTEGER ND,K,num_recs,num_col,num_incbin,inc,incbi,ire
 
       CHARACTER OUTSTR*124
+      CHARACTER*1000 bigoutstr
 
       LOGICAL fclerror, fc_loads_exist
 
       REAL current,left,right
-      REAL elecload(12),elecloadb(12)
+      REAL elecload(60),elecloadb(60)
       INTEGER ISTAT,IER,I
       LOGICAL fc_loads_exists
       INTEGER irec, incbin
@@ -1792,7 +1793,7 @@ C-----for the selected input method.
         fclerror = .true.
       ENDIF
       K=0
-      CALL EGETWI(OUTSTR,K,FC_lds_per_rec,1,12,'F',
+      CALL EGETWI(OUTSTR,K,FC_lds_per_rec,1,60,'F',
      &            ' FC loads per rec ',IER)
       IF(IER /= 0)THEN
         WRITE(IUOUT,*) ' Error reading number of data items per record.'
@@ -1822,7 +1823,7 @@ C-----Check that the correct number of records of electric loads data are presen
           fclerror = .true.
       END SELECT
       DO I=1,num_recs
-        CALL STRIPC(IFCloads_ascii,OUTSTR,99,num_col,1,
+        CALL STRIPC1K(IFCloads_ascii,bigoutstr,99,num_col,1,
      &              ' Test read of a record',IER)
         if(IER /= 0)then
           WRITE(IUOUT,*) ' End of fuel cell elec loads file.'
@@ -2026,7 +2027,7 @@ C-------------------------------------------------------------------------------
 C Declare local variables.
 C---------------------------------------------------------------------------------
       INTEGER record,incbin,after_midnight
-      REAL elecloadb(12),frac_hr,frac_min,tenth
+      REAL elecloadb(60),frac_hr,frac_min,tenth
       REAL q_nonHVAC_elec,q_HVAC_elec
       LOGICAL CLOSE
       INTEGER IDYP,ISTAT

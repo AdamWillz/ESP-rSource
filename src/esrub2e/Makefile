@@ -6,6 +6,7 @@ MFSdir = $(SRCdir)/esrumfs
 PRJdir = $(SRCdir)/esruprj
 BLDdir = $(SRCdir)/esrubld
 CETCdir = $(SRCdir)/cetc
+COSIMdir = $(SRCdir)/co-sim
 PROG = b2e$(EXE)
 
 .SUFFIXES: .o .F
@@ -15,7 +16,7 @@ PROG = b2e$(EXE)
 %.o : %.f90
 	$(MCC) $(FFLAGS) -c $<
 
-MODULE_OBJECTS = h3kmodule.o aim2_module.o startup.o
+MODULE_OBJECTS = h3kmodule.o aim2_module.o startup.o CosimShare.o
 
 OBJECTS = basesimp.o basesimp_inputs.o b2e.o bscoeff.o bscoeff_extended.o \
 	CDBPlugins.o CDBCommon.o CDBExplore.o\
@@ -25,7 +26,7 @@ OBJECTS = basesimp.o basesimp_inputs.o b2e.o bscoeff.o bscoeff_extended.o \
     azalt.o qrun.o
 
 MODULES = aim2.mod aim2_calcdata.mod aim2_h2k_dummy.mod aim2_inputdata.mod start_up.mod \
-          parse_command_line.mod h3kmodule.mod
+          parse_command_line.mod h3kmodule.mod cosimshare.mod
 
 $(PROG): $(MODULE_OBJECTS) $(OBJECTS)
 	$(MFC) $(LD_FLAGS) -o $(PROG) $(FFLAGS) $(MODULE_OBJECTS) $(OBJECTS) $(ULIBS)
@@ -129,6 +130,9 @@ qrun.F:
 h3kmodule.f90:
 	rm -f h3kmodule.f90
 	ln -s $(CETCdir)/h3kmodule.f90 .
+CosimShare.F:
+	rm -f CosimShare.F
+	ln -s $(COSIMdir)/CosimShare.F .	
 
 strip:
 	@if [ -f $(PROG) ]; then strip $(PROG); fi
@@ -142,4 +146,4 @@ clean:
 	CDBPlugins.F CDBCommon.F CDBExplore.F \
 	c2fdum.F ctlwrt.F ctread.F econtrol.F egeometry.F emfnetw.F emkcfg.F esru_misc.F \
 	eroper.F esystem.F filelist.F initalc.F item.F mfcdat.F nwkrewr.F pltcfg.F sort.F startup.F tdfile.F \
-	readTrnsys.F rwipv.F rwsbem.F azalt.F qrun.F h3kmodule.f90
+	readTrnsys.F rwipv.F rwsbem.F azalt.F qrun.F h3kmodule.f90 CosimShare.F
