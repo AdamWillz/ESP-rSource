@@ -138,6 +138,8 @@ C      within the subroutine).
 C  itu is the output channel for reporting (if itrc is > zero).
 C  itrc the level of reporting (zero is quiet).
 
+      USE COSIMSHARE
+
 #include "plant.h"
 #include "building.h"
 #include "net_flow.h"
@@ -153,7 +155,10 @@ C LPCDB/IPCDB (for plant template database)
 
       COMMON/ER1/IER1
       COMMON/outin/iuout,iuin
-
+      
+C Number of Zones
+      integer ncomp,ncon
+      common/c1/ncomp,ncon
       COMMON/C6/INDCFG
       COMMON/C8/LPNAM
       COMMON/C9/NPCOMP,NCI(MPCOM),CDATA(MPCOM,MMISCD)
@@ -182,8 +187,7 @@ C Common for new format component database
       COMMON/NCDBFORM/ICDBF
 
       COMMON/IsTRNSYS/Is_TRNSYS(MPCOM)
-      integer ncomp,ncon
-      COMMON/C1/NCOMP,NCON
+
 
       LOGICAL close,FOUNDNUM(10),Is_TRNSYS
       CHARACTER OUTSTR*124,OUTS*124,word*20,LLTMP*144,cmsg*24
@@ -205,6 +209,7 @@ C containing NMISC.
       integer lndbp   ! for length of standard database path
       integer ier
       logical unixok
+      integer counter ! Generic loop counter
 
 C Set folder separator (fs) to \ or / as required.
       call isunix(unixok)
@@ -916,6 +921,33 @@ C Also change over flow connection.
               endif   
            endif
  709    continue
+ 
+C Determine if there are additional surface temperatures to be sent to 
+C the co-simulator
+        CALL STRIPC(iuc,OUTSTR,0,counter,1,'co-sim surfaces',IER)
+        IF(IER.NE.0)RETURN
+        K=0
+        CALL EGETWI(OUTSTR,K,coSimNumSurf,0,maxSend,'W',
+     &        'co-sim surfaces',IER)
+        IF(coSimNumSurf<0) coSimNumSurf=0 ! Number of surfaces cannot be less then zero
+        
+        if(coSimNumSurf > 0) then
+        	! There are surface temperatures to be reported to the 
+        	! Co-simulator.
+        	! Move to next line and collect surface indexes
+        	CALL STRIPC(iuc,OUTSTR,0,counter,1,'co-sim indexes',IER)
+            IF(IER.NE.0)RETURN
+            K=0
+        	! Begin pulling zone and surface indexes from input
+        	do  counter=1,coSimNumSurf
+  				CALL EGETWI(OUTSTR,K,coSimZones(counter),0,ncomp,'W',
+     &           'co-sim zone ind',IER) ! Zone number
+  	            IF(IER.NE.0)RETURN
+  	            CALL EGETWI(OUTSTR,K,coSimSurfs(counter),0,
+     &           MS,'W','co-sim surf ind',IER) ! Surface number
+  	            IF(IER.NE.0)RETURN 
+  			end  do
+        endif	
 
 C Close plant cfg file before exiting.
     6   CALL ERPFREE(IUC,ISTAT)

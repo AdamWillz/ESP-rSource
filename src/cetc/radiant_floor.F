@@ -164,8 +164,13 @@ C     this let to an unbearable computing time in copy routine.
 C     the routine now applies the computed flux to the linked zone structure too, so a radiant floor affects not only the 
 C     actual zone but also the linked zone.
       SUBROUTINE RadFloor_CoeffGen(IPCOMP,COUT,ISTATS)
+      use h3kmodule
 #include "plant.h"
 #include "building.h"
+
+C External functions------------------------------------------------
+      integer lnblnk
+C ------------------------------------------------------------------ 
 
       COMMON/OUTIN/IUOUT,IUIN
       COMMON/TC/ITC,ICNT
@@ -195,6 +200,10 @@ C     actual zone but also the linked zone.
       COMMON/PCRES/QDATA(MPCOM),PCAOUT(MPCOM,MPCRES),NAPDAT(MPCOM)
       REAL QDATA,PCAOUT
       INTEGER napdat
+      
+C Plant component ASCII names.
+      common/pcnam/pcname(mpcom)
+      character*15 pcname        ! Plant component names      
 
 C     building construction common block data
       COMMON/C6/INDCFG
@@ -217,14 +226,15 @@ C     Parameters and common variables related to this component ----------------
 C     The common block should also be included in the MZNASS subroutine
 C     (found in ESRUPLT/PMATRX.F)to store present time values of some variables
 
-      PARAMETER (Nmax = 20, ITmax = 100, PI=3.1415926535, PI2=0.5*PI)
-      PARAMETER (Relax = 1.0, Tol = 1.E-6, TolF = 1.E-3, Small = 1.E-15)
+      PARAMETER (Nmax = 20, PI=3.1415926535, PI2=0.5*PI)
+      PARAMETER (Tol = 1.E-6, TolF = 1.E-3, Small = 1.E-15)
       COMMON /RHC/Acof(MPCOM,Nmax,Nmax),Fcof(MPCOM,Nmax,Nmax),
      &     Fcofp(MPCOM,Nmax,Nmax),ConAf(MPCOM),ConBf(MPCOM),
      &     ConDf(MPCOM),ConAp(MPCOM),ConBp(MPCOM),
      &     ConDp(MPCOM), TetaMf(MPCOM), TetaMp(MPCOM),
      &     Tpipef(MPCOM), Tpipep(MPCOM)
-      REAL    COUT(MPCOE), J11, J12, J21, J22
+      REAL    COUT(MPCOE), J11, J12, J21, J22, Relax
+      INTEGER ITmax
       
       COMMON/GR1D01/NNDS,NNDZ(MCOM),NNDC(MCOM,MS),NNDL(MCOM,MS,ME)
 
@@ -237,6 +247,10 @@ C logical value to assess if the zone has a coupled zone
       logical bCoupled_Zone
 
       character outs*124
+     
+C Variables used for reporting
+
+      INTEGER iNameLength        ! Used for the reporting
 C----------------------------------------------------------------------
 C     Flag indicating if radiant floor is active, number of radiant floors, indirect index for radiant_floor component
       COMMON/RadFloor/RadFloor_active, NRadFloor, IRadFloor,
@@ -310,7 +324,13 @@ C     1-D average temperature of the pipe outer surface
 
 C     1-D average temperature of the inside face of the radiant surface
       Tsurf1D = TFS(Iz, Is)
-
+      
+C     Under Relaxation factor      
+      Relax = ADATA(IPCOMP,10)
+      
+C     Max Number of iterations for component      
+      ITmax = INT( ADATA(IPCOMP,11) )      
+      
 C---------------------------------------------------------------------------------
 C     Calculate the total thickness, average conductivity and volumetric specific heat
 C     of the slab system, and the distance of pipe centre from the indoor surface.
@@ -662,6 +682,26 @@ C     2nd phase mass (ie. vapour) balance coefficients
                COUT(2)=0.
                COUT(3)=0.
             END IF
+            
+C---------------------------------------------------------------------------------
+C Make select results available in XML and CVS output.
+C---------------------------------------------------------------------------------
+
+         iNameLength = lnblnk(pcname(IPCOMP))
+      
+         call AddToReport(rvpltRadFloorTmin%Identifier,
+     &           Tmin,
+     &           pcname(IPCOMP)(1:iNameLength))  
+         
+         call AddToReport(rvpltRadFloorTmax%Identifier,
+     &           Tmax,
+     &           pcname(IPCOMP)(1:iNameLength))
+     
+         call AddToReport(rvpltRadFloorInj%Identifier,
+     &           Qnode,
+     &           pcname(IPCOMP)(1:iNameLength)) 
+     
+C----------------------------------------------------------------------------------            
 
 C     Trace output
             IF(ITC.GT.0.AND.NSINC.GE.ITC.AND.NSINC.LE.ITCF.AND.

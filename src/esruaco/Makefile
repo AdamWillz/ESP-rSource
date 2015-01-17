@@ -7,6 +7,7 @@ MRTdir = $(SRCdir)/esrumrt
 PRJdir = $(SRCdir)/esruprj
 CETCdir = $(SRCdir)/cetc
 BLDdir = $(SRCdir)/esrubld
+COSIMdir = $(SRCdir)/co-sim
 PROG= aco$(EXE)
 
 .SUFFIXES: .o .F
@@ -16,7 +17,7 @@ PROG= aco$(EXE)
 %.o : %.f90
 	$(MCC) $(FFLAGS) -c $<
 
-MODULE_OBJECTS = h3kmodule.o startup.o aim2_module.o
+MODULE_OBJECTS = h3kmodule.o startup.o aim2_module.o CosimShare.o
 
 OBJECTS = aco.o acocalc.o acoesp.o arrow.o ascii_mat.o azalt.o\
 	basesimp.o basesimp_inputs.o bscoeff.o bscoeff_extended.o \
@@ -27,7 +28,7 @@ OBJECTS = aco.o acocalc.o acoesp.o arrow.o ascii_mat.o azalt.o\
 	readBCF.o readTrnsys.o rwipv.o rwsbem.o sort.o  tdfile.o qrun.o
 
 MODULES = aim2.mod aim2_calcdata.mod aim2_h2k_dummy.mod aim2_inputdata.mod start_up.mod \
-	parse_command_line.mod h3kmodule.mod
+	parse_command_line.mod h3kmodule.mod cosimshare.mod
 
 $(PROG): $(MODULE_OBJECTS) $(OBJECTS)
 	$(MFC) $(LD_FLAGS) -o  $(PROG) $(FFLAGS) $(MODULE_OBJECTS) $(OBJECTS) $(ULIBS) $(F_to_C_flags)
@@ -125,6 +126,9 @@ mfcdat.F:
 nwkrewr.F:
 	rm -f nwkrewr.F
 	ln -s $(COMdir)/nwkrewr.F .
+CosimShare.F:
+	rm -f CosimShare.F
+	ln -s $(COSIMdir)/CosimShare.F .	
 pltcfg.F:
 	rm -f pltcfg.F
 	ln -s $(COMdir)/pltcfg.F .
@@ -170,4 +174,4 @@ clean:
 	e3dviews.F ecasctl.F econstr.F edcon.F edcondb.F edatabase.F egeometry.F egtgeom.F \
 	emfnetw.F enetmisc.F enetrewr.F emkcfg.F eroper.F esru_misc.F esystem.F filelist.F \
 	inside.F item.F mfcdat.F nwkrewr.F pltcfg.F readTrnsys.F rwipv.F rwsbem.F \
-	sort.F startup.F tdfile.F h3kmodule.f90 qrun.F azalt.f
+	sort.F startup.F tdfile.F h3kmodule.f90 qrun.F azalt.f CosimShare.F

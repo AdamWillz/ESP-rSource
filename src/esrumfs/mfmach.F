@@ -121,7 +121,7 @@ C     RESRMX - maximum relative residual (relative to SAFLW for NDWREL)
       COMMON/MFCALC/IPSMOD,MSLVTP
       COMMON/MFLITR/MAXITF,FERREL,FERMFL,PMAX,STEFFR,MFTRAC,ITER,IOK
       COMMON/CONTM0/NCONTM,NOCNTM,CONTMNAM(MCONTM)
-      COMMON/mfctl/ctlpos(MCNN)
+      COMMON/mfctl/ctlpos(MCNN),ctlpast(MCNN)
       common/btime/btimep,btimef
 
       PARAMETER       (SMALL=1.0E-15)
@@ -608,7 +608,7 @@ C     FEXP = SUPCMP(ICMP,3) - flow exponent b (-)
 #include "net_flow.h"
 
 
-      COMMON/mfctl/ctlpos(MCNN)
+      COMMON/mfctl/ctlpos(MCNN),ctlpast(MCNN)
       COMMON/MFLOW5/RHON(MNOD)
       COMMON/MFLOW9/ITPCMP(MCMP),ISDCMP(MCMP),ISDCNN(MCMP),
      &              SUPCMP(MCMP,MCMS)
@@ -779,7 +779,7 @@ C
 cc      implicit none
 #include "net_flow.h"
 
-      COMMON/mfctl/ctlpos(MCNN)
+      COMMON/mfctl/ctlpos(MCNN),ctlpast(MCNN)
       COMMON/MFLOW5/RHON(MNOD)
       COMMON/MFLOW9/ITPCMP(MCMP),ISDCMP(MCMP),ISDCNN(MCMP),
      &              SUPCMP(MCMP,MCMS)
@@ -863,7 +863,7 @@ C     FEXP = SUPCMP(ICMP,3) - flow exponent b (-)
 
 #include "net_flow.h"
 
-      COMMON/mfctl/ctlpos(MCNN)
+      COMMON/mfctl/ctlpos(MCNN),ctlpast(MCNN)
       COMMON/MFLOW9/ITPCMP(MCMP),ISDCMP(MCMP),ISDCNN(MCMP),
      &              SUPCMP(MCMP,MCMS)
       COMMON/MFLW10/NODPS(MCNN),HGTPS(MCNN),NODNE(MCNN),HGTNE(MCNN),
@@ -914,7 +914,7 @@ C     FEXP = SUPCMP(ICMP,3) - flow exponent b (-)
 
 #include "net_flow.h"
 
-      COMMON/mfctl/ctlpos(MCNN)
+      COMMON/mfctl/ctlpos(MCNN),ctlpast(MCNN)
       COMMON/MFLOW5/RHON(MNOD)
       COMMON/MFLOW9/ITPCMP(MCMP),ISDCMP(MCMP),ISDCNN(MCMP),
      &              SUPCMP(MCMP,MCMS)
@@ -977,7 +977,7 @@ C     COFB = SUPCMP(ICMP,3) - flow coefficient b (Pa/(m^3/s)^2)
      &              ITPCON(MCNN),NDSCNN(MCNN,MCNS)
       COMMON/MFLRES/FLW1(MCNN),FLW2(MCNN),PRES(MNOD),
      &              RESID(MNOD),SAFLW(MNOD)
-      COMMON/mfctl/ctlpos(MCNN)
+      COMMON/mfctl/ctlpos(MCNN),ctlpast(MCNN)
 
       DOUBLE PRECISION FLW1,FLW2,PRES,RESID,SAFLW
       DOUBLE PRECISION DELP,DERIV
@@ -1053,7 +1053,7 @@ C     COFB = SUPCMP(ICMP,3) - flow coefficient b (Pa/(kg/s)^2)
      &              ITPCON(MCNN),NDSCNN(MCNN,MCNS)
       COMMON/MFLRES/FLW1(MCNN),FLW2(MCNN),PRES(MNOD),
      &              RESID(MNOD),SAFLW(MNOD)
-      COMMON/mfctl/ctlpos(MCNN)
+      COMMON/mfctl/ctlpos(MCNN),ctlpast(MCNN)
 
       DOUBLE PRECISION FLW1,FLW2,PRES,RESID,SAFLW
       DOUBLE PRECISION DELP,DERIV
@@ -1130,7 +1130,7 @@ C control ratio returned in ctlpos.
      &              ITPCON(MCNN),NDSCNN(MCNN,MCNS)
       COMMON/MFLRES/FLW1(MCNN),FLW2(MCNN),PRES(MNOD),
      &              RESID(MNOD),SAFLW(MNOD)
-      COMMON/mfctl/ctlpos(MCNN)
+      COMMON/mfctl/ctlpos(MCNN),ctlpast(MCNN)
 
       DOUBLE PRECISION FLW1,FLW2,PRES,RESID,SAFLW
       DOUBLE PRECISION DERIV
@@ -1169,7 +1169,7 @@ C control ratio returned in ctlpos.
      &              ITPCON(MCNN),NDSCNN(MCNN,MCNS)
       COMMON/MFLRES/FLW1(MCNN),FLW2(MCNN),PRES(MNOD),
      &              RESID(MNOD),SAFLW(MNOD)
-      COMMON/mfctl/ctlpos(MCNN)
+      COMMON/mfctl/ctlpos(MCNN),ctlpast(MCNN)
 
       DOUBLE PRECISION FLW1,FLW2,PRES,RESID,SAFLW
       DOUBLE PRECISION DERIV
@@ -1204,7 +1204,7 @@ C control ratio returned in ctlpos.
      &              ITPCON(MCNN),NDSCNN(MCNN,MCNS)
       COMMON/MFLRES/FLW1(MCNN),FLW2(MCNN),PRES(MNOD),
      &              RESID(MNOD),SAFLW(MNOD)
-      COMMON/mfctl/ctlpos(MCNN)
+      COMMON/mfctl/ctlpos(MCNN),ctlpast(MCNN)
 
       DOUBLE PRECISION FLW1,FLW2,PRES,RESID,SAFLW
       DOUBLE PRECISION DELP,DERIV
@@ -1261,7 +1261,7 @@ C     ORAD = SUPCMP(ICMP,3) - radius of opening   (m)
       COMMON/MFLRES/FLW1(MCNN),FLW2(MCNN),PRES(MNOD),
      &              RESID(MNOD),SAFLW(MNOD)
       COMMON/MFLCTL/IRY,IRM,IRD,IRH,FLWTIM,IHOUR,IYD,IFYD,ILYD,IPROG
-      COMMON/mfctl/ctlpos(MCNN)
+      COMMON/mfctl/ctlpos(MCNN),ctlpast(MCNN)
 
       DOUBLE PRECISION FLW1,FLW2,PRES,RESID,SAFLW
       DOUBLE PRECISION DELP,DERIV
@@ -1327,7 +1327,7 @@ C control ratio returned in ctlpos.
      &              ITPCON(MCNN),NDSCNN(MCNN,MCNS)
       COMMON/MFLRES/FLW1(MCNN),FLW2(MCNN),PRES(MNOD),
      &              RESID(MNOD),SAFLW(MNOD)
-      COMMON/mfctl/ctlpos(MCNN)
+      COMMON/mfctl/ctlpos(MCNN),ctlpast(MCNN)
 
       DOUBLE PRECISION FLW1,FLW2,PRES,RESID,SAFLW
       DOUBLE PRECISION DELP,DERIV
@@ -1381,7 +1381,7 @@ C     FCOF = f{SUPCMP(ICMP,3)} - crack length (m)
      &              ITPCON(MCNN),NDSCNN(MCNN,MCNS)
       COMMON/MFLRES/FLW1(MCNN),FLW2(MCNN),PRES(MNOD),
      &              RESID(MNOD),SAFLW(MNOD)
-      COMMON/mfctl/ctlpos(MCNN)
+      COMMON/mfctl/ctlpos(MCNN),ctlpast(MCNN)
 
       DOUBLE PRECISION FLW1,FLW2,PRES,RESID,SAFLW
       DOUBLE PRECISION DELP,DERIV
@@ -1448,7 +1448,7 @@ C     TNEG                  - absolute temperature -ve side (K)
      &              ITPCON(MCNN),NDSCNN(MCNN,MCNS)
       COMMON/MFLRES/FLW1(MCNN),FLW2(MCNN),PRES(MNOD),
      &              RESID(MNOD),SAFLW(MNOD)
-      COMMON/mfctl/ctlpos(MCNN)
+      COMMON/mfctl/ctlpos(MCNN),ctlpast(MCNN)
 
       DOUBLE PRECISION FLW1,FLW2,PRES,RESID,SAFLW
       DOUBLE PRECISION DELP,DERIV
@@ -1576,7 +1576,7 @@ C     VEL                   - velocity (m/s)
      &              RESID(MNOD),SAFLW(MNOD)
       COMMON/MFLCTL/IRY,IRM,IRD,IRH,FLWTIM,IHOUR,IYD,IFYD,ILYD,IPROG
       COMMON/MFLITR/MAXITF,FERREL,FERMFL,PMAX,STEFFR,MFTRAC,ITER,IOK
-      COMMON/mfctl/ctlpos(MCNN)
+      COMMON/mfctl/ctlpos(MCNN),ctlpast(MCNN)
 
       DOUBLE PRECISION FLW1,FLW2,PRES,RESID,SAFLW
       DOUBLE PRECISION DELP,DERIV
@@ -2274,7 +2274,7 @@ C     RHO                   - fluid density (kg/m^3)
      &              RESID(MNOD),SAFLW(MNOD)
       COMMON/MFLCTL/IRY,IRM,IRD,IRH,FLWTIM,IHOUR,IYD,IFYD,ILYD,IPROG
       COMMON/MFLITR/MAXITF,FERREL,FERMFL,PMAX,STEFFR,MFTRAC,ITER,IOK
-      COMMON/mfctl/ctlpos(MCNN)
+      COMMON/mfctl/ctlpos(MCNN),ctlpast(MCNN)
 
       DOUBLE PRECISION FLW1,FLW2,PRES,RESID,SAFLW
       DOUBLE PRECISION DELP,DERIV
@@ -2473,7 +2473,7 @@ C     HH100           - relative valve position H/H100 (-)
      &              ITPCON(MCNN),NDSCNN(MCNN,MCNS)
       COMMON/MFLRES/FLW1(MCNN),FLW2(MCNN),PRES(MNOD),
      &              RESID(MNOD),SAFLW(MNOD)
-      COMMON/mfctl/ctlpos(MCNN)
+      COMMON/mfctl/ctlpos(MCNN),ctlpast(MCNN)
 
       DOUBLE PRECISION FLW1,FLW2,PRES,RESID,SAFLW
       DOUBLE PRECISION DELP,DERIV
@@ -2564,7 +2564,7 @@ C
      &              ITPCON(MCNN),NDSCNN(MCNN,MCNS)
       COMMON/MFLRES/FLW1(MCNN),FLW2(MCNN),PRES(MNOD),
      &              RESID(MNOD),SAFLW(MNOD)
-      COMMON/mfctl/ctlpos(MCNN)
+      COMMON/mfctl/ctlpos(MCNN),ctlpast(MCNN)
 
       DOUBLE PRECISION FLW1,FLW2,PRES,RESID,SAFLW
       DOUBLE PRECISION DELP,DERIV
@@ -2635,7 +2635,7 @@ C
      &              ITPCON(MCNN),NDSCNN(MCNN,MCNS)
       COMMON/MFLRES/FLW1(MCNN),FLW2(MCNN),PRES(MNOD),
      &              RESID(MNOD),SAFLW(MNOD)
-      COMMON/mfctl/ctlpos(MCNN)
+      COMMON/mfctl/ctlpos(MCNN),ctlpast(MCNN)
 
       DOUBLE PRECISION FLW1,FLW2,PRES,RESID,SAFLW
       DOUBLE PRECISION DELP,DERIV

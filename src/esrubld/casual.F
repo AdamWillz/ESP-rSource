@@ -996,10 +996,13 @@ C           l = 6 -> convective fraction (0->1)
 C           l = 7 -> casual gain slot (1-7)
 C
 C Initialize total electric load - related gains
+! These are added in for the zone below, so they get initialized for each zone
       Total_NG = 0. ! (W)
       Total_elec_CON_gain = 0. ! (W) 
       Total_elec_RAD_gain = 0. ! (W)
       DO ii = 1, iNumb_Gain_coupling(icomp,iDay)
+       W_electric_nonHVAC = 0. ! Zero out the heat gain power for this next gain loop
+       W_NG_nonHVAC = 0. ! Zero out the Natural gas power for this next gain loop
 C Check to see if the future  building time is between the start hour and            
 C the end hour of the gain.
         start_hour = Coupling_gain_info(icomp,iDay,ii,1) ! start hour 0-24)
@@ -1078,6 +1081,12 @@ C Accumulate NG consumption (W)
 
         endif          
       ENDDO
+      
+      ! Report the NG consumption for the zone to SiteUtilities
+      ! Only NG is considered as the electric gains are on the
+      ! the electrical network side
+      fSUFuelEnergyUse(iNaturalGas, iCHREM_AL) = Total_NG
+      call StoreCasualNGZoneEnergyUse(icomp, fSUFuelEnergyUse)
 
 C NOTE: add radiant & convective gains from occupant-driven
 C electric loads to ESP-r common blocks QCASR and QCASC.

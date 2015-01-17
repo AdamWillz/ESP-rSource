@@ -107,6 +107,10 @@ C LOGIC
 C     Check if WindowOpenControl model is not running 
       IF (.not. bWindowControlFlag) THEN
         bWindowsAreOpen(iComp) = .false.
+		
+C     Control data hasn't been set. Don't run WindowOpenControl		
+      ELSEIF (IDTYP .eq. 0) THEN
+      	bWindowsAreOpen(iComp) = .false.		
 
 C     Check if the cooling system has capacity AND will turn on
 C       BMISCD(1,IDTYP,IPER,4) is hardcoded to controller 1 cooling capacity

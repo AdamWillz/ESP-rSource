@@ -26,7 +26,7 @@ C Boston, MA 02111-1307 USA.
 
       COMMON/OUTIN/IUOUT,IUIN
       COMMON/FCLSOL/ICFP,IDTYPP,IPERP
-      COMMON/mfctl/ctlpos(MCNN)
+      COMMON/mfctl/ctlpos(MCNN),ctlpast(MCNN)
       COMMON/MFLCTL/IRY,IRM,IRD,IRH,FLWTIM,IHOUR,IYD,IFYD,ILYD,IPROG
       common/caleni/nbdaytype,nbcaldays(MDTY),icalender(365)
       INTEGER NBDAYTYPE,NBCALDAYS,ICALENDER,NIN
@@ -117,6 +117,9 @@ C Plant network slave
         ELSE IF(IFCLAW(ICFP,IDTYPP,IPERP).EQ.6)THEN
           CALL FCL06
  
+C AIM-2 Controller
+        ELSE IF(IFCLAW(ICFP,IDTYPP,IPERP).EQ.7)THEN
+          CALL FCL07	
 C New controllers inserted here!
         ELSE
           WRITE(outs,*) 'MFCNTR: invalid m. flow control law ',
@@ -445,7 +448,7 @@ C << what comprises ON
 #include "net_flow.h"
 #include "building.h"
 #include "control.h"
-      COMMON/mfctl/ctlpos(MCNN)
+      COMMON/mfctl/ctlpos(MCNN),ctlpast(MCNN)
       COMMON/FCLSOL/ICFP,IDTYPP,IPERP
       COMMON/MFLOW1/NNOD,NCMP,NCNN
       COMMON/MFLW10/NODPS(MCNN),HGTPS(MCNN),NODNE(MCNN),HGTNE(MCNN),
@@ -508,7 +511,7 @@ C *******  FCL01 Proportional controller with hysteresis
 #include "building.h"
 #include "control.h"
 
-      COMMON/mfctl/ctlpos(MCNN)
+      COMMON/mfctl/ctlpos(MCNN),ctlpast(MCNN)
       COMMON/FCLSOL/ICFP,IDTYPP,IPERP
       COMMON/MFLOW1/NNOD,NCMP,NCNN
       COMMON/MFLW10/NODPS(MCNN),HGTPS(MCNN),NODNE(MCNN),HGTNE(MCNN),
@@ -549,7 +552,7 @@ C 1.0 is nominal rate or area, 1.5 would be 1.5 x nominal etc.).
 #include "building.h"
 #include "control.h"
 
-      COMMON/mfctl/ctlpos(MCNN)
+      COMMON/mfctl/ctlpos(MCNN),ctlpast(MCNN)
       COMMON/FCLSOL/ICFP,IDTYPP,IPERP
       COMMON/MFLOW1/NNOD,NCMP,NCNN
       COMMON/MFLW10/NODPS(MCNN),HGTPS(MCNN),NODNE(MCNN),HGTNE(MCNN),
@@ -683,7 +686,7 @@ C logical AND/OR as specified in the sensor definition
       COMMON/MFLOW1/NNOD,NCMP,NCNN
       COMMON/MFLW10/NODPS(MCNN),HGTPS(MCNN),NODNE(MCNN),HGTNE(MCNN),
      &              ITPCON(MCNN),NDSCNN(MCNN,MCNS)
-      common/MFCTL/CTLPOS(MCNN)
+      common/MFCTL/CTLPOS(MCNN),ctlpast(MCNN)
       common/FCLSOL/ICFP,IDTYPP,IPERP
       common/fcl0305/TSETPO
 
@@ -855,7 +858,7 @@ C climate file commons
       COMMON/MFLW10/NODPS(MCNN),HGTPS(MCNN),NODNE(MCNN),HGTNE(MCNN),
      &              ITPCON(MCNN),NDSCNN(MCNN,MCNS)
       COMMON/AFN/IAIRN,LAPROB,ICAAS(MCOM)
-      common/MFCTL/CTLPOS(MCNN)
+      common/MFCTL/CTLPOS(MCNN),ctlpast(MCNN)
       common/FCLSOL/ICFP,IDTYPP,IPERP
 
 C Time and weather data.
@@ -1157,7 +1160,7 @@ C 1.0 is nominal rate or area, 1.5 would be 1.5 x nominal etc.).
 #include "control.h"
 
       COMMON/OUTIN/IUOUT,IUIN
-      COMMON/mfctl/ctlpos(MCNN)
+      COMMON/mfctl/ctlpos(MCNN),ctlpast(MCNN)
       COMMON/FCLSOL/ICFP,IDTYPP,IPERP
       COMMON/MFLOW1/NNOD,NCMP,NCNN
       COMMON/MFLW10/NODPS(MCNN),HGTPS(MCNN),NODNE(MCNN),HGTNE(MCNN),
@@ -1282,5 +1285,134 @@ C Controlling a component.
       endif
 c      write(97,*)icfp,actfrac(ipln)
 c      if(icfp.eq.5)write(905,*)ifan(icfp,2),ctlpos(ifan(icfp,2))
+      RETURN
+      END
+      
+C *******  FCL07 Ported AIM-2 Window control
+C 
+C 
+      SUBROUTINE FCL07
+
+#include "net_flow.h"
+#include "building.h"
+#include "control.h"
+      COMMON/mfctl/ctlpos(MCNN),ctlpast(MCNN)
+      COMMON/FCLSOL/ICFP,IDTYPP,IPERP
+      COMMON/MFLOW1/NNOD,NCMP,NCNN
+      COMMON/MFLW10/NODPS(MCNN),HGTPS(MCNN),NODNE(MCNN),HGTNE(MCNN),
+     &              ITPCON(MCNN),NDSCNN(MCNN,MCNS)
+
+C Future values common block.
+
+      COMMON/FVALA/TFA(MCOM),QFA(MCOM)
+C     Zone Temp.
+      REAL  TFA,QFA
+
+C Climate 
+      COMMON/CLIMI/QFP,QFF,TP,TF,QDP,QDF,VP,VF,DP,DF,HP,HF
+      REAL  QFP,QFF,TP
+C     Ambiant Temperature at Future Timestep.
+      REAL  TF,QDP,QDF,VP,VF,DP,DF,HP,HF
+	 
+C Common block required for getting AC Setpoint
+       COMMON/PSTSOL/ICF,IDTYP,IPER,BB1,BB2,BB3,IICOMP,TNP,QFUT,TFUT
+       INTEGER  ICF,IDTYP,IPER
+       REAL  BB1,BB2,BB3
+       INTEGER  IICOMP
+       REAL  TNP,QFUT,TFUT
+	   
+      common/simtim/ihrp,ihrf,idyp,idyf,idwp,idwf,nsinc,its
+
+      INTEGER ControlZone !The zone in which an active central cooling system sensor is place (usually a main level zone 1, should correspond to BC01 type and use of NRCan HVAC module)
+      REAL HighSetpoint !Temperature above which windows open
+      REAL LowSetpoint !Temperature below which windows close (allowing an operating deadband)
+      REAL DeltaTIntExt !Temperature difference (Tinterior - Texterior) required to open windows (so they are only opened when natural cooling will occur and is of significance)
+      REAL MinAmb !The minimum ambient temperature that windows are allowed to open too (otherwise it is possible to open windows when it is cold and replace the entire zone air mass in the timestep)
+
+C Read in controller misc. data	  
+      ControlZone=INT(fmiscd(ICFP,IDTYPP,IPERP,2))
+      HighSetpoint=fmiscd(ICFP,IDTYPP,IPERP,3)
+      LowSetpoint=fmiscd(ICFP,IDTYPP,IPERP,4)
+      DeltaTIntExt=fmiscd(ICFP,IDTYPP,IPERP,5)
+      MinAmb=fmiscd(ICFP,IDTYPP,IPERP,6)
+			  
+      if(ifan(ICFP,1).eq.-3)then
+
+C Controlling a connection. (ICNN not relevant, therefor 0)
+        CALL CFFVAR(SIGNAL,0)
+        IF(IDTYP .eq. 0) THEN
+C Control data has not been initialized, set to 0.0
+          CTLPOS(ifan(icfp,2))=0.0
+		  
+C       Check if the cooling system has capacity AND will turn on
+C       BMISCD(1,IDTYP,IPER,4) is hardcoded to controller 1 cooling capacity
+C       BMISCD(1,IDTYP,IPER,7) is hardcoded to controller 1 cooling temperature setpoint
+        ELSEIF ( BMISCD(1,IDTYP,IPER,4) .ge. 1 .and. !Check cooling capacity is greater than 1 W
+     &  TFA(ControlZone) .ge. BMISCD(1,IDTYP,IPER,7)) THEN
+          CTLPOS(ifan(icfp,2))=0.0
+		  
+C       Check if Cooling or Heating is on in the zone based on the air point heat flux
+        ELSEIF ( abs(QFA(ifsn(icfp,1))) >= 1) THEN
+          CTLPOS(ifan(icfp,2))=0.0	  
+
+C       Check if zone temperature is below Low Setpoint
+        ELSEIF ( SIGNAL <= LowSetpoint) THEN
+          CTLPOS(ifan(icfp,2))=0.0
+
+C       Check if zone temperature is above the High Setpoint AND the temperature is great enough AND it is not too cold outside
+        ELSEIF ( SIGNAL >= HighSetpoint .and.
+     &  (SIGNAL - TF) >= DeltaTIntExt .and.
+     &  TF >= MinAmb) THEN
+          CTLPOS(ifan(icfp,2))=1.0
+		  
+C       Else, use the previous control condition to maintain the deadband
+        ELSE		  
+               CTLPOS(ifan(icfp,2))=ctlpast(ifan(icfp,2))
+        ENDIF
+		! Update previous control data for next timestep
+        ctlpast(ifan(icfp,2))=CTLPOS(ifan(icfp,2))
+      else
+
+C Controlling a component. (ie ifan(ICFP,1).eq.-4)
+        do 1 icnn=1,ncnn
+          if((ifan(icfp,2).eq.ITPCON(ICNN)))
+     &      then
+C Establish sensed variable magnitude and actuated node location.
+            CALL CFFVAR(SIGNAL,icnn)
+              IF(IDTYP .eq. 0) THEN
+C Control data has not been initialized, set to 0.0
+                 CTLPOS(icnn)=0.0
+		  
+C       Check if the cooling system has capacity AND will turn on
+C       BMISCD(1,IDTYP,IPER,4) is hardcoded to controller 1 cooling capacity
+C       BMISCD(1,IDTYP,IPER,7) is hardcoded to controller 1 cooling temperature setpoint
+              ELSEIF ( BMISCD(1,IDTYP,IPER,4) .ge. 1 .and. !Check cooling capacity is greater than 1 W
+     &        TFA(ControlZone) .ge. BMISCD(1,IDTYP,IPER,7)) THEN
+                 CTLPOS(icnn)=0.0
+		  
+C       Check if Cooling or Heating is on in the zone based on the air point heat flux
+              ELSEIF ( abs(QFA(ifsn(icfp,1))) >= 1.) THEN
+                 CTLPOS(icnn)=0.0
+
+C       Check if zone temperature is below Low Setpoint
+              ELSEIF ( SIGNAL <= LowSetpoint) THEN
+                 CTLPOS(icnn)=0.0
+
+C       Check if zone temperature is above the High Setpoint AND the temperature is great enough AND it is not too cold outside
+              ELSEIF ( SIGNAL >= HighSetpoint .and.
+     &        (SIGNAL - TF) >= DeltaTIntExt .and.
+     &        TF >= MinAmb) THEN
+                 CTLPOS(icnn)=1.0
+C       Else, use the previous control condition to maintain the deadband
+              ELSE		  
+                     CTLPOS(ifan(icfp,2))=ctlpast(ifan(icfp,2))
+              ENDIF
+		      ! Update previous control data for next timestep
+              ctlpast(ifan(icfp,2))=CTLPOS(ifan(icfp,2))
+
+          endif 
+  1     continue
+      endif 
+	  
       RETURN
       END

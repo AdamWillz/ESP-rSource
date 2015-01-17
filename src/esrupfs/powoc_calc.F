@@ -1690,7 +1690,9 @@ C-------------------------------------------------------
 
       Call AddToReport(rvEPowLoadAdj%Identifier,
      &      fE_Load)
-
+     
+      fSUFuelEnergyUse(iElectricity, iCHREM_AL) = fE_Load
+      call StorePowocCompEnergyUse(iComponent, fSUFuelEnergyUse)
 
       RETURN
       END

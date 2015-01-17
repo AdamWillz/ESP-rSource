@@ -37,6 +37,7 @@ C    CONTLYR allows the user to select a layer in a construction
 C    SCANBPLINK: scans a control file for building plant linkages
 C    ASKBPLINK: presents a list of plant components returning the index IS.
 C    EDBPLINK: allows building plant link  to be added, deleted or edited.
+C    COSIMLINK: sets up the surface temperature linkage between ESP-r and TRNSYS
 
 C*********************** newnet ************************
 C Newnet displays menu for defining plant components,
@@ -46,6 +47,7 @@ C     simtyp - holds description of simulation type.
 
       subroutine newnet(iedit,mode)
 
+      USE COSIMSHARE
 #include "plant.h"
 #include "building.h"
 #include "control.h"      
@@ -104,7 +106,7 @@ C Common controlling format of plant network file
       character lpnam*72,laprob*72,LPNF*72
 
       dimension ival(mpcom)
-      CHARACTER*44 ITEM(28)
+      CHARACTER*44 ITEM(31)
       CHARACTER H*72,outs*124,ltmp*72,pcname*15, lctlf*72,ctldoc*248
       CHARACTER ICDIR*72, DOIT*248,mode*1,pcdesc*80
       character*68 mscdsc, cvrdsc,hfpdsc
@@ -186,7 +188,10 @@ C Read components data from database
       endif
 
 C First initialise all variables.
-      if(iedit.ne.1) call initiv(ipcomp) 
+      if(iedit.ne.1) then
+          call initiv(ipcomp)
+          coSimNumSurf=0
+      endif     
 
 C Let user select the simulation type required.
       if (npmtyp.eq.0) then
@@ -243,10 +248,14 @@ C Let the user pick a menu item.
         item(24)='j plant config file format > short'
       endif
       item(25)='  ---------------------    '
-      item(26)='! Update plant config file '
-      item(27)='? Help                     '
-      item(28)='- Exit                     '
-      nitms=28
+      write(item(26),
+     &'(a,i3,a)')'No. of linked co-sim surfaces... ( ',coSimNumSurf,' )'      
+      item(27)='k Link surfaces to co-simulation '
+      item(28)='  ---------------------    '
+      item(29)='! Update plant config file '
+      item(30)='? Help                     '
+      item(31)='- Exit                     '
+      nitms=31
 
 C If newnet is called with mode 'G' skip menu definition.
       if(mode.eq.'G') then
@@ -465,6 +474,11 @@ C Toggle .pln file format
         else
           bPLN_format_long = .true.
         endif  
+        
+C Link surfaces to the co-simulator
+      elseif(ino.eq.27) then 
+      
+         CALL COSIMLINK         
         
       elseif(ino.eq.nitms-2) then
 
@@ -2880,3 +2894,39 @@ C Update the zone -> control linkages
       RETURN      
       END
 
+C ************************** COSIMLINK *******************************8
+C COSIMLINK allows building plant link  to be added, deleted or edited.
+C The function is determined by the mode:
+C E - edit
+C A - add
+C D - delete
+
+      SUBROUTINE COSIMLINK
+      
+      USE COSIMSHARE
+#include "building.h"      
+      
+C     Number of Zones
+      common/c1/ncomp,ncon
+      integer ncomp,ncon
+      
+C     Local variables      
+      CHARACTER HOLD*72,MSG*70
+      INTEGER IER	! Holds error code
+      INTEGER i 	! Generic counter
+      
+      CALL EASKI(coSimNumSurf,' ','How many surfaces to be connected?',
+     &                    0,'F',maxSend,'F',0,'co-sim surf cons',IER,0)
+     
+      DO 682 i=1,coSimNumSurf
+        WRITE( MSG,'(A4,I3)') 'Surf',i
+      	CALL EASKI(coSimZones(i),MSG,'Zone Index?',
+     &                    1,'F',ncomp,'F',1,'cosim zones',IER,0)
+        CALL EASKI(coSimSurfs(i),MSG,'Surf Index?',
+     &                    1,'F',MS,'F',6,'cosim surfs',IER,0)
+            
+ 682  CONTINUE
+      
+      RETURN
+      END
+     

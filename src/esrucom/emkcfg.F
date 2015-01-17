@@ -1752,9 +1752,10 @@ C Check to see if this connection is only pointed to once by an
 C "another zone" connection in the whole list.
               dup=.false.
               do 291 i2=1,NCON
-                if(IC2(i2).eq.IC1(i).and.IE2(i2).eq.IE1(i))then
+                if(IC2(i2).eq.IC1(i).and.IE2(i2).eq.IE1(i).and.
+     &          ICT(i2).eq.3)then
                   if(.NOT.dup)then
-                    if(ICT(i2).eq.3)dup=.true.
+                    dup=.true.
                   else
                     if(.NOT.first)then
                       CALL CONXINF(1,0,CXSTR)

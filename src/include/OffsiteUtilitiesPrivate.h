@@ -119,6 +119,19 @@ C.....Flag indicating whether time of use (TOU) electricity rates have been spec
 C.....Column in BC data file corresponding to TOU electricity rates schedule
       integer iTOUcolumn
       
+       common/CHREM_SU/
+     &  fCHREMSiteEnUse,
+     &  fCHREMSiteGHG,
+     &  fCHREMEndUseEnUse(iNumUses),
+     &  fCHREMEndUseGHG(iNumUses),
+     &  fCHREMSULPV
+      ! Total site values
+      real fCHREMSiteEnUse, fCHREMSiteGHG
+      ! PV supply value (W)
+      real fCHREMSULPV
+      ! Total end use values
+      real fCHREMEndUseEnUse, fCHREMEndUseGHG
+      
 C.....Calorific value of fuels
       real fFuelConversionFactor(iNumFuel)
 
@@ -140,27 +153,27 @@ C     PROPANE:        39.065  L/GJ (?!?) Wikipedia says 46 MJ/kg which at 0.51 k
 C         
 C-----------------------------------------------------------------------
 
-C.....Electricity: Convert W->kWH
+C.....Electricity: Convert W->kWH/s
       data fFuelConversionFactor(iElectricity) / 2.77778E-07 /
 
-C.....Natural gas: Convert W->m3
+C.....Natural gas: Convert W->m3/s
       data fFuelConversionFactor(iNaturalGas) / 26.8932E-09 /
 
-C.....Oil: Convert W->L
+C.....Oil: Convert W->L/s
       data fFuelConversionFactor(iOil) / 25.9578E-09 /
 
-C.....PROPANE: Convert W->L
+C.....PROPANE: Convert W->L/s
       data fFuelConversionFactor(iPropane) / 39.065E-09 /
 
-C.....Hardwood: Convert W->Tonne
-      data fFuelConversionFactor(iHardWood) / 17.738E-09 /
+C.....Hardwood: Convert W->Tonne/s
+      data fFuelConversionFactor(iHardWood) / 5.637E-11 /
 
-C.....Softwood: Convert W->Tonne
-      data fFuelConversionFactor(iSoftWood) / 10.753E-09 /
+C.....Softwood: Convert W->Tonne/s
+      data fFuelConversionFactor(iSoftWood) / 9.299E-11 /
 
-C.....Mixed Wood: Convert W->Tonne
-      data fFuelConversionFactor(iMixedWood) / 13.956E-09 /
+C.....Mixed Wood: Convert W->Tonne/s
+      data fFuelConversionFactor(iMixedWood) / 7.1653E-11 /
 
 C.....Wood Pellets 
-      data fFuelConversionFactor(iWoodPellets) / 19.0800E-09 /
+      data fFuelConversionFactor(iWoodPellets) / 5.050E-11 /
 

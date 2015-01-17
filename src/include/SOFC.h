@@ -504,7 +504,7 @@ C    FC_lds_per_rec_bin     variable holding number of increments per record
 C                           in direct access file (6 or 12, as explained above).
 C---------------------------------------------------------------------------------
       INTEGER FC_lds_per_rec_annual,FC_lds_per_rec_daily
-      PARAMETER ( FC_lds_per_rec_annual = 12 )
+      PARAMETER ( FC_lds_per_rec_annual = 60 )
       PARAMETER ( FC_lds_per_rec_daily  =  6 )
       INTEGER FC_lds_per_rec
       INTEGER FC_lds_per_rec_bin

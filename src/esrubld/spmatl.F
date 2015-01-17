@@ -1200,6 +1200,8 @@ C        ageing, soiling, snow cover,blocking diodes and wiring.
 #include "building.h"
 #include "plant.h"
 #include "power.h"
+#include "OffsiteUtilitiesPublic.h"
+#include "OffsiteUtilitiesPrivate.h"
 
       integer icomp		!- zone number
       integer ispmnod		!- special material node index
@@ -1435,6 +1437,10 @@ C Parameters for h3kreports reporting.
       logical bInitalized(mspmnod)
       data bInitalized / mspmnod * .false. /
 
+     
+C CHREM parameter to store the PV electricty generation
+      fCHREMSULPV = 0.0
+      
 C Store name of special material string in array.
       if(.not.bInitalized(ispmnod))then
          cName(ispmnod)=spmlabel(ispmnod)
@@ -1786,6 +1792,8 @@ C and the two boundary nodes.
      &          (fPVPwrPerArea/4.)
        endif
 
+       fCHREMSULPV = fPVPower
+
 C XML output.
        Call AddToReport(rvBldSPMatlEffIrr%Identifier,
      &         fQPnl,
@@ -1815,6 +1823,10 @@ C XML output.
      &         fQInc * fSurfArea,
      &         cName(ispmnod)(1:iNameLen(ispmnod)))
 
+C this line is to report the available solar radiation by PV for CHREM.
+       Call AddToReport(rvBldCHREMSPMatlTtlIncTtl%Identifier,
+     &         fQInc * fSurfArea)
+
        Call AddToReport(rvBldSPMatlDrtIncAr%Identifier,
      &         exdir(ispmloc(ispmnod,2)),
      &         cName(ispmnod)(1:iNameLen(ispmnod)))
@@ -1826,6 +1838,10 @@ C XML output.
        Call AddToReport(rvBldSPMatlPVPow%Identifier,
      &         fPVPower,
      &         cName(ispmnod)(1:iNameLen(ispmnod)))
+
+C this line report the PV generation for CHREM
+       Call AddToReport(rvBldCHREMSPMatlPVPow%Identifier,
+     &         fPVPower)
 
 C Trace output.
       if(itc.le.0.or.nsinc.lt.itc.or.ispmxist.eq.0)goto 999

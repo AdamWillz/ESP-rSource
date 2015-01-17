@@ -701,11 +701,11 @@ C Record the name and then check and see if it is a duplicate.
             iln2=lnblnk(namelist(ih))  ! length of prior name to test
             if(iln.eq.iln2)then
               if(namelist(ih)(1:iln2).eq.nametocheck(1:iln))then
-                write(outs,'(3a,i4,3a,i4,a)') 'Duplicate names ',
-     &            nametocheck(1:iln),' (',matdbitems,') vs ',
-     &            namelist(ih)(1:iln2),' (',ih,
-     &            '). Material names must be unique!'
-                call edisp(iuout,outs)
+C                write(outs,'(3a,i4,3a,i4,a)') 'Duplicate names ',
+C     &            nametocheck(1:iln),' (',matdbitems,') vs ',
+C     &            namelist(ih)(1:iln2),' (',ih,
+C     &            '). Material names must be unique!'
+C                call edisp(iuout,outs)
                 dupfound = .true.  ! a duplicate name found
               endif
             else

@@ -1426,6 +1426,7 @@ C Find number of data blocks per hour to be saved.
 
 C transport miscellaneous simulation data to reporting object
               if ( isH3KEnabled() ) then
+                 call CHREM_Calculate_Building_Data(icomp)
                  call H3K_transport_build_data(icomp)
                  if (IAIRN .ne. 0) THEn
                     call H3K_transport_mfn_data()

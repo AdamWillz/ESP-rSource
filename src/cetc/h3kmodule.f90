@@ -359,6 +359,9 @@ MODULE h3kmodule
 
    Type(ReportVariable) :: rvBldInfAirInf,rvBldInfAirChg
    
+   !Used by radiant_floor.F
+   Type(ReportVariable) :: rvpltRadFloorTmin,rvpltRadFloorTmax,rvpltRadFloorInj 
+   
    !Used by TCC.F
    Type(ReportVariable) :: rvpltCosimInvocations, rvpltCosimEsprIter,rvpltCosimTrnsysIter,rvpltHCCTempToTrnsys, &
       rvpltHCCFlowToTrnsys, rvpltACCTempToTrnsys, rvpltACCFlowToTrnsys, rvpltACCMoistFlowToTrnsys, &
@@ -368,7 +371,35 @@ MODULE h3kmodule
 
    !Used by complex_fenestration.F
    Type(ReportVariable) :: rvCFCShadeCtl, rvCFCSlatAngle
-   
+
+   !Used by CHREM 
+   Type(ReportVariable) :: rvPltCHREMDHWwtrDrw, rvPltCHREMDHWenergyin,rvPltCHREMDHWsupplytemp, &
+      rvPltCHREMDHWdeliverytemp,rvPltCHREMDHWburnerout,rvPltCHREMDHWskinloss,rvPltCHREMDHWflueloss, &
+      rvPltCHREMDHWheattobuild,rvPltCHREMDHWwaterheatload, &
+      rvTFuelCHREMSiteEnduse, rvTFuelCHREMAllEndEnergyContent, rvTFuelCHREMAllEndQty, &
+      rvTFuelCHRMAllEndQtyElectricity,rvTFuelCHREMAllEndQtyNaturalGas, &
+      rvTFuelCHREMAllEndQtyOil, rvTFuelCHREMAllEndQtyPropane,rvTFuelCHREMAllEndQtyMixedWood, &
+      rvTFuelCHREMAllEndQtyHardWood, rvTFuelCHREMAllEndQtySoftWood, rvTFuelCHREMAllEndQtyWoodPellet, &
+      rvTFuelCHREMAllEndEnergyContElec,rvTFuelCHREMAllEndEnergyContNatGas,rvTFuelCHREMAllEndEnergyContOil, &
+      rvTFuelCHREMAllEndEnergyContPropane,rvTFuelCHREMAllEndEnergyContMixWood,rvTFuelCHREMAllEndEnergyContHardWood, &
+      rvTFuelCHREMAllEndEnergyContSoftWood,rvTFuelCHREMAllEndEnergyContPellets, &
+      rvTFuelCHREMQty,rvTFuelCHREMQtyElec,rvTFuelCHREMQtyNatGas,rvTFuelCHREMQtyOil,rvTFuelCHREMQtyProp, &
+      rvTFuelCHREMQtyMixWood,rvTFuelCHREMQtyHardWood,rvTFuelCHREMQtySoftWood,rvTFuelCHREMQtyPellets, &
+      rvTFuelCHREMEnergyCont, rvTFuelCHREMEnergyContElec, rvTFuelCHREMEnergyContNatGas, rvTFuelCHREMAllEndQtyElectricity, &
+      rvTFuelCHREMEnergyContOil, rvTFuelCHREMEnergyContProp, rvTFuelCHREMEnergyContMixWood, &
+      rvTFuelCHREMEnergyContHardWood, rvTFuelCHREMEnergyContSoftWood, rvTFuelCHREMEnergyContPellets, &
+      rvTEndUseCHREMEnergyDHW, rvTEndUseCHREMEnergySH, rvTEndUseCHREMEnergySC, rvTEndUseCHREMEnergyLights, &
+      rvTEndUseCHREMEnergyEqt, rvTEndUseCHREMEnergyHRV, rvTEndUseCHREMEnergyUnCat, rvTEndUseCHREMEnergyOther, &
+      rvTEndUseCHREMExBill, rvTEndUseCHREMEnergyEnd, rvBldCHREMSPMatlTtlIncTtl, rvBldCHREMSPMatlPVPow, &
+      rvBndCndCHREMStpInt,rvBndCndCHREMLnInt, rvTEndUseCHREMEnergyAL
+      
+    !Used by CHREM_report_data.F
+    Type(ReportVariable) :: rvZNAPAirSens, rvZNAPInfil, rvZNAPAmbVent, rvZNAPZnCpldVent, &
+      rvZNAPConvCasGain, rvZNAPHeat,rvZNAPCool, rvZNAPSurfConv, rvZNOPSens,rvZNOPCond, rvZNOPSW, &
+      rvZNOPConv, rvZNOPLWSurf, rvZNOPLWCas, rvZNOPLWPlt, rvZNTrSens, rvZNTrCond, rvZNTrSW, &
+      rvZNTrConv, rvZNTrLWSurf, rvZNTrLWCFCGen, rvZNTrLWCas, rvZNTrLWPlt, rvZNAPTemp, rvAPAmbTemp, &
+      rvAPAmbTempFut, rvWNDWOpen
+	  
 CONTAINS
    ! ********************************************************************
    ! Subroutine: UpdateH3kReport
@@ -3641,7 +3672,7 @@ CONTAINS
       !Used by DHW_module.F
       rvPltDHWWtr%VariableName = 'plant/ideal_DHW_model/water_draw'
       rvPltDHWWtr%MetaType = 'units'
-      rvPltDHWWtr%VariableType = '(l/s)'
+      rvPltDHWWtr%VariableType = '(l/h)'
       rvPltDHWWtr%Description = 'Ideal DWH model: timestep-averaged volumetric water draw'
       Call AddVariable(rvPltDHWWtr)
 
@@ -3694,6 +3725,549 @@ CONTAINS
                   // ' water heating requirements'
       Call AddVariable(rvPltDHWWtrHLd)
 
+      !Used by CHREM
+      !DHW
+      rvPltCHREMDHWwtrDrw%VariableName = 'CHREM/DHW/water_draw'
+      rvPltCHREMDHWwtrDrw%MetaType = 'units'
+      rvPltCHREMDHWwtrDrw%VariableType = '(l/s)'
+      rvPltCHREMDHWwtrDrw%Description = 'Ideal DWH model: timestep-averaged volumetric water draw'
+      Call AddVariable(rvPltCHREMDHWwtrDrw)
+
+
+      rvPltCHREMDHWenergyin%VariableName = 'CHREM/DHW/energy_input'
+      rvPltCHREMDHWenergyin%MetaType = 'units'
+      rvPltCHREMDHWenergyin%VariableType = '(W)'
+      rvPltCHREMDHWenergyin%Description = 'Ideal DWH model: energy requirement'
+      Call AddVariable(rvPltCHREMDHWenergyin)
+
+
+      rvPltCHREMDHWsupplytemp%VariableName = 'CHREM/DHW/supply_temperature'
+      rvPltCHREMDHWsupplytemp%MetaType = 'units'
+      rvPltCHREMDHWsupplytemp%VariableType = '(oC)'
+      rvPltCHREMDHWsupplytemp%Description = 'Ideal DHW model: temperature of make-up water'
+      Call AddVariable(rvPltCHREMDHWsupplytemp)
+
+
+      rvPltCHREMDHWdeliverytemp%VariableName = 'CHREM/DHW/delivery_temperature'
+      rvPltCHREMDHWdeliverytemp%MetaType = 'units'
+      rvPltCHREMDHWdeliverytemp%VariableType = '(oC)'
+      rvPltCHREMDHWdeliverytemp%Description = 'Ideal DHW model: temperature at which water is delivered'
+      Call AddVariable(rvPltCHREMDHWdeliverytemp)
+
+
+      rvPltCHREMDHWburnerout%VariableName = 'CHREM/DHW/burner_heat_output'
+      rvPltCHREMDHWburnerout%MetaType = 'units'
+      rvPltCHREMDHWburnerout%VariableType = '(W)'
+      rvPltCHREMDHWburnerout%Description = 'Ideal DHW model: heat delivered by burner'
+      Call AddVariable(rvPltCHREMDHWburnerout)
+
+
+      rvPltCHREMDHWskinloss%VariableName = 'CHREM/DHW/skin_loss'
+      rvPltCHREMDHWskinloss%MetaType = 'units'
+      rvPltCHREMDHWskinloss%VariableType = '(W)'
+      rvPltCHREMDHWskinloss%Description = 'Ideal DHW model: skin-loss to surroundings'
+      Call AddVariable(rvPltCHREMDHWskinloss)
+
+      rvPltCHREMDHWflueloss%VariableName = 'CHREM/DHW/flue_loss'
+      rvPltCHREMDHWflueloss%MetaType = 'units'
+      rvPltCHREMDHWflueloss%VariableType = '(W)'
+      rvPltCHREMDHWflueloss%Description = 'Ideal DHW model: thermal energy lost in exhaust gases'
+      Call AddVariable(rvPltCHREMDHWflueloss)
+
+
+      rvPltCHREMDHWheattobuild%VariableName = 'CHREM/DHW/heat_transfer_to_building'
+      rvPltCHREMDHWheattobuild%MetaType = 'units'
+      rvPltCHREMDHWheattobuild%VariableType = '(W)'
+      rvPltCHREMDHWheattobuild%Description = 'Ideal DHW model: rate of heat transfer to surrounding space'
+      Call AddVariable(rvPltCHREMDHWheattobuild)
+
+      rvPltCHREMDHWwaterheatload%VariableName = 'CHREM/DHW/water_heating_load'
+      rvPltCHREMDHWwaterheatload%MetaType = 'units'
+      rvPltCHREMDHWwaterheatload%VariableType = '(W)'
+      rvPltCHREMDHWwaterheatload%Description = 'Ideal DHW model: theoretical minimum heat required to meet'&
+         // ' water heating requirements'
+      Call AddVariable(rvPltCHREMDHWwaterheatload)
+      
+      !Site energy use and quantity
+      rvTFuelCHREMSiteEnduse%VariableName = 'CHREM/SCD/site/energy'
+      rvTFuelCHREMSiteEnduse%MetaType = 'units'
+      rvTFuelCHREMSiteEnduse%VariableType = '(W)'
+      rvTFuelCHREMSiteEnduse%Description = 'Total site energy use'
+      Call AddVariable(rvTFuelCHREMSiteEnduse)
+      
+      rvTFuelCHREMAllEndEnergyContent%VariableName = 'CHREM/SCD/all_end_uses/energy_content'
+      rvTFuelCHREMAllEndEnergyContent%MetaType = 'units'
+      rvTFuelCHREMAllEndEnergyContent%VariableType = '(W)'
+      rvTFuelCHREMAllEndEnergyContent%Description = '*** Not Defined ***'
+      Call AddVariable(rvTFuelCHREMAllEndEnergyContent)
+
+      rvTFuelCHREMAllEndEnergyContElec%VariableName = 'CHREM/SCD/src/electricity/energy'
+      rvTFuelCHREMAllEndEnergyContElec%MetaType = 'units'
+      rvTFuelCHREMAllEndEnergyContElec%VariableType = '(W)'
+      rvTFuelCHREMAllEndEnergyContElec%Description = 'Total site electricity energy use.'
+      Call AddVariable(rvTFuelCHREMAllEndEnergyContElec)
+
+      rvTFuelCHREMAllEndEnergyContNatGas%VariableName = 'CHREM/SCD/src/natural_gas/energy'
+      rvTFuelCHREMAllEndEnergyContNatGas%MetaType = 'units'
+      rvTFuelCHREMAllEndEnergyContNatGas%VariableType = '(W)'
+      rvTFuelCHREMAllEndEnergyContNatGas%Description = 'Total site natural gas energy use.'
+      Call AddVariable(rvTFuelCHREMAllEndEnergyContNatGas)
+
+      rvTFuelCHREMAllEndEnergyContOil%VariableName = 'CHREM/SCD/src/oil/energy'
+      rvTFuelCHREMAllEndEnergyContOil%MetaType = 'units'
+      rvTFuelCHREMAllEndEnergyContOil%VariableType = '(W)'
+      rvTFuelCHREMAllEndEnergyContOil%Description = 'Total site oil energy use.'
+      Call AddVariable(rvTFuelCHREMAllEndEnergyContOil)
+
+      rvTFuelCHREMAllEndEnergyContPropane%VariableName = 'CHREM/SCD/src/propane/energy'
+      rvTFuelCHREMAllEndEnergyContPropane%MetaType = 'units'
+      rvTFuelCHREMAllEndEnergyContPropane%VariableType = '(W)'
+      rvTFuelCHREMAllEndEnergyContPropane%Description = 'Total site propane energy use.'
+      Call AddVariable(rvTFuelCHREMAllEndEnergyContPropane)
+
+      rvTFuelCHREMAllEndEnergyContMixWood%VariableName = 'CHREM/SCD/src/mixed_wood/energy'
+      rvTFuelCHREMAllEndEnergyContMixWood%MetaType = 'units'
+      rvTFuelCHREMAllEndEnergyContMixWood%VariableType = '(W)'
+      rvTFuelCHREMAllEndEnergyContMixWood%Description = 'Total site mixed wood energy use.'
+      Call AddVariable(rvTFuelCHREMAllEndEnergyContMixWood)
+
+      rvTFuelCHREMAllEndEnergyContHardWood%VariableName = 'CHREM/SCD/src/hard_wood/energy'
+      rvTFuelCHREMAllEndEnergyContHardWood%MetaType = 'units'
+      rvTFuelCHREMAllEndEnergyContHardWood%VariableType = '(W)'
+      rvTFuelCHREMAllEndEnergyContHardWood%Description = 'Total site hard wood energy use.'
+      Call AddVariable(rvTFuelCHREMAllEndEnergyContHardWood)
+
+      rvTFuelCHREMAllEndEnergyContSoftWood%VariableName = 'CHREM/SCD/src/soft_wood/energy'
+      rvTFuelCHREMAllEndEnergyContSoftWood%MetaType = 'units'
+      rvTFuelCHREMAllEndEnergyContSoftWood%VariableType = '(W)'
+      rvTFuelCHREMAllEndEnergyContSoftWood%Description = 'Total site soft wood energy use.'
+      Call AddVariable(rvTFuelCHREMAllEndEnergyContSoftWood)
+
+      rvTFuelCHREMAllEndEnergyContPellets%VariableName = 'CHREM/SCD/src/wood_pellets/energy'
+      rvTFuelCHREMAllEndEnergyContPellets%MetaType = 'units'
+      rvTFuelCHREMAllEndEnergyContPellets%VariableType = '(W)'
+      rvTFuelCHREMAllEndEnergyContPellets%Description = 'Total site wood pellets energy use.'
+      Call AddVariable(rvTFuelCHREMAllEndEnergyContPellets)
+      
+      rvTFuelCHREMAllEndQty%VariableName = 'CHREM/SCD/all_end_uses/quantity'
+      rvTFuelCHREMAllEndQty%MetaType = 'units'
+      rvTFuelCHREMAllEndQty%VariableType = '*** Not Defined ***'
+      rvTFuelCHREMAllEndQty%Description = 'Total amount of fuel used on site'
+      Call AddVariable(rvTFuelCHREMAllEndQty)
+
+      rvTFuelCHREMAllEndQtyElectricity%VariableName = 'CHREM/SCD/src/electricity/quantity'
+      rvTFuelCHREMAllEndQtyElectricity%MetaType = 'units'
+      rvTFuelCHREMAllEndQtyElectricity%VariableType = '(kWh/s)'
+      rvTFuelCHREMAllEndQtyElectricity%Description = 'Total site electricity quantity use.'
+      Call AddVariable(rvTFuelCHREMAllEndQtyElectricity)
+
+      rvTFuelCHREMAllEndQtyNaturalGas%VariableName = 'CHREM/SCD/src/natural_gas/quantity'
+      rvTFuelCHREMAllEndQtyNaturalGas%MetaType = 'units'
+      rvTFuelCHREMAllEndQtyNaturalGas%VariableType = '(m3/s)'
+      rvTFuelCHREMAllEndQtyNaturalGas%Description = 'Total site natural gas quantity use.'
+      Call AddVariable(rvTFuelCHREMAllEndQtyNaturalGas)
+
+      rvTFuelCHREMAllEndQtyOil%VariableName = 'CHREM/SCD/src/oil/quantity'
+      rvTFuelCHREMAllEndQtyOil%MetaType = 'units'
+      rvTFuelCHREMAllEndQtyOil%VariableType = '(l/s)'
+      rvTFuelCHREMAllEndQtyOil%Description = 'Total site oil quantity use.'
+      Call AddVariable(rvTFuelCHREMAllEndQtyOil)
+
+      rvTFuelCHREMAllEndQtyPropane%VariableName = 'CHREM/SCD/src/propane/quantity'
+      rvTFuelCHREMAllEndQtyPropane%MetaType = 'units'
+      rvTFuelCHREMAllEndQtyPropane%VariableType = '(m3/s)'
+      rvTFuelCHREMAllEndQtyPropane%Description = 'Total site propane quantity use.'
+      Call AddVariable(rvTFuelCHREMAllEndQtyPropane)
+
+      rvTFuelCHREMAllEndQtyMixedWood%VariableName = 'CHREM/SCD/src/mixed_wood/quantity'
+      rvTFuelCHREMAllEndQtyMixedWood%MetaType = 'units'
+      rvTFuelCHREMAllEndQtyMixedWood%VariableType = '(tonne/s)'
+      rvTFuelCHREMAllEndQtyMixedWood%Description = 'Total site mixed wood quantity use.'
+      Call AddVariable(rvTFuelCHREMAllEndQtyMixedWood)
+
+      rvTFuelCHREMAllEndQtyHardWood%VariableName = 'CHREM/SCD/src/hard_wood/quantity'
+      rvTFuelCHREMAllEndQtyHardWood%MetaType = 'units'
+      rvTFuelCHREMAllEndQtyHardWood%VariableType = '(tonne/s)'
+      rvTFuelCHREMAllEndQtyHardWood%Description = 'Total site hard wood quantity use.'
+      Call AddVariable(rvTFuelCHREMAllEndQtyHardWood)
+
+      rvTFuelCHREMAllEndQtySoftWood%VariableName = 'CHREM/SCD/src/soft_wood/quantity'
+      rvTFuelCHREMAllEndQtySoftWood%MetaType = 'units'
+      rvTFuelCHREMAllEndQtySoftWood%VariableType = '(tonne/s)'
+      rvTFuelCHREMAllEndQtySoftWood%Description = 'Total site soft wood quantity use.'
+      Call AddVariable(rvTFuelCHREMAllEndQtySoftWood)
+
+      rvTFuelCHREMAllEndQtyWoodPellet%VariableName = 'CHREM/SCD/src/wood_pellets/quantity'
+      rvTFuelCHREMAllEndQtyWoodPellet%MetaType = 'units'
+      rvTFuelCHREMAllEndQtyWoodPellet%VariableType = '(tonne/s)'
+      rvTFuelCHREMAllEndQtyWoodPellet%Description = 'Total site wood pellets quantity use.'
+      Call AddVariable(rvTFuelCHREMAllEndQtyWoodPellet)
+      
+      rvTFuelCHREMQty%VariableName = 'CHREM/SCD/use/*/src/*/quantity'
+      rvTFuelCHREMQty%MetaType = 'units'
+      rvTFuelCHREMQty%VariableType = '*** Type not defined ***'
+      rvTFuelCHREMQty%Description = '*** Description not defined ***'
+      Call AddVariable(rvTFuelCHREMQty)
+      
+      rvTFuelCHREMQtyElec%VariableName = 'CHREM/SCD/use/*/src/electricity/quantity'
+      rvTFuelCHREMQtyElec%MetaType = 'units'
+      rvTFuelCHREMQtyElec%VariableType = '(kWh/s)'
+      rvTFuelCHREMQtyElec%Description = 'Total amount of electricity used.'
+      Call AddVariable(rvTFuelCHREMQtyElec)
+      
+      rvTFuelCHREMQtyNatGas%VariableName = 'CHREM/SCD/use/*/src/natural_gas/quantity'
+      rvTFuelCHREMQtyNatGas%MetaType = 'units'
+      rvTFuelCHREMQtyNatGas%VariableType = '(m3/s)'
+      rvTFuelCHREMQtyNatGas%Description = 'Total amount of natural gas used.'
+      Call AddVariable(rvTFuelCHREMQtyNatGas)
+      
+      rvTFuelCHREMQtyOil%VariableName = 'CHREM/SCD/use/*/src/oil/quantity'
+      rvTFuelCHREMQtyOil%MetaType = 'units'
+      rvTFuelCHREMQtyOil%VariableType = '(l/s)'
+      rvTFuelCHREMQtyOil%Description = 'Total amount of oil used.'
+      Call AddVariable(rvTFuelCHREMQtyOil)
+      
+      rvTFuelCHREMQtyProp%VariableName = 'CHREM/SCD/use/*/src/propane/quantity'
+      rvTFuelCHREMQtyProp%MetaType = 'units'
+      rvTFuelCHREMQtyProp%VariableType = '(m3/s)'
+      rvTFuelCHREMQtyProp%Description = 'Total amount of propane used.'
+      Call AddVariable(rvTFuelCHREMQtyProp)
+      
+      rvTFuelCHREMQtyMixWood%VariableName = 'CHREM/SCD/use/*/src/mixed_wood/quantity'
+      rvTFuelCHREMQtyMixWood%MetaType = 'units'
+      rvTFuelCHREMQtyMixWood%VariableType = '(tonne/s)'
+      rvTFuelCHREMQtyMixWood%Description = 'Total amount of mixed wood used.'
+      Call AddVariable(rvTFuelCHREMQtyMixWood)
+      
+      rvTFuelCHREMQtyHardWood%VariableName = 'CHREM/SCD/use/*/src/hard_wood/quantity'
+      rvTFuelCHREMQtyHardWood%MetaType = 'units'
+      rvTFuelCHREMQtyHardWood%VariableType = '(tonne/s)'
+      rvTFuelCHREMQtyHardWood%Description = 'Total amount of hard wood used.'
+      Call AddVariable(rvTFuelCHREMQtyHardWood)
+      
+      rvTFuelCHREMQtySoftWood%VariableName = 'CHREM/SCD/use/*/src/soft_wood/quantity'
+      rvTFuelCHREMQtySoftWood%MetaType = 'units'
+      rvTFuelCHREMQtySoftWood%VariableType = '(tonne/s)'
+      rvTFuelCHREMQtySoftWood%Description = 'Total amount of soft wood used.'
+      Call AddVariable(rvTFuelCHREMQtySoftWood)
+      
+      rvTFuelCHREMQtyPellets%VariableName = 'CHREM/SCD/use/*/src/wood_pellets/quantity'
+      rvTFuelCHREMQtyPellets%MetaType = 'units'
+      rvTFuelCHREMQtyPellets%VariableType = '(tonne/s)'
+      rvTFuelCHREMQtyPellets%Description = 'Total amount of wood pellets used.'
+      Call AddVariable(rvTFuelCHREMQtyPellets)
+      
+      rvTFuelCHREMEnergyCont%VariableName = 'CHREM/SCD/use/*/src/*/energy'
+      rvTFuelCHREMEnergyCont%MetaType = 'units'
+      rvTFuelCHREMEnergyCont%VariableType = '(W)'
+      rvTFuelCHREMEnergyCont%Description = '*** Description not defined ***'
+      Call AddVariable(rvTFuelCHREMEnergyCont)
+      
+      rvTFuelCHREMEnergyContElec%VariableName = 'CHREM/SCD/use/*/src/electricity/energy'
+      rvTFuelCHREMEnergyContElec%MetaType = 'units'
+      rvTFuelCHREMEnergyContElec%VariableType = '(W)'
+      rvTFuelCHREMEnergyContElec%Description = 'Energy content of electricity used.'
+      Call AddVariable(rvTFuelCHREMEnergyContElec)
+      
+      rvTFuelCHREMEnergyContNatGas%VariableName = 'CHREM/SCD/use/*/src/natural_gas/energy'
+      rvTFuelCHREMEnergyContNatGas%MetaType = 'units'
+      rvTFuelCHREMEnergyContNatGas%VariableType = '(W)'
+      rvTFuelCHREMEnergyContNatGas%Description = 'Energy content of natural gas used.'
+      Call AddVariable(rvTFuelCHREMEnergyContNatGas)
+      
+      rvTFuelCHREMEnergyContOil%VariableName = 'CHREM/SCD/use/*/src/oil/energy'
+      rvTFuelCHREMEnergyContOil%MetaType = 'units'
+      rvTFuelCHREMEnergyContOil%VariableType = '(W)'
+      rvTFuelCHREMEnergyContOil%Description = 'Energy content of oil used.'
+      Call AddVariable(rvTFuelCHREMEnergyContOil)
+      
+      rvTFuelCHREMEnergyContProp%VariableName = 'CHREM/SCD/use/*/src/propane/energy'
+      rvTFuelCHREMEnergyContProp%MetaType = 'units'
+      rvTFuelCHREMEnergyContProp%VariableType = '(W)'
+      rvTFuelCHREMEnergyContProp%Description = 'Energy content of propane used.'
+      Call AddVariable(rvTFuelCHREMEnergyContProp)
+      
+      rvTFuelCHREMEnergyContMixWood%VariableName = 'CHREM/SCD/use/*/src/mixed_wood/energy'
+      rvTFuelCHREMEnergyContMixWood%MetaType = 'units'
+      rvTFuelCHREMEnergyContMixWood%VariableType = '(W)'
+      rvTFuelCHREMEnergyContMixWood%Description = 'Energy content of mixed wood used.'
+      Call AddVariable(rvTFuelCHREMEnergyContMixWood)
+      
+      rvTFuelCHREMEnergyContHardWood%VariableName = 'CHREM/SCD/use/*/src/hard_wood/energy'
+      rvTFuelCHREMEnergyContHardWood%MetaType = 'units'
+      rvTFuelCHREMEnergyContHardWood%VariableType = '(W)'
+      rvTFuelCHREMEnergyContHardWood%Description = 'Energy content of hard wood used.'
+      Call AddVariable(rvTFuelCHREMEnergyContHardWood)
+      
+      rvTFuelCHREMEnergyContSoftWood%VariableName = 'CHREM/SCD/use/*/src/soft_wood/energy'
+      rvTFuelCHREMEnergyContSoftWood%MetaType = 'units'
+      rvTFuelCHREMEnergyContSoftWood%VariableType = '(W)'
+      rvTFuelCHREMEnergyContSoftWood%Description = 'Energy content of soft wood used.'
+      Call AddVariable(rvTFuelCHREMEnergyContSoftWood)
+      
+      rvTFuelCHREMEnergyContPellets%VariableName = 'CHREM/SCD/use/*/src/wood_pellets/energy'
+      rvTFuelCHREMEnergyContPellets%MetaType = 'units'
+      rvTFuelCHREMEnergyContPellets%VariableType = '(W)'
+      rvTFuelCHREMEnergyContPellets%Description = 'Energy content of wood pellets used.'
+      Call AddVariable(rvTFuelCHREMEnergyContPellets)
+      
+      rvTEndUseCHREMEnergySH%VariableName = 'CHREM/SCD/use/space_heating/energy'
+      rvTEndUseCHREMEnergySH%MetaType = 'units'
+      rvTEndUseCHREMEnergySH%VariableType = '(W)'
+      rvTEndUseCHREMEnergySH%Description = 'Energy content used for space heating.'
+      Call AddVariable(rvTEndUseCHREMEnergySH)
+      
+      rvTEndUseCHREMEnergySC%VariableName = 'CHREM/SCD/use/space_cooling/energy'
+      rvTEndUseCHREMEnergySC%MetaType = 'units'
+      rvTEndUseCHREMEnergySC%VariableType = '(W)'
+      rvTEndUseCHREMEnergySC%Description = 'Energy content used for space cooling.'
+      Call AddVariable(rvTEndUseCHREMEnergySC)
+      
+      rvTEndUseCHREMEnergyDHW%VariableName = 'CHREM/SCD/use/DHW/energy'
+      rvTEndUseCHREMEnergyDHW%MetaType = 'units'
+      rvTEndUseCHREMEnergyDHW%VariableType = '(W)'
+      rvTEndUseCHREMEnergyDHW%Description = 'Energy content used for Domestic hot water.'
+      Call AddVariable(rvTEndUseCHREMEnergyDHW)
+      
+      rvTEndUseCHREMEnergyLights%VariableName = 'CHREM/SCD/use/lights/energy'
+      rvTEndUseCHREMEnergyLights%MetaType = 'units'
+      rvTEndUseCHREMEnergyLights%VariableType = '(W)'
+      rvTEndUseCHREMEnergyLights%Description = 'Energy content used for lights.'
+      Call AddVariable(rvTEndUseCHREMEnergyLights)
+      
+      rvTEndUseCHREMEnergyEqt%VariableName = 'CHREM/SCD/use/equipment/energy'
+      rvTEndUseCHREMEnergyEqt%MetaType = 'units'
+      rvTEndUseCHREMEnergyEqt%VariableType = '(W)'
+      rvTEndUseCHREMEnergyEqt%Description = 'Energy content used for equipments.'
+      Call AddVariable(rvTEndUseCHREMEnergyEqt)
+      
+      rvTEndUseCHREMEnergyUnCat%VariableName = 'CHREM/SCD/use/uncategorized/energy'
+      rvTEndUseCHREMEnergyUnCat%MetaType = 'units'
+      rvTEndUseCHREMEnergyUnCat%VariableType = '(W)'
+      rvTEndUseCHREMEnergyUnCat%Description = 'Energy content used for uncategorized.'
+      Call AddVariable(rvTEndUseCHREMEnergyUnCat)
+      
+      rvTEndUseCHREMEnergyHRV%VariableName = 'CHREM/SCD/use/HRV/energy'
+      rvTEndUseCHREMEnergyHRV%MetaType = 'units'
+      rvTEndUseCHREMEnergyHRV%VariableType = '(W)'
+      rvTEndUseCHREMEnergyHRV%Description = 'Energy content used for HRV.'
+      Call AddVariable(rvTEndUseCHREMEnergyHRV)
+      
+      rvTEndUseCHREMEnergyOther%VariableName = 'CHREM/SCD/use/other/energy'
+      rvTEndUseCHREMEnergyOther%MetaType = 'units'
+      rvTEndUseCHREMEnergyOther%VariableType = '(W)'
+      rvTEndUseCHREMEnergyOther%Description = 'Energy content used for other.'
+      Call AddVariable(rvTEndUseCHREMEnergyOther)
+      
+      rvTEndUseCHREMExBill%VariableName = 'CHREM/SCD/use/extra_billingcharge/energy'
+      rvTEndUseCHREMExBill%MetaType = 'units'
+      rvTEndUseCHREMExBill%VariableType = '(W)'
+      rvTEndUseCHREMExBill%Description = 'Energy content used for extra billing charge.'
+      Call AddVariable(rvTEndUseCHREMExBill)
+      
+      rvTEndUseCHREMEnergyAL%VariableName = 'CHREM/SCD/use/CHREM_AL/energy'
+      rvTEndUseCHREMEnergyAL%MetaType = 'units'
+      rvTEndUseCHREMEnergyAL%VariableType = '(W)'
+      rvTEndUseCHREMEnergyAL%Description = 'Energy content used for CHREM_AL.'
+      Call AddVariable(rvTEndUseCHREMEnergyAL)
+      
+      rvTEndUseCHREMEnergyEnd%VariableName = 'CHREM/SCD/use/*/energy'
+      rvTEndUseCHREMEnergyEnd%MetaType = 'units'
+      rvTEndUseCHREMEnergyEnd%VariableType = '(W)'
+      rvTEndUseCHREMEnergyEnd%Description = 'Energy content used for Energy default.'
+      Call AddVariable(rvTEndUseCHREMEnergyEnd)
+      
+      !Used by spmatl.F
+      rvBldCHREMSPMatlTtlIncTtl%VariableName = 'CHREM/SCD/gen/PV_AVL/src/electricity/energy'
+      rvBldCHREMSPMatlTtlIncTtl%MetaType = 'units'
+      rvBldCHREMSPMatlTtlIncTtl%VariableType = '(W)'
+      rvBldCHREMSPMatlTtlIncTtl%Description = 'Total irradiance of PV module'
+      Call AddVariable(rvBldCHREMSPMatlTtlIncTtl)
+      
+      rvBldCHREMSPMatlPVPow%VariableName = 'CHREM/SCD/gen/PV_Use/src/electricity/energy'
+      rvBldCHREMSPMatlPVPow%MetaType = 'units'
+      rvBldCHREMSPMatlPVPow%VariableType = '(W)'
+      rvBldCHREMSPMatlPVPow%Description = 'Power produced by PV module'
+      Call AddVariable(rvBldCHREMSPMatlPVPow)
+      
+      !Used by BC_data.F
+      rvBndCndCHREMStpInt%VariableName = 'CHREM/BCD/*/step_interpolation'
+      rvBndCndCHREMStpInt%MetaType = '*'
+      rvBndCndCHREMStpInt%VariableType = '*'
+      rvBndCndCHREMStpInt%Description = '*'
+      Call AddVariable(rvBndCndCHREMStpInt)
+
+      rvBndCndCHREMLnInt%VariableName = 'CHREM/BCD/*/linear_interpolation'
+      rvBndCndCHREMLnInt%MetaType = '*'
+      rvBndCndCHREMLnInt%VariableType = '*'
+      rvBndCndCHREMLnInt%Description = '*'
+      Call AddVariable(rvBndCndCHREMLnInt)
+
+
+
+      !Used by CHREM_report_data.F
+      rvZNAPAirSens%VariableName = 'CHREM/zone_*/Power/SH_AirMass'
+      rvZNAPAirSens%MetaType = 'units'
+      rvZNAPAirSens%VariableType = '(W)'
+      rvZNAPAirSens%Description = 'Sensible heating - air mass.'
+      Call AddVariable(rvZNAPAirSens)
+      
+      rvZNAPInfil%VariableName = 'CHREM/zone_*/Power/AV_Infil'
+      rvZNAPInfil%MetaType = 'units'
+      rvZNAPInfil%VariableType = '(W)'
+      rvZNAPInfil%Description = 'Heat advection - uncontrolled infiltration.'
+      Call AddVariable(rvZNAPInfil)
+      
+      rvZNAPAmbVent%VariableName = 'CHREM/zone_*/Power/AV_AmbVent'
+      rvZNAPAmbVent%MetaType = 'units'
+      rvZNAPAmbVent%VariableType = '(W)'
+      rvZNAPAmbVent%Description = 'Heat advection - controlled ventilation from ambient.'
+      Call AddVariable(rvZNAPAmbVent)
+      
+      rvZNAPZnCpldVent%VariableName = 'CHREM/zone_*/Power/AV_ZnCpldVent'
+      rvZNAPZnCpldVent%MetaType = 'units'
+      rvZNAPZnCpldVent%VariableType = '(W)'
+      rvZNAPZnCpldVent%Description = 'Heat advection - zone coupled ventilation.'
+      Call AddVariable(rvZNAPZnCpldVent)
+      
+      rvZNAPConvCasGain%VariableName = 'CHREM/zone_*/Power/GN_ConvCasGain'
+      rvZNAPConvCasGain%MetaType = 'units'
+      rvZNAPConvCasGain%VariableType = '(W)'
+      rvZNAPConvCasGain%Description = 'Generation - casual gains convective.'
+      Call AddVariable(rvZNAPConvCasGain)
+      
+      rvZNAPHeat%VariableName = 'CHREM/zone_*/Power/GN_Heat'
+      rvZNAPHeat%MetaType = 'units'
+      rvZNAPHeat%VariableType = '(W)'
+      rvZNAPHeat%Description = 'Generation - active heating.'
+      Call AddVariable(rvZNAPHeat)
+      
+      rvZNAPCool%VariableName = 'CHREM/zone_*/Power/GN_Cool'
+      rvZNAPCool%MetaType = 'units'
+      rvZNAPCool%VariableType = '(W)'
+      rvZNAPCool%Description = 'Generation - active cooling.'
+      Call AddVariable(rvZNAPCool)
+      
+      rvZNAPSurfConv%VariableName = 'CHREM/zone_*/Power/CV_AirSurf'
+      rvZNAPSurfConv%MetaType = 'units'
+      rvZNAPSurfConv%VariableType = '(W)'
+      rvZNAPSurfConv%Description = 'Convection - Airpoint to surfaces.'
+      Call AddVariable(rvZNAPSurfConv)
+      
+      rvZNOPSens%VariableName = 'CHREM/zone_*/Power/SH_Opaq'
+      rvZNOPSens%MetaType = 'units'
+      rvZNOPSens%VariableType = '(W)'
+      rvZNOPSens%Description = 'Sensible heating - opaque interior node.'
+      Call AddVariable(rvZNOPSens)
+      
+      rvZNOPCond%VariableName = 'CHREM/zone_*/Power/CD_Opaq'
+      rvZNOPCond%MetaType = 'units'
+      rvZNOPCond%VariableType = '(W)'
+      rvZNOPCond%Description = 'Conduction - opaque interior node.'
+      Call AddVariable(rvZNOPCond)
+      
+      rvZNOPSW%VariableName = 'CHREM/zone_*/Power/SW_Opaq'
+      rvZNOPSW%MetaType = 'units'
+      rvZNOPSW%VariableType = '(W)'
+      rvZNOPSW%Description = 'Short wave - opaque interior node.'
+      Call AddVariable(rvZNOPSW)
+      
+      rvZNOPConv%VariableName = 'CHREM/zone_*/Power/CV_Opaq'
+      rvZNOPConv%MetaType = 'units'
+      rvZNOPConv%VariableType = '(W)'
+      rvZNOPConv%Description = 'Convection - opaque interior node.'
+      Call AddVariable(rvZNOPConv)
+      
+      rvZNOPLWSurf%VariableName = 'CHREM/zone_*/Power/LW_Opaq_Surf'
+      rvZNOPLWSurf%MetaType = 'units'
+      rvZNOPLWSurf%VariableType = '(W)'
+      rvZNOPLWSurf%Description = 'Long wave surface - opaque interior node.'
+      Call AddVariable(rvZNOPLWSurf)
+      
+      rvZNOPLWCas%VariableName = 'CHREM/zone_*/Power/LW_Opaq_Cas'
+      rvZNOPLWCas%MetaType = 'units'
+      rvZNOPLWCas%VariableType = '(W)'
+      rvZNOPLWCas%Description = 'Long wave casual - opaque interior node.'
+      Call AddVariable(rvZNOPLWCas)
+      
+      rvZNOPLWPlt%VariableName = 'CHREM/zone_*/Power/LW_Opaq_Plt'
+      rvZNOPLWPlt%MetaType = 'units'
+      rvZNOPLWPlt%VariableType = '(W)'
+      rvZNOPLWPlt%Description = 'Long wave plant - opaque interior node.'
+      Call AddVariable(rvZNOPLWPlt)
+      
+      rvZNTrSens%VariableName = 'CHREM/zone_*/Power/SH_Trans'
+      rvZNTrSens%MetaType = 'units'
+      rvZNTrSens%VariableType = '(W)'
+      rvZNTrSens%Description = 'Sensible heating - transparent interior node.'
+      Call AddVariable(rvZNTrSens)
+      
+      rvZNTrCond%VariableName = 'CHREM/zone_*/Power/CD_Trans'
+      rvZNTrCond%MetaType = 'units'
+      rvZNTrCond%VariableType = '(W)'
+      rvZNTrCond%Description = 'Conduction - transparent interior node.'
+      Call AddVariable(rvZNTrCond)
+      
+      rvZNTrSW%VariableName = 'CHREM/zone_*/Power/SW_Trans'
+      rvZNTrSW%MetaType = 'units'
+      rvZNTrSW%VariableType = '(W)'
+      rvZNTrSW%Description = 'Short wave - transparent interior node.'
+      Call AddVariable(rvZNTrSW)
+      
+      rvZNTrConv%VariableName = 'CHREM/zone_*/Power/CV_Trans'
+      rvZNTrConv%MetaType = 'units'
+      rvZNTrConv%VariableType = '(W)'
+      rvZNTrConv%Description = 'Convection - transparent interior node.'
+      Call AddVariable(rvZNTrConv)
+      
+      rvZNTrLWSurf%VariableName = 'CHREM/zone_*/Power/LW_Trans_Surf'
+      rvZNTrLWSurf%MetaType = 'units'
+      rvZNTrLWSurf%VariableType = '(W)'
+      rvZNTrLWSurf%Description = 'Long wave surface - transparent interior node.'
+      Call AddVariable(rvZNTrLWSurf)
+      
+      rvZNTrLWCas%VariableName = 'CHREM/zone_*/Power/LW_Trans_Cas'
+      rvZNTrLWCas%MetaType = 'units'
+      rvZNTrLWCas%VariableType = '(W)'
+      rvZNTrLWCas%Description = 'Long wave casual - transparent interior node.'
+      Call AddVariable(rvZNTrLWCas)
+      
+      rvZNTrLWPlt%VariableName = 'CHREM/zone_*/Power/LW_Trans_Plt'
+      rvZNTrLWPlt%MetaType = 'units'
+      rvZNTrLWPlt%VariableType = '(W)'
+      rvZNTrLWPlt%Description = 'Long wave plant - transparent interior node.'
+      Call AddVariable(rvZNTrLWPlt)
+      
+      rvZNTrLWCFCGen%VariableName = 'CHREM/zone_*/Power/LW_Trans_CFC_gen'
+      rvZNTrLWCFCGen%MetaType = 'units'
+      rvZNTrLWCFCGen%VariableType = '(W)'
+      rvZNTrLWCFCGen%Description = 'Long wave CFC generation - transparent interior node.'
+      Call AddVariable(rvZNTrLWCFCGen)
+      
+      rvZNAPTemp%VariableName = 'CHREM/zone_*/Temp/Airpoint'
+      rvZNAPTemp%MetaType = 'units'
+      rvZNAPTemp%VariableType = '(C)'
+      rvZNAPTemp%Description = 'Temperature - zone airpoint.'
+      Call AddVariable(rvZNAPTemp)
+      
+      rvAPAmbTemp%VariableName = 'CHREM/CLM/Temp/Airpoint'
+      rvAPAmbTemp%MetaType = 'units'
+      rvAPAmbTemp%VariableType = '(C)'
+      rvAPAmbTemp%Description = 'Temperature - climate ambient airpoint.'
+      Call AddVariable(rvAPAmbTemp)
+      
+      rvAPAmbTempFut%VariableName = 'CHREM/CLM/Temp/Future'
+      rvAPAmbTempFut%MetaType = 'units'
+      rvAPAmbTempFut%VariableType = '(C)'
+      rvAPAmbTempFut%Description = 'Temperature - climate ambient airpoint future.'
+      Call AddVariable(rvAPAmbTempFut)
+      
+      rvWNDWOpen%VariableName = 'CHREM/zone_*/Windows/Open'
+      rvWNDWOpen%MetaType = 'units'
+      rvWNDWOpen%VariableType = '(-)'
+      rvWNDWOpen%Description = 'Operation - zone windows.'
+      Call AddVariable(rvWNDWOpen)
+      
       !Used by h2_comps.F
       rvPltOprtSgn%VariableName = 'plant/*/misc_data/operating_signal'
       rvPltOprtSgn%MetaType = 'units'
@@ -4147,6 +4721,25 @@ CONTAINS
       rvBldInfAirChg%VariableType = '(ACH)'
       rvBldInfAirChg%Description = ''
       Call AddVariable(rvBldInfAirChg)
+      
+      !Used by radiant_floor.F
+      rvpltRadFloorTmin%VariableName = 'plant/*/T_min'
+      rvpltRadFloorTmin%MetaType = 'units'
+      rvpltRadFloorTmin%VariableType = '(oC)'
+      rvpltRadFloorTmin%Description = 'Minimum inside surface temperature'
+      Call AddVariable(rvpltRadFloorTmin)
+      
+      rvpltRadFloorTmax%VariableName = 'plant/*/T_max'
+      rvpltRadFloorTmax%MetaType = 'units'
+      rvpltRadFloorTmax%VariableType = '(oC)'
+      rvpltRadFloorTmax%Description = 'Maximum inside surface temperature'
+      Call AddVariable(rvpltRadFloorTmax)
+      
+      rvpltRadFloorInj%VariableName = 'plant/*/Q_inj'
+      rvpltRadFloorInj%MetaType = 'units'
+      rvpltRadFloorInj%VariableType = '(W)'
+      rvpltRadFloorInj%Description = 'Flux injected to node'
+      Call AddVariable(rvpltRadFloorInj)
 
       !Used by TCC.F
       rvpltCosimInvocations%VariableName = 'plant/co-sim/Invocations'

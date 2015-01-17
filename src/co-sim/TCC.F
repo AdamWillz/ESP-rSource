@@ -549,6 +549,7 @@ C ******************************************************************************
       INTEGER FUNCTION TCC_communication()
       USE DLL_Functions, ONLY:PassDataToTRNSYS,GetTRNSYSData,
      &                        GetSystemConv
+      USE COSIMSHARE
       IMPLICIT NONE
 #include "plant.h"
 #include "building.h"
@@ -592,9 +593,10 @@ C Number of Zones
       common/c1/ncomp,ncon
 
 C Zone air temperatures
-      real tpa,qpa,tfa,qfa
+      real tpa,qpa,tfa,qfa,tfs,qfs
       common/pvala/tpa(mcom),qpa(mcom)  !Zone air temperatures and heat transfers (present)
       common/fvala/tfa(mcom),qfa(mcom)  !Zone air temperatures and heat transfers (future)
+      common/fvals/tfs(mcom,ms),qfs(mcom) !Surfaces temperatures and heat transfers (future)
 C Humidity ratio (kg moisture/kg dry air) in zones.
       COMMON/FVALG/GFA(MCOM)
       REAL :: GFA
@@ -602,8 +604,7 @@ C Humidity ratio (kg moisture/kg dry air) in zones.
 C---------------------------------------------------------------------------------
 C Declare local variables.
 C---------------------------------------------------------------------------------
-      integer i ! count variable
-
+      integer i,k ! count variables
 
 C---------------------------------------------------------------------------------
 C Start trace if trace output requested.
@@ -616,9 +617,22 @@ C-------------------------------------------------------------------------------
 C---------------------------------------------------------------------------------
 C Prepare data from ESP-r's building thermal domain to pass to TRNSYS.
 C---------------------------------------------------------------------------------
-      DO i=1, ncomp
+      k=1 ! Reset indexer
+      DO i=1, (ncomp+coSimNumSurf)
+      	
+      	IF(i<=ncomp)THEN
+      
         COSIM_DATA%ESPrZonesData(i)%AirPointTemperatures = TFA(i) ! Zone air-point temperature (oC).
         COSIM_DATA%ESPrZonesData(i)%AirPointHumidities   = GFA(i) ! Zone air-point humidity (kgw/kga).
+        ELSE
+        ! Output extra surface temperatures if required
+        	COSIM_DATA%ESPrZonesData(i)%AirPointTemperatures = 
+     &                      TFS(coSimZones(k),coSimSurfs(k))                 	 
+        	COSIM_DATA%ESPrZonesData(i)%AirPointHumidities   = 0.0 ! Zone air-point humidity (kgw/kga).
+        	k=k+1 ! update indexer
+      
+        END IF
+      
       END DO
       
 
