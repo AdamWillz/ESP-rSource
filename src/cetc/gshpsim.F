@@ -413,7 +413,12 @@ c load averaged for the ground loop calculation.
 
            COP = daily_GSHP_COP(load_weighted_GSHP_COP,daily_heat_load)
 
-           dQ(iPeriod) = - daily_heat_load/1000. * (1 - 1/COP)
+           if (COP .gt. 0.0) then
+                 dQ(iPeriod) = - daily_heat_load/1000. 
+     &                         * (1 - 1/COP)
+           else  ! The GSHP is not used for heating, only cooling
+                 dQ(iPeriod) = 0.0
+           endif
 
 c For days where there is a cooling load and no heating load, dQ
 c will be a function of daily_cool_load and COP.
@@ -425,7 +430,12 @@ c load averaged for the ground loop calculation, so we will not account for the
 c COP when the load is zero.
              COP = daily_GSHP_COP(load_weighted_GSHP_COP,
      &                            daily_cool_load)   
-             dQ(iPeriod) = daily_cool_load/1000. * (1 + 1/COP) 
+           if (COP .gt. 0.0) then
+             dQ(iPeriod) = daily_cool_load/1000.
+     &                     * (1 + 1/COP)
+           else  ! The GSHP is not used for cooling, only heating
+                 dQ(iPeriod) = 0.0
+           endif
 
          else
 c For days where there are both heating and cooling loads and no cooling load, dQ
@@ -876,9 +886,9 @@ C ----- Reference
      &  - 1 * Gshp_Ground_Temp_Amp * EXP(a * BD) * COS(b + a * BD)
 C ----- **** Calculate EWT  ****
       Tfluid = dTtot + dTinf + Gshp_Ground_Temp_Avg
-
-      CALL FREEZING (Tfluid, kWi, pipe_length, Rpipe, OD, BD, dTinf, 
-     &               Gshp_Ground_Temp_Avg, dTtot)
+C AW apr 2015: Call to this subroutine never changes Tfluid
+C      CALL FREEZING (Tfluid, kWi, pipe_length, Rpipe, OD, BD, dTinf, 
+C     &               Gshp_Ground_Temp_Avg, dTtot)
                 
       EWT = Tfluid - (kWi / 2) / (Flow / 1000 * Cp * Density)
 
@@ -1114,9 +1124,9 @@ C ----- - **** Calculate EWT ****
         ELSE
           Tfluid = (Tfluid_temp + Tfluid)/2.0
         END IF
-
-        CALL FREEZING (Tfluid, kWi, pipe_length, Rpipe, OD, BD,dTinf, 
-     &                   Gshp_Ground_Temp_Avg, dTtot)
+C AW apr 2015: Call to this subroutine never changes Tfluid
+C        CALL FREEZING (Tfluid, kWi, pipe_length, Rpipe, OD, BD,dTinf, 
+C     &                   Gshp_Ground_Temp_Avg, dTtot)
 
   95    CONTINUE  ! Go to second pipe burial depth
       
@@ -1364,9 +1374,9 @@ C ----- ground temperature parameters will be based on weather file and Moore mo
 C ------ **** Calculate EWT  ****
       Tfluid = dTtot + dTinf + Gshp_Ground_Temp_Avg
 
-
-      CALL FREEZING (Tfluid,kWi,pipe_length,Rpipe,OD,BD,dTinf,
-     &Gshp_Ground_Temp_Avg,dTtot)       
+C AW apr 2015: Call to this subroutine never changes Tfluid
+C      CALL FREEZING (Tfluid,kWi,pipe_length,Rpipe,OD,BD,dTinf,
+C     &Gshp_Ground_Temp_Avg,dTtot)       
        
       EWT = Tfluid - (kWi / 2) / (Flow / 1000 * Cp * Density)
 
