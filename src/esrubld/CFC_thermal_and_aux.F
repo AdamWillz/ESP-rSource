@@ -2223,9 +2223,10 @@ C ********************************************************************
       IMPLICIT NONE
 #include "building.h"
       INTEGER n,m,i
-      REAL alpha,beta,solx,aw,ap,ae,bp
+      REAL alpha,beta,solx,aw,ap,ae,bp,Small
       DIMENSION alpha(me*2+2),beta(me*2+2),solx(me*2+2)
       DIMENSION aw(me*2+2),ap(me*2+2),ae(me*2+2),bp(me*2+2)
+      PARAMETER (Small = 1E-25)
 
       m=2*n-4
       DO i=1,m,1
@@ -2237,6 +2238,7 @@ C ********************************************************************
       DO i=2,m,1
         alpha(i)=ae(i)/(ap(i)-alpha(i-1)*aw(i))
         beta(i)=(aw(i)*beta(i-1)+bp(i))/(ap(i)-alpha(i-1)*aw(i))
+        IF(abs(beta(i)) < Small) beta(i) = 0.
       ENDDO
       solx(m)=beta(m)
       DO i=m-1,1,-1
