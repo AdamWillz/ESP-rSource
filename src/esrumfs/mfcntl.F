@@ -1405,10 +1405,10 @@ C       Check if zone temperature is above the High Setpoint AND the temperature
                  CTLPOS(icnn)=1.0
 C       Else, use the previous control condition to maintain the deadband
               ELSE		  
-                     CTLPOS(ifan(icfp,2))=ctlpast(ifan(icfp,2))
+                     CTLPOS(icnn)=ctlpast(icnn)
               ENDIF
 		      ! Update previous control data for next timestep
-              ctlpast(ifan(icfp,2))=CTLPOS(ifan(icfp,2))
+              ctlpast(icnn)=CTLPOS(icnn)
 
           endif 
   1     continue
