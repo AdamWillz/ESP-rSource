@@ -1001,7 +1001,7 @@ C Initialize total electric load - related gains
       Total_elec_CON_gain = 0. ! (W) 
       Total_elec_RAD_gain = 0. ! (W)
       DO ii = 1, iNumb_Gain_coupling(icomp,iDay)
-       W_electric_nonHVAC = 0. ! Zero out the heat gain power for this next gain loop
+       W_heat_nonHVAC = 0. ! Zero out the heat gain power for this next gain loop
        W_NG_nonHVAC = 0. ! Zero out the Natural gas power for this next gain loop
 C Check to see if the future  building time is between the start hour and            
 C the end hour of the gain.
@@ -1022,7 +1022,7 @@ C loads that may have been encountered in the zone operation file. Use calls
 C to fGet_BC_data_by_name to recover data in boundary conditions file.
           if(caskeytype(icomp,iGainSlot)(1:13).eq.'net_utilities')then
 
-            W_electric_nonHVAC =  Elec_Net_Load_Calc(occupant_load) ! W
+            W_heat_nonHVAC =  Elec_Net_Load_Calc(occupant_load) ! W
           elseif(caskeytype(icomp,iGainSlot)(1:15).eq.
      &           'ALOtherElectric')then
             cBCD_col = "ALOtherElectric"
@@ -1068,12 +1068,12 @@ C Convective casual gains (W)
           Total_elec_CON_gain = Total_elec_CON_gain 
      &             + sens_load_fraction 
      &             * convective_load_fraction 
-     &             * W_electric_nonHVAC
+     &             * W_heat_nonHVAC
 C Radiative casual gains (W)
           Total_elec_RAD_gain = Total_elec_RAD_gain 
      &             + sens_load_fraction 
      &             * radiant_load_fraction 
-     &             * W_electric_nonHVAC
+     &             * W_heat_nonHVAC
 C Accumulate NG consumption (W)
           Total_NG = Total_NG 
      &             + sens_load_fraction 
