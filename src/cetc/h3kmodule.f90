@@ -392,7 +392,8 @@ MODULE h3kmodule
       rvTEndUseCHREMEnergyEqt, rvTEndUseCHREMEnergyHRV, rvTEndUseCHREMEnergyUnCat, rvTEndUseCHREMEnergyOther, &
       rvTEndUseCHREMExBill, rvTEndUseCHREMEnergyEnd, rvBldCHREMSPMatlTtlIncTtl, rvBldCHREMSPMatlPVPow, &
       rvBndCndCHREMStpInt,rvBndCndCHREMLnInt, rvTEndUseCHREMEnergyAL, rvEPOWCHREMpcuLOSSES, &
-      rvEPOWCHREMpcuINPUT, rvEPOWCHREMpcuOUTPUT, rvEPOWCHREMNodesLoadReal
+      rvEPOWCHREMpcuINPUT, rvEPOWCHREMpcuOUTPUT, rvEPOWCHREMNodesSumReal, rvEPOWCHREMNodesLoadReal, &
+      rvEPOWCHREMNodesGenerationReal
       
     !Used by CHREM_report_data.F
     Type(ReportVariable) :: rvZNAPAirSens, rvZNAPInfil, rvZNAPAmbVent, rvZNAPZnCpldVent, &
@@ -4079,42 +4080,54 @@ CONTAINS
       Call AddVariable(rvTEndUseCHREMEnergyEnd)
       
       !Used by spmatl.F
-      rvBldCHREMSPMatlTtlIncTtl%VariableName = 'CHREM/SCD/gen/PV_AVL/src/electricity/energy'
-      rvBldCHREMSPMatlTtlIncTtl%MetaType = 'units'
-      rvBldCHREMSPMatlTtlIncTtl%VariableType = '(W)'
-      rvBldCHREMSPMatlTtlIncTtl%Description = 'Total irradiance of PV module'
-      Call AddVariable(rvBldCHREMSPMatlTtlIncTtl)
+      !rvBldCHREMSPMatlTtlIncTtl%VariableName = 'CHREM/SCD/gen/PV_AVL/src/electricity/energy'
+      !rvBldCHREMSPMatlTtlIncTtl%MetaType = 'units'
+      !rvBldCHREMSPMatlTtlIncTtl%VariableType = '(W)'
+      !rvBldCHREMSPMatlTtlIncTtl%Description = 'Total irradiance of PV module'
+      !Call AddVariable(rvBldCHREMSPMatlTtlIncTtl)
       
-      rvBldCHREMSPMatlPVPow%VariableName = 'CHREM/SCD/gen/PV_Use/src/electricity/energy'
-      rvBldCHREMSPMatlPVPow%MetaType = 'units'
-      rvBldCHREMSPMatlPVPow%VariableType = '(W)'
-      rvBldCHREMSPMatlPVPow%Description = 'Power produced by PV module'
-      Call AddVariable(rvBldCHREMSPMatlPVPow)
+      !rvBldCHREMSPMatlPVPow%VariableName = 'CHREM/SCD/gen/PV_Use/src/electricity/energy'
+      !rvBldCHREMSPMatlPVPow%MetaType = 'units'
+      !rvBldCHREMSPMatlPVPow%VariableType = '(W)'
+      !rvBldCHREMSPMatlPVPow%Description = 'Power produced by PV module'
+      !Call AddVariable(rvBldCHREMSPMatlPVPow)
       
       !Site PV generation and inverter losses
-      rvEPOWCHREMpcuLOSSES%VariableName = 'CHREM/SCD/gen/PV_PCU/*/src/electricity/PCU_losses'
+      rvEPOWCHREMpcuLOSSES%VariableName = 'CHREM/Site_Bal/PV_PCU/*/PCU_losses'
       rvEPOWCHREMpcuLOSSES%MetaType = 'units'
       rvEPOWCHREMpcuLOSSES%VariableType = '(W)'
       rvEPOWCHREMpcuLOSSES%Description = 'Power loss from PCU'
       Call AddVariable(rvEPOWCHREMpcuLOSSES)
       
-      rvEPOWCHREMpcuINPUT%VariableName = 'CHREM/SCD/gen/PV_PCU/*/src/electricity/energy_in'
+      rvEPOWCHREMpcuINPUT%VariableName = 'CHREM/Site_Bal/PV_PCU/*/power_in'
       rvEPOWCHREMpcuINPUT%MetaType = 'units'
       rvEPOWCHREMpcuINPUT%VariableType = '(W)'
       rvEPOWCHREMpcuINPUT%Description = 'Power input of PCU'
       Call AddVariable(rvEPOWCHREMpcuINPUT)
       
-      rvEPOWCHREMpcuOUTPUT%VariableName = 'CHREM/SCD/gen/PV_PCU/*/src/electricity/energy_out'
+      rvEPOWCHREMpcuOUTPUT%VariableName = 'CHREM/Site_Bal/PV_PCU/*/power_in'
       rvEPOWCHREMpcuOUTPUT%MetaType = 'units'
       rvEPOWCHREMpcuOUTPUT%VariableType = '(W)'
       rvEPOWCHREMpcuOUTPUT%Description = 'Power output of PCU'
       Call AddVariable(rvEPOWCHREMpcuOUTPUT)
-
-      rvEPOWCHREMNodesLoadReal%VariableName = 'CHREM/SCD/gen/Nodes/*/src/electricity/node_real'
+      
+      rvEPOWCHREMNodesLoadReal%VariableName = 'CHREM/Site_Bal/NodeBalance/*/load'
       rvEPOWCHREMNodesLoadReal%MetaType = 'units'
       rvEPOWCHREMNodesLoadReal%VariableType = '(W)'
-      rvEPOWCHREMNodesLoadReal%Description = 'Electrical node real load'
+      rvEPOWCHREMNodesLoadReal%Description = 'Power input of PCU'
       Call AddVariable(rvEPOWCHREMNodesLoadReal)
+      
+      rvEPOWCHREMNodesGenerationReal%VariableName = 'CHREM/Site_Bal/NodeBalance/*/generation'
+      rvEPOWCHREMNodesGenerationReal%MetaType = 'units'
+      rvEPOWCHREMNodesGenerationReal%VariableType = '(W)'
+      rvEPOWCHREMNodesGenerationReal%Description = 'Power input of PCU'
+      Call AddVariable(rvEPOWCHREMNodesGenerationReal)
+      
+      rvEPOWCHREMNodesSumReal%VariableName = 'CHREM/Site_Bal/NodeBalance/*/sum'
+      rvEPOWCHREMNodesSumReal%MetaType = 'units'
+      rvEPOWCHREMNodesSumReal%VariableType = '(W)'
+      rvEPOWCHREMNodesSumReal%Description = 'Power input of PCU'
+      Call AddVariable(rvEPOWCHREMNodesSumReal)
 
       !Used by BC_data.F
       rvBndCndCHREMStpInt%VariableName = 'CHREM/BCD/*/step_interpolation'
