@@ -3547,6 +3547,12 @@ C........nodal reactive transmission
      &         qenodt(iElec_node),
      &         node_num)
 
+C........CHREM node data
+         call AddToReport(
+     &         rvEPOWCHREMNodesLoadReal%Identifier,
+     &         penodl(iElec_node),
+     &         ENODNAM(iElec_node)(1:12))
+
       enddo
 
 C.....Write out electrical power of hybrid components.

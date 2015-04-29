@@ -1463,6 +1463,10 @@ C.....Format string as 'electrical_net/power_only_components/NAME/misc_data'
      &      fPwrLoss,
      &      powcomnam(IPWC)(1:iNameLength))
 
+      Call AddToReport(rvEPOWCHREMpcuLOSSES%Identifier,
+     &      fPwrLoss,
+     &      powcomnam(IPWC)(1:iNameLength))
+
 C.....Only report efficiency if unit is on
       if ( .not. bPower_Zero ) then
 
@@ -1477,6 +1481,14 @@ C.....Only report efficiency if unit is on
      &      powcomnam(IPWC)(1:iNameLength))
 
       Call AddToReport(rvEPowPCUPowOut%Identifier,
+     &      fPwrOutput,
+     &      powcomnam(IPWC)(1:iNameLength))
+
+      Call AddToReport(rvEPOWCHREMpcuINPUT%Identifier,
+     &      fPwrInput,
+     &      powcomnam(IPWC)(1:iNameLength))
+
+      Call AddToReport(rvEPOWCHREMpcuOUTPUT%Identifier,
      &      fPwrOutput,
      &      powcomnam(IPWC)(1:iNameLength))
 
