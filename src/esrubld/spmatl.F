@@ -1822,10 +1822,10 @@ C XML output.
        Call AddToReport(rvBldSPMatlTtlIncTtl%Identifier,
      &         fQInc * fSurfArea,
      &         cName(ispmnod)(1:iNameLen(ispmnod)))
-
+C ADW Apr 29, 2015: Moving PV generation to different location
 C this line is to report the available solar radiation by PV for CHREM.
-       Call AddToReport(rvBldCHREMSPMatlTtlIncTtl%Identifier,
-     &         fQInc * fSurfArea)
+C       Call AddToReport(rvBldCHREMSPMatlTtlIncTtl%Identifier,
+C     &         fQInc * fSurfArea)
 
        Call AddToReport(rvBldSPMatlDrtIncAr%Identifier,
      &         exdir(ispmloc(ispmnod,2)),
@@ -1838,10 +1838,10 @@ C this line is to report the available solar radiation by PV for CHREM.
        Call AddToReport(rvBldSPMatlPVPow%Identifier,
      &         fPVPower,
      &         cName(ispmnod)(1:iNameLen(ispmnod)))
-
+C ADW Apr 29, 2015: Moving PV generation to different location
 C this line report the PV generation for CHREM
-       Call AddToReport(rvBldCHREMSPMatlPVPow%Identifier,
-     &         fPVPower)
+C       Call AddToReport(rvBldCHREMSPMatlPVPow%Identifier,
+C     &         fPVPower)
 
 C Trace output.
       if(itc.le.0.or.nsinc.lt.itc.or.ispmxist.eq.0)goto 999

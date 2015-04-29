@@ -3553,6 +3553,16 @@ C........CHREM node data
      &         penodl(iElec_node),
      &         ENODNAM(iElec_node)(1:12))
 
+         call AddToReport(
+     &         rvEPOWCHREMNodesGenerationReal%Identifier,
+     &         penodg(iElec_node),
+     &         ENODNAM(iElec_node)(1:12))
+
+         call AddToReport(
+     &         rvEPOWCHREMNodesSumReal%Identifier,
+     &         (penodl(iElec_node)+penodg(iElec_node)),
+     &         ENODNAM(iElec_node)(1:12))
+
       enddo
 
 C.....Write out electrical power of hybrid components.
