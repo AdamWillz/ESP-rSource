@@ -391,7 +391,8 @@ MODULE h3kmodule
       rvTEndUseCHREMEnergyDHW, rvTEndUseCHREMEnergySH, rvTEndUseCHREMEnergySC, rvTEndUseCHREMEnergyLights, &
       rvTEndUseCHREMEnergyEqt, rvTEndUseCHREMEnergyHRV, rvTEndUseCHREMEnergyUnCat, rvTEndUseCHREMEnergyOther, &
       rvTEndUseCHREMExBill, rvTEndUseCHREMEnergyEnd, rvBldCHREMSPMatlTtlIncTtl, rvBldCHREMSPMatlPVPow, &
-      rvBndCndCHREMStpInt,rvBndCndCHREMLnInt, rvTEndUseCHREMEnergyAL
+      rvBndCndCHREMStpInt,rvBndCndCHREMLnInt, rvTEndUseCHREMEnergyAL, rvEPOWCHREMpcuLOSSES, &
+      rvEPOWCHREMpcuINPUT, rvEPOWCHREMpcuOUTPUT, rvEPOWCHREMNodesLoadReal
       
     !Used by CHREM_report_data.F
     Type(ReportVariable) :: rvZNAPAirSens, rvZNAPInfil, rvZNAPAmbVent, rvZNAPZnCpldVent, &
@@ -4090,6 +4091,31 @@ CONTAINS
       rvBldCHREMSPMatlPVPow%Description = 'Power produced by PV module'
       Call AddVariable(rvBldCHREMSPMatlPVPow)
       
+      !Site PV generation and inverter losses
+      rvEPOWCHREMpcuLOSSES%VariableName = 'CHREM/SCD/gen/*/src/electricity/energy_losses'
+      rvEPOWCHREMpcuLOSSES%MetaType = 'units'
+      rvEPOWCHREMpcuLOSSES%VariableType = '(W)'
+      rvEPOWCHREMpcuLOSSES%Description = 'Power loss from PCU'
+      Call AddVariable(rvEPOWCHREMpcuLOSSES)
+      
+      rvEPOWCHREMpcuINPUT%VariableName = 'CHREM/SCD/gen/*/src/electricity/energy_in'
+      rvEPOWCHREMpcuINPUT%MetaType = 'units'
+      rvEPOWCHREMpcuINPUT%VariableType = '(W)'
+      rvEPOWCHREMpcuINPUT%Description = 'Power input of PCU'
+      Call AddVariable(rvEPOWCHREMpcuINPUT)
+      
+      rvEPOWCHREMpcuOUTPUT%VariableName = 'CHREM/SCD/gen/*/src/electricity/energy_out'
+      rvEPOWCHREMpcuOUTPUT%MetaType = 'units'
+      rvEPOWCHREMpcuOUTPUT%VariableType = '(W)'
+      rvEPOWCHREMpcuOUTPUT%Description = 'Power output of PCU'
+      Call AddVariable(rvEPOWCHREMpcuOUTPUT)
+
+      rvEPOWCHREMNodesLoadReal%VariableName = 'CHREM/SCD/gen/*/src/electricity/node_real'
+      rvEPOWCHREMNodesLoadReal%MetaType = 'units'
+      rvEPOWCHREMNodesLoadReal%VariableType = '(W)'
+      rvEPOWCHREMNodesLoadReal%Description = 'Electrical node real load'
+      Call AddVariable(rvEPOWCHREMNodesLoadReal)
+
       !Used by BC_data.F
       rvBndCndCHREMStpInt%VariableName = 'CHREM/BCD/*/step_interpolation'
       rvBndCndCHREMStpInt%MetaType = '*'
