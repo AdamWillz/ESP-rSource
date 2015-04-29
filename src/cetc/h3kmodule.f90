@@ -4092,25 +4092,25 @@ CONTAINS
       Call AddVariable(rvBldCHREMSPMatlPVPow)
       
       !Site PV generation and inverter losses
-      rvEPOWCHREMpcuLOSSES%VariableName = 'CHREM/SCD/gen/*/src/electricity/energy_losses'
+      rvEPOWCHREMpcuLOSSES%VariableName = 'CHREM/SCD/gen/PV_PCU/*/src/electricity/PCU_losses'
       rvEPOWCHREMpcuLOSSES%MetaType = 'units'
       rvEPOWCHREMpcuLOSSES%VariableType = '(W)'
       rvEPOWCHREMpcuLOSSES%Description = 'Power loss from PCU'
       Call AddVariable(rvEPOWCHREMpcuLOSSES)
       
-      rvEPOWCHREMpcuINPUT%VariableName = 'CHREM/SCD/gen/*/src/electricity/energy_in'
+      rvEPOWCHREMpcuINPUT%VariableName = 'CHREM/SCD/gen/PV_PCU/*/src/electricity/energy_in'
       rvEPOWCHREMpcuINPUT%MetaType = 'units'
       rvEPOWCHREMpcuINPUT%VariableType = '(W)'
       rvEPOWCHREMpcuINPUT%Description = 'Power input of PCU'
       Call AddVariable(rvEPOWCHREMpcuINPUT)
       
-      rvEPOWCHREMpcuOUTPUT%VariableName = 'CHREM/SCD/gen/*/src/electricity/energy_out'
+      rvEPOWCHREMpcuOUTPUT%VariableName = 'CHREM/SCD/gen/PV_PCU/*/src/electricity/energy_out'
       rvEPOWCHREMpcuOUTPUT%MetaType = 'units'
       rvEPOWCHREMpcuOUTPUT%VariableType = '(W)'
       rvEPOWCHREMpcuOUTPUT%Description = 'Power output of PCU'
       Call AddVariable(rvEPOWCHREMpcuOUTPUT)
 
-      rvEPOWCHREMNodesLoadReal%VariableName = 'CHREM/SCD/gen/*/src/electricity/node_real'
+      rvEPOWCHREMNodesLoadReal%VariableName = 'CHREM/SCD/gen/Nodes/*/src/electricity/node_real'
       rvEPOWCHREMNodesLoadReal%MetaType = 'units'
       rvEPOWCHREMNodesLoadReal%VariableType = '(W)'
       rvEPOWCHREMNodesLoadReal%Description = 'Electrical node real load'
