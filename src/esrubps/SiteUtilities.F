@@ -147,10 +147,11 @@ C.........Zero end-use energy use (by fuel) array slot
           fCHREMEndUseEnUse(iEndUse) = fCHREMEndUseEnUse(iEndUse) +
      &      fEndUseEnergyUse ( iFuel, iEndUse )
         enddo use_loop
-        if (iFuel .eq. 1 .and. fCHREMSULPV .gt. 0) then 
-	     fTotalEnergyUse( iFuel ) = fTotalEnergyUse( iFuel )
-     &        - fCHREMSULPV
-	endif
+C ADW May 2015: fCHREMSULPV is the power output of a spmtl, and does not reflect inverter losses
+C        if (iFuel .eq. 1 .and. fCHREMSULPV .gt. 0) then 
+C	     fTotalEnergyUse( iFuel ) = fTotalEnergyUse( iFuel )
+C     &        - fCHREMSULPV
+C	endif
         fCHREMSiteEnUse = fCHREMSiteEnUse + fTotalEnergyUse( iFuel )
         
 
