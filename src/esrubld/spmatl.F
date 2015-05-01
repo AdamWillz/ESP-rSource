@@ -1437,9 +1437,9 @@ C Parameters for h3kreports reporting.
       logical bInitalized(mspmnod)
       data bInitalized / mspmnod * .false. /
 
-     
+C ADW May 2015: This variable ignores inverter losses     
 C CHREM parameter to store the PV electricty generation
-      fCHREMSULPV = 0.0
+C      fCHREMSULPV = 0.0
       
 C Store name of special material string in array.
       if(.not.bInitalized(ispmnod))then
@@ -1791,8 +1791,8 @@ C and the two boundary nodes.
      &          qtmca(ispmloc(ispmnod,2),ispmloc(ispmnod,3)-1,2)-
      &          (fPVPwrPerArea/4.)
        endif
-
-       fCHREMSULPV = fPVPower
+C ADW 2015: This variable ignores inverter losses
+C       fCHREMSULPV = fPVPower
 
 C XML output.
        Call AddToReport(rvBldSPMatlEffIrr%Identifier,
