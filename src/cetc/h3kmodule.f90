@@ -4114,19 +4114,19 @@ CONTAINS
       rvEPOWCHREMNodesLoadReal%VariableName = 'CHREM/Site_Bal/NodeBalance/*/load'
       rvEPOWCHREMNodesLoadReal%MetaType = 'units'
       rvEPOWCHREMNodesLoadReal%VariableType = '(W)'
-      rvEPOWCHREMNodesLoadReal%Description = 'Power input of PCU'
+      rvEPOWCHREMNodesLoadReal%Description = 'Load imposed on node'
       Call AddVariable(rvEPOWCHREMNodesLoadReal)
       
       rvEPOWCHREMNodesGenerationReal%VariableName = 'CHREM/Site_Bal/NodeBalance/*/generation'
       rvEPOWCHREMNodesGenerationReal%MetaType = 'units'
       rvEPOWCHREMNodesGenerationReal%VariableType = '(W)'
-      rvEPOWCHREMNodesGenerationReal%Description = 'Power input of PCU'
+      rvEPOWCHREMNodesGenerationReal%Description = 'Generation imposed on node'
       Call AddVariable(rvEPOWCHREMNodesGenerationReal)
       
       rvEPOWCHREMNodesSumReal%VariableName = 'CHREM/Site_Bal/NodeBalance/*/sum'
       rvEPOWCHREMNodesSumReal%MetaType = 'units'
       rvEPOWCHREMNodesSumReal%VariableType = '(W)'
-      rvEPOWCHREMNodesSumReal%Description = 'Power input of PCU'
+      rvEPOWCHREMNodesSumReal%Description = 'Sum of node generation and load'
       Call AddVariable(rvEPOWCHREMNodesSumReal)
 
       !Used by BC_data.F
