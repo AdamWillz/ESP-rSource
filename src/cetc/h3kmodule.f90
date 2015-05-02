@@ -4105,7 +4105,7 @@ CONTAINS
       rvEPOWCHREMpcuINPUT%Description = 'Power input of PCU'
       Call AddVariable(rvEPOWCHREMpcuINPUT)
       
-      rvEPOWCHREMpcuOUTPUT%VariableName = 'CHREM/Site_Bal/PV_PCU/*/power_in'
+      rvEPOWCHREMpcuOUTPUT%VariableName = 'CHREM/Site_Bal/PV_PCU/*/power_out'
       rvEPOWCHREMpcuOUTPUT%MetaType = 'units'
       rvEPOWCHREMpcuOUTPUT%VariableType = '(W)'
       rvEPOWCHREMpcuOUTPUT%Description = 'Power output of PCU'
