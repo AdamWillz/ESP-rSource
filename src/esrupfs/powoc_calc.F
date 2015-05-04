@@ -1385,9 +1385,13 @@ C  x  = fPwrOutput/fNomPower
      &                  4. * fVarA * fVarC ) ) /
      &                  ( 2. * fVarA )
 
+C ADW May 2015: If fXSolve is still negative, it is likely that the power conditioner rated power output is
+C very large in comparison to the input voltage; zero out the output power in this case. This change is based
+C on the original Type 175 from TRNSYS
+             fXSolve = max(fXSolve,0.)  
 
              fPwrOutput = fXSolve * fNomPower
-
+  
              if ( fPwrOutput .gt. fPwrInput ) then    ! Ensures that PCU efficiency is not > 100%
                                                       ! and that power losses are not negative!
                fPwrOutput = fPwrInput
