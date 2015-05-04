@@ -392,8 +392,8 @@ MODULE h3kmodule
       rvTEndUseCHREMEnergyEqt, rvTEndUseCHREMEnergyHRV, rvTEndUseCHREMEnergyUnCat, rvTEndUseCHREMEnergyOther, &
       rvTEndUseCHREMExBill, rvTEndUseCHREMEnergyEnd, rvBldCHREMSPMatlTtlIncTtl, rvBldCHREMSPMatlPVPow, &
       rvBndCndCHREMStpInt,rvBndCndCHREMLnInt, rvTEndUseCHREMEnergyAL, rvEPOWCHREMpcuLOSSES, &
-      rvEPOWCHREMpcuINPUT, rvEPOWCHREMpcuOUTPUT, rvEPOWCHREMNodesSumReal, rvEPOWCHREMNodesLoadReal, &
-      rvEPOWCHREMNodesGenerationReal
+      rvEPOWCHREMpcuINPUT, rvEPOWCHREMpcuOUTPUT, rvEPOWCHREMNodesLoadReal, rvEPOWCHREMNodesNetEx, &
+      rvEPOWCHREMNodesGenerationReal, rvEPOWCHREMNodesNetIm
       
     !Used by CHREM_report_data.F
     Type(ReportVariable) :: rvZNAPAirSens, rvZNAPInfil, rvZNAPAmbVent, rvZNAPZnCpldVent, &
@@ -4114,20 +4114,26 @@ CONTAINS
       rvEPOWCHREMNodesLoadReal%VariableName = 'CHREM/Site_Bal/NodeBalance/*/load'
       rvEPOWCHREMNodesLoadReal%MetaType = 'units'
       rvEPOWCHREMNodesLoadReal%VariableType = '(W)'
-      rvEPOWCHREMNodesLoadReal%Description = 'Load imposed on node'
+      rvEPOWCHREMNodesLoadReal%Description = 'Real load imposed on node'
       Call AddVariable(rvEPOWCHREMNodesLoadReal)
       
       rvEPOWCHREMNodesGenerationReal%VariableName = 'CHREM/Site_Bal/NodeBalance/*/generation'
       rvEPOWCHREMNodesGenerationReal%MetaType = 'units'
       rvEPOWCHREMNodesGenerationReal%VariableType = '(W)'
-      rvEPOWCHREMNodesGenerationReal%Description = 'Generation imposed on node'
+      rvEPOWCHREMNodesGenerationReal%Description = 'Real generation imposed on node'
       Call AddVariable(rvEPOWCHREMNodesGenerationReal)
       
-      rvEPOWCHREMNodesSumReal%VariableName = 'CHREM/Site_Bal/NodeBalance/*/sum'
-      rvEPOWCHREMNodesSumReal%MetaType = 'units'
-      rvEPOWCHREMNodesSumReal%VariableType = '(W)'
-      rvEPOWCHREMNodesSumReal%Description = 'Sum of node generation and load'
-      Call AddVariable(rvEPOWCHREMNodesSumReal)
+      rvEPOWCHREMNodesNetIm%VariableName = 'CHREM/Site_Bal/NodeBalance/*/net_import'
+      rvEPOWCHREMNodesNetIm%MetaType = 'units'
+      rvEPOWCHREMNodesNetIm%VariableType = '(W)'
+      rvEPOWCHREMNodesNetIm%Description = 'Net import of real power'
+      Call AddVariable(rvEPOWCHREMNodesNetIm)
+      
+      rvEPOWCHREMNodesNetEx%VariableName = 'CHREM/Site_Bal/NodeBalance/*/net_export'
+      rvEPOWCHREMNodesNetEx%MetaType = 'units'
+      rvEPOWCHREMNodesNetEx%VariableType = '(W)'
+      rvEPOWCHREMNodesNetEx%Description = 'Net export of real power'
+      Call AddVariable(rvEPOWCHREMNodesNetEx)
 
       !Used by BC_data.F
       rvBndCndCHREMStpInt%VariableName = 'CHREM/BCD/*/step_interpolation'

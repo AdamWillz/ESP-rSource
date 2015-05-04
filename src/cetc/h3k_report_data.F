@@ -3386,6 +3386,7 @@ C.....Counters
       real elec_net_load_calc   ! miscellaneous function that retuns data
                                 ! from electrical network depending on the
                                 ! integer parameter passed to it.
+      real NodalSum
 
       integer iLength
 
@@ -3558,10 +3559,32 @@ C........CHREM node data
      &         penodg(iElec_node),
      &         ENODNAM(iElec_node)(1:12))
 
-         call AddToReport(
-     &         rvEPOWCHREMNodesSumReal%Identifier,
-     &         (penodl(iElec_node)+penodg(iElec_node)),
-     &         ENODNAM(iElec_node)(1:12))
+C........Determine node import and export
+         NodalSum = penodl(iElec_node)+penodg(iElec_node)
+         if (NodalSum >= 0) then ! Net-export
+         
+            call AddToReport(
+     &            rvEPOWCHREMNodesNetEx%Identifier,
+     &            NodalSum,
+     &            ENODNAM(iElec_node)(1:12))
+     
+            call AddToReport(
+     &            rvEPOWCHREMNodesNetIm%Identifier,
+     &            0.,
+     &            ENODNAM(iElec_node)(1:12))
+     
+         else ! Net-import
+
+            call AddToReport(
+     &            rvEPOWCHREMNodesNetEx%Identifier,
+     &            0.,
+     &            ENODNAM(iElec_node)(1:12))
+     
+            call AddToReport(
+     &            rvEPOWCHREMNodesNetIm%Identifier,
+     &            abs(NodalSum),
+     &            ENODNAM(iElec_node)(1:12))
+         endif
 
       enddo
 
