@@ -156,7 +156,9 @@ C	endif
         
 
       enddo fuel_loop
-
+C ADW June 2015: Call new subroutine to perform electrical grid balance
+C TODO: better way to link ideal HVAC electrical loads to electrical network
+      CALL CHREM_Grid_Balance
       return
       end
 
@@ -2149,5 +2151,71 @@ C...........Calculate present 'real' day -> day number
 
         END IF
 
+      return
+      end
+C=CHREM_Grid_Balance====================================================
+C
+C ABSTRACT:
+C
+C ConvertEnergyToFuel converts the total energy use associated with a given
+C fuel into a standard unit of measure, based on the fuel's calorific
+C value.
+C
+C=======================================================================
+      subroutine CHREM_Grid_Balance()
+      use h3kmodule
+      implicit none
+#include "building.h"
+#include "plant.h"
+#include "power.h"
+#include "OffsiteUtilitiesPublic.h"
+#include "OffsiteUtilitiesPrivate.h"
+
+C---------------------------------------------------------------------------------
+C     global variables
+C---------------------------------------------------------------------------------
+C     penodg - present node generation [W]
+C     fTotalEnergyUse( iElectricity ) - total site electrical consumption [W]
+
+C---------------------------------------------------------------------------------
+C     local variables
+C---------------------------------------------------------------------------------
+C.....Counters
+      integer iElec_node
+      real NodalSum
+
+      do iElec_node = 1, nenod
+C........Only perform balance on main house AC bus in CHREM
+         if (ENODNAM(iElec_node) == 'V_node_1') then 
+C...........Determine node import and export
+            NodalSum = (-1*fTotalEnergyUse( iElectricity ))
+     &                  +penodg(iElec_node)
+            if (NodalSum >= 0) then ! Net-export
+         
+                call AddToReport(
+     &                rvEPOWCHREMNodesNetEx%Identifier,
+     &                NodalSum,
+     &                ENODNAM(iElec_node)(1:12))
+        
+                call AddToReport(
+     &                rvEPOWCHREMNodesNetIm%Identifier,
+     &                0.,
+     &                ENODNAM(iElec_node)(1:12))
+        
+            else ! Net-import
+    
+                call AddToReport(
+     &               rvEPOWCHREMNodesNetEx%Identifier,
+     &               0.,
+     &               ENODNAM(iElec_node)(1:12))
+        
+                call AddToReport(
+     &               rvEPOWCHREMNodesNetIm%Identifier,
+     &               abs(NodalSum),
+     &               ENODNAM(iElec_node)(1:12))
+            endif
+         endif
+      enddo
+      
       return
       end

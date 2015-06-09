@@ -3559,32 +3559,32 @@ C........CHREM node data
      &         penodg(iElec_node),
      &         ENODNAM(iElec_node)(1:12))
 
-C........Determine node import and export
-         NodalSum = penodl(iElec_node)+penodg(iElec_node)
-         if (NodalSum >= 0) then ! Net-export
-         
-            call AddToReport(
-     &            rvEPOWCHREMNodesNetEx%Identifier,
-     &            NodalSum,
-     &            ENODNAM(iElec_node)(1:12))
-     
-            call AddToReport(
-     &            rvEPOWCHREMNodesNetIm%Identifier,
-     &            0.,
-     &            ENODNAM(iElec_node)(1:12))
-     
-         else ! Net-import
-
-            call AddToReport(
-     &            rvEPOWCHREMNodesNetEx%Identifier,
-     &            0.,
-     &            ENODNAM(iElec_node)(1:12))
-     
-            call AddToReport(
-     &            rvEPOWCHREMNodesNetIm%Identifier,
-     &            abs(NodalSum),
-     &            ENODNAM(iElec_node)(1:12))
-         endif
+CC........Determine node import and export
+C         NodalSum = penodl(iElec_node)+penodg(iElec_node)
+C         if (NodalSum >= 0) then ! Net-export
+C         
+C            call AddToReport(
+C     &            rvEPOWCHREMNodesNetEx%Identifier,
+C     &            NodalSum,
+C     &            ENODNAM(iElec_node)(1:12))
+C     
+C            call AddToReport(
+C     &            rvEPOWCHREMNodesNetIm%Identifier,
+C     &            0.,
+C     &            ENODNAM(iElec_node)(1:12))
+C     
+C         else ! Net-import
+C
+C            call AddToReport(
+C     &            rvEPOWCHREMNodesNetEx%Identifier,
+C     &            0.,
+C     &            ENODNAM(iElec_node)(1:12))
+C     
+C            call AddToReport(
+C     &            rvEPOWCHREMNodesNetIm%Identifier,
+C     &            abs(NodalSum),
+C     &            ENODNAM(iElec_node)(1:12))
+C         endif
 
       enddo
 
