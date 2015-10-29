@@ -245,7 +245,7 @@ C     Flag indicating if radiant floor is active, number of radiant floors, indi
       LOGICAL RadFloor_active
       INTEGER NRadFloor
       INTEGER IRadFloor(MPCOM), InitRadFloor(MPCOM)
-      INTEGER irf
+      INTEGER irf, InsulationLayer
 C----------------------------------------------------------------------
 C     Trace output
       IF(ITC.GT.0.AND.NSINC.GE.ITC.AND.NSINC.LE.ITCF.AND.
@@ -301,7 +301,10 @@ C     Zone surface No.
 
 C     Surface injection node No.
       In = INT( ADATA(IPCOMP,9) )
-
+      
+C     Layer of insulation
+      InsulationLayer = ADATA(IPCOMP,10)  
+      
 C     Area of the radiant surface
       AreaR   = SNA(Iz, Is)
 
@@ -337,8 +340,9 @@ C     Layer specific heat
          SHT  = THRMLI(Iz,Is,J,3)
 C     Layer thickness
          THKL = THRMLI(Iz,Is,J,4)
-
-         THKC = THKC + THKL
+         IF(J .GT. InsulationLayer) THEN
+            THKC = THKC + THKL
+         ENDIF
 
 C     Find the resistance of the air gap associated with layer J.
          IF(NairGap .GT. 0 .AND. THRMLI(Iz,Is,J,1) .LT. Small)THEN
@@ -356,8 +360,10 @@ C     Find the resistance of the air gap associated with layer J.
             IF(In .EQ. Ncentr  ) Xqc = THKC - THKL/2.
             IF(In .EQ. Ncentr-1) Xqc = THKC - THKL
          ENDIF
-         AKslab  = AKslab  + COND*THKL
-         RCPslab = RCPslab + DENS*SHT*THKL
+         IF(J .GT. InsulationLayer) THEN
+            AKslab  = AKslab  + COND*THKL
+            RCPslab = RCPslab + DENS*SHT*THKL
+         ENDIF
  11   CONTINUE
 
 C     average thermal conductivity, diffusivity and volumetric
