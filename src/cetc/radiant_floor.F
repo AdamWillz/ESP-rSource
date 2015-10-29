@@ -352,7 +352,7 @@ C     Layer specific heat
          SHT  = THRMLI(Iz,Is,J,3)
 C     Layer thickness
          THKL = THRMLI(Iz,Is,J,4)
-         IF(J .GT. InsulationLayer) THEN
+         IF(J .GT. InsulationLayer .OR. InsulationLayer .EQ. 0) THEN
             THKC = THKC + THKL
          ENDIF
 
@@ -372,7 +372,7 @@ C     Find the resistance of the air gap associated with layer J.
             IF(In .EQ. Ncentr  ) Xqc = THKC - THKL/2.
             IF(In .EQ. Ncentr-1) Xqc = THKC - THKL
          ENDIF
-         IF(J .GT. InsulationLayer) THEN
+         IF(J .GT. InsulationLayer .OR. InsulationLayer .EQ. 0) THEN
             AKslab  = AKslab  + COND*THKL
             RCPslab = RCPslab + DENS*SHT*THKL
          ENDIF
