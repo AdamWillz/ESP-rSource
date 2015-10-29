@@ -217,8 +217,8 @@ C     Parameters and common variables related to this component ----------------
 C     The common block should also be included in the MZNASS subroutine
 C     (found in ESRUPLT/PMATRX.F)to store present time values of some variables
 
-      PARAMETER (Nmax = 20, ITmax = 100, PI=3.1415926535, PI2=0.5*PI)
-      PARAMETER (Relax = 1.0, Tol = 1.E-6, TolF = 1.E-3, Small = 1.E-15)
+      PARAMETER (Nmax = 20, PI=3.1415926535, PI2=0.5*PI)
+      PARAMETER (Tol = 1.E-6, TolF = 1.E-3, Small = 1.E-15)
       COMMON /RHC/Acof(MPCOM,Nmax,Nmax),Fcof(MPCOM,Nmax,Nmax),
      &     Fcofp(MPCOM,Nmax,Nmax),ConAf(MPCOM),ConBf(MPCOM),
      &     ConDf(MPCOM),ConAp(MPCOM),ConBp(MPCOM),
@@ -246,6 +246,12 @@ C     Flag indicating if radiant floor is active, number of radiant floors, indi
       INTEGER NRadFloor
       INTEGER IRadFloor(MPCOM), InitRadFloor(MPCOM)
       INTEGER irf, InsulationLayer
+C----------------------------------------------------------------------
+C     Declaration of additional parameters
+C     Max number iterations
+      INTEGER ITmax
+C     Relaxation factor     
+      REAL    Relax
 C----------------------------------------------------------------------
 C     Trace output
       IF(ITC.GT.0.AND.NSINC.GE.ITC.AND.NSINC.LE.ITCF.AND.
@@ -303,7 +309,13 @@ C     Surface injection node No.
       In = INT( ADATA(IPCOMP,9) )
       
 C     Layer of insulation
-      InsulationLayer = ADATA(IPCOMP,10)  
+      InsulationLayer = ADATA(IPCOMP,10)
+
+C     Relaxation factor
+      Relax = ADATA(IPCOMP,11)
+     
+C     Number of model iterations
+      ITmax = INT( ADATA(IPCOMP,12) )
       
 C     Area of the radiant surface
       AreaR   = SNA(Iz, Is)
