@@ -233,8 +233,7 @@ C     (found in ESRUPLT/PMATRX.F)to store present time values of some variables
      &     ConDf(MPCOM),ConAp(MPCOM),ConBp(MPCOM),
      &     ConDp(MPCOM), TetaMf(MPCOM), TetaMp(MPCOM),
      &     Tpipef(MPCOM), Tpipep(MPCOM)
-      REAL    COUT(MPCOE), J11, J12, J21, J22, Relax
-      INTEGER ITmax
+      REAL    COUT(MPCOE), J11, J12, J21, J22
       
       COMMON/GR1D01/NNDS,NNDZ(MCOM),NNDC(MCOM,MS),NNDL(MCOM,MS,ME)
 
