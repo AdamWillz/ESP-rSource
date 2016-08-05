@@ -79,8 +79,10 @@ c Variable passed in call
       COMMON/FILEP/IFIL
       COMMON/ER/IER
       COMMON/OUTIN/IUOUT,IUIN
+      COMMON/hvacinfo/ihvacflag
 
       INTEGER IUNIT,IFIL,k,IER,ND,ival,i,ISTAT,IUOUT, IUIN
+      INTEGER :: ihvacflag
       REAL val
 
 c Define the characters variables associated with the utility
@@ -98,9 +100,16 @@ c Read the total number of HVAC systems serving the various zones in
 c the building
       k = 0
       CALL STRIPC(IUNIT,OUTSTR,99,ND,1,'hvac data',IER)
-      CALL EGETWI(OUTSTR,K,ival,1,10,'F',
+      CALL EGETWI(OUTSTR,K,ival,0,10,'F',
      &'hvac data: num_hvac_sys',IER)
       num_hvac_sys=ival
+c if the number of hvac systems is less than zero, set flag to 0 and
+c return
+      if(num_hvac_sys<1) then
+          ihvacflag = 0
+          return
+      endif
+      
 c Read site altitude
       CALL EGETWR(OUTSTR,K,val,0.,10000.,'F',
      &'hvac input: site_altitude',IER)
