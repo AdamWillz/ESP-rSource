@@ -156,7 +156,8 @@ c Electricity and SOLAR do not have a flue so it is set to Zero.
       END SELECT
       IF (iFuelType.eq.ELECTRICITY
      &    .OR.
-     &    iFuelType.eq.SOLAR) THEN
+     &    iFuelType.eq.SOLAR .OR.
+     &    iFuelType.eq.FICTICIOUS ) THEN
 
       fDHW_FlueGasLossFactor = 0.0
       ENDIF
@@ -689,6 +690,11 @@ c Portion of Pilot energy that is transmitted to room.
      &    + fDHW_PipeLosses()
      &    + fDHW_PilotEnergyToRoom()
      &    - fHPRoomLoad
+     
+      elseif (iTankType ==  Ficticious_DHW) then
+c No losses to zone for `fictitious' tank type        
+        fDHW_EnergyToZone = 0.0
+        
       else 
       
         fDHW_EnergyToZone =
@@ -917,6 +923,9 @@ C      REAL   fAlpha
 
       CASE (Elec_Conserver_tank)
         fDHW_DOEEFTank = 1.-fDOEEF
+
+      CASE (Ficticious_DHW)
+       fDHW_DOEEFTank = 1.
       END SELECT
       fEFTank = fDHW_DOEEFTank
       END
@@ -966,6 +975,9 @@ c----56--1---------2---------3---------4---------5---------6---------7---------8
       fDHW_StandbyTankLosses = 0.0
 
       CASE (Elec_Instantaneous)
+      fDHW_StandbyTankLosses = 0.0
+      
+      CASE (Ficticious_DHW)
       fDHW_StandbyTankLosses = 0.0
 
       CASE DEFAULT
@@ -1243,7 +1255,7 @@ c----56--1---------2---------3---------4---------5---------6---------7---------8
 
 c Local variables
       SELECT CASE (iFuelType)
-      CASE (ELECTRICITY,SOLAR)
+      CASE (ELECTRICITY,SOLAR,FICTICIOUS)
         fDHW_FlueLosses = 0.0
       CASE (OIL,NATURALGAS,WOOD,PROPANE)
         fDHW_FlueLosses = (fDHW_EnergyInputWater()
@@ -1806,7 +1818,7 @@ C Read  DHW type.
         endif
 
         if(.not. error_flag) then
-          CALL EGETWI(OUTSTR,K,IVAL,1,6,'F',' DHW type ',IER)
+          CALL EGETWI(OUTSTR,K,IVAL,1,7,'F',' DHW type ',IER)
           if(IER.NE.0)then
             call edisp(IUOUT,' Cannot read DHW type.')
             error_flag = .true.
@@ -1822,7 +1834,7 @@ C Read  DHW Tank type.
         endif
 
         if(.not. error_flag) then
-          CALL EGETWI(OUTSTR,K,IVAL,1,20,'F',' DHW tanktype ',IER)
+          CALL EGETWI(OUTSTR,K,IVAL,1,21,'F',' DHW tanktype ',IER)
           if(IER.NE.0)then
             call edisp(IUOUT,' Cannot read DHW Tank type.')
             error_flag = .true.
@@ -2163,13 +2175,17 @@ C=======================================================================
       use h3kmodule
       implicit none
 #include "dhw_common.h"
+#include "dhw_parameters.h"
 #include "OffsiteUtilitiesPublic.h"
 #include "h3k_report_data.h"
 
 C.....Store energy requirement in site-utilities facility storage
 C.....array. (W)
-      fSUFuelEnergyUse( iFuelType, iUseDHW ) =
-     &    fDHW_H3K_energy_requirement(2)
+      if (iFuelType .NE. FICTICIOUS) then
+        fSUFuelEnergyUse( iFuelType, iUseDHW ) =
+     &      fDHW_H3K_energy_requirement(2)
+      END IF
+        
 C.....Pass data to storage facility.
       call StoreSiteEnergyUse(iIdealDHW, fSUFuelEnergyUse )
 

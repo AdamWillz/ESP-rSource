@@ -22,6 +22,8 @@
       PARAMETER ( WOOD =5 )
       INTEGER SOLAR
       PARAMETER ( SOLAR =6 )
+      INTEGER FICTICIOUS
+      PARAMETER ( FICTICIOUS =7 )
 
 !Tank Type (propane,Gas)
       INTEGER Conventional_tank
@@ -68,6 +70,9 @@
 !TankType  (Solar)
       INTEGER Solar_Collector_System
       PARAMETER ( Solar_Collector_System = 20 )
+!Tank Type  (Ficticious)
+      INTEGER Ficticious_DHW
+      PARAMETER ( Ficticious_DHW = 21 )
       
 
 
