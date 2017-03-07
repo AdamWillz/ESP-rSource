@@ -1741,6 +1741,13 @@ C Add to VN the normalised VC.
         VN(2)=VN(2)+VC(2)
         VN(3)=VN(3)+VC(3)
  30   continue
+ 
+C ADW: Mar 2017, Some values of VN are really small. As a temporary fix, set to 0
+      do 88 I=1,3
+         if(abs(VN(I))<1e-20)then
+            VN(I)=0
+         endif
+ 88   continue
 
 C Make the surface normal of unit length and build EQN from VN.
       SNORM=0.
