@@ -767,7 +767,7 @@ C Use file unit IAPROB to read db.
         endif
       else
         write(currentfile,'(a)') lfmul(1:lnblnk(lfmul))
-c        CALL ERMLDB(0,iuout,IER)
+        CALL ERMLDB(0,iuout,IER)
         if(IER.NE.0)then
           outs='Problem during reading of construction database.'
           if(dll)then
