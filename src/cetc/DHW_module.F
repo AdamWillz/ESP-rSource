@@ -1433,8 +1433,13 @@ c----56--1---------2---------3---------4---------5---------6---------7---------8
 #include "dhw_common.h"
 #include "ground_temp_mains_common.h"
 
+C TFA(MCOM),           ! zone future temperatures
+      common/FVALA/TFA(MCOM),QFA(MCOM)
+      real tfa, qfa
+
 C Note this should be changed to the zone temperature that  the tank is in.
-      fRoomTemp = 20.0
+C      fRoomTemp = 20.0
+      fRoomTemp = tfa(iDHWZoneLocation)
 
       RETURN
 
