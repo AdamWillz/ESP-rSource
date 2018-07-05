@@ -1806,7 +1806,7 @@ c --- 27-08-2014: Patrice Pinel: Added a parameter to the mechanical ventilation
           !CALL MECH_VENT_CONTROL(ICOMP,ZONE_mechvent_cond) ! Conductance of mech vent returned.
           CALL MECH_VENT_CONTROL(ICOMP,ZONE_mechvent_cond, 
      &                           ZONE_mechvent_moistFlow,
-     $                           ZONE_mechvent_airFlow)
+     &                           ZONE_mechvent_airFlow)
           CVIF = CVIF + ZONE_mechvent_cond
         ENDIF
 
