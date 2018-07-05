@@ -3592,9 +3592,10 @@ C exists and what it points to.
 C Check to see if this connection only pointed to once in the whole list.
               dup=.false.
               do 291 i2=1,NCON
-                if(IC2(i2).eq.IC1(i).and.IE2(i2).eq.IE1(i))then
+                if(IC2(i2).eq.IC1(i).and.IE2(i2).eq.IE1(i).and.
+     &          ICT(i2).eq.3)then
                   if(.NOT.dup)then
-                    if(ICT(i2).eq.3)dup=.true.
+                    dup=.true.
                   else
                     prob=.true.
                   endif
