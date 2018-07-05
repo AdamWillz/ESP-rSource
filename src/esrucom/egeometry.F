@@ -4702,6 +4702,10 @@ C the same as computed above.
    63   vdx=SSUREQN(icc,1)
         vdy=SSUREQN(icc,2)
         vdz=SSUREQN(icc,3)
+C Reset the values to 0 if they are very small
+        if(abs(vdx)<1.0E-12) vdx = 0.0
+        if(abs(vdy)<1.0E-12) vdy = 0.0
+        if(abs(vdz)<1.0E-12) vdz = 0.0
         call UV2AZ(vdx,vdy,vdz,uazim,uelev)
         call eclose(uazim,SSPAZI(icc),0.001,closeaz)
         call eclose(uelev,SSPELV(icc),0.001,closeel)
