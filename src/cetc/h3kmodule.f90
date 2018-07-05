@@ -361,7 +361,10 @@ MODULE h3kmodule
          rvpltFCellFuelHHV,rvpltFCellElecEffBOP,rvpltFCellCogenEff,rvpltFCellFuelFlw
 
    Type(ReportVariable) :: rvBldInfAirInf,rvBldInfAirChg
-   
+
+   !Used by radiant_floor.F
+   Type(ReportVariable) :: rvpltRadFloorTmin,rvpltRadFloorTmax,rvpltRadFloorInj 
+
    !Used by TCC.F
    Type(ReportVariable) :: rvpltCosimInvocations, rvpltCosimEsprIter,rvpltCosimTrnsysIter,rvpltHCCTempToTrnsys, &
       rvpltHCCFlowToTrnsys, rvpltACCTempToTrnsys, rvpltACCFlowToTrnsys, rvpltACCMoistFlowToTrnsys, &
@@ -4157,6 +4160,25 @@ CONTAINS
       rvBldInfAirChg%VariableType = '(ACH)'
       rvBldInfAirChg%Description = ''
       Call AddVariable(rvBldInfAirChg)
+
+      !Used by radiant_floor.F
+      rvpltRadFloorTmin%VariableName = 'plant/*/T_min'
+      rvpltRadFloorTmin%MetaType = 'units'
+      rvpltRadFloorTmin%VariableType = '(oC)'
+      rvpltRadFloorTmin%Description = 'Minimum inside surface temperature'
+      Call AddVariable(rvpltRadFloorTmin)
+      
+      rvpltRadFloorTmax%VariableName = 'plant/*/T_max'
+      rvpltRadFloorTmax%MetaType = 'units'
+      rvpltRadFloorTmax%VariableType = '(oC)'
+      rvpltRadFloorTmax%Description = 'Maximum inside surface temperature'
+      Call AddVariable(rvpltRadFloorTmax)
+      
+      rvpltRadFloorInj%VariableName = 'plant/*/Q_inj'
+      rvpltRadFloorInj%MetaType = 'units'
+      rvpltRadFloorInj%VariableType = '(W)'
+      rvpltRadFloorInj%Description = 'Flux injected to node'
+      Call AddVariable(rvpltRadFloorInj)  
 
       !Used by TCC.F
       rvpltCosimInvocations%VariableName = 'plant/co-sim/Invocations'

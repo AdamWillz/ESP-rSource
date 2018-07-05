@@ -164,8 +164,13 @@ C     this let to an unbearable computing time in copy routine.
 C     the routine now applies the computed flux to the linked zone structure too, so a radiant floor affects not only the 
 C     actual zone but also the linked zone.
       SUBROUTINE RadFloor_CoeffGen(IPCOMP,COUT,ISTATS)
+      use h3kmodule
 #include "plant.h"
 #include "building.h"
+
+C External functions------------------------------------------------
+      integer lnblnk
+C ------------------------------------------------------------------ 
 
       COMMON/OUTIN/IUOUT,IUIN
       COMMON/TC/ITC,ICNT
@@ -195,6 +200,10 @@ C     actual zone but also the linked zone.
       COMMON/PCRES/QDATA(MPCOM),PCAOUT(MPCOM,MPCRES),NAPDAT(MPCOM)
       REAL QDATA,PCAOUT
       INTEGER napdat
+      
+C Plant component ASCII names.
+      common/pcnam/pcname(mpcom)
+      character*15 pcname        ! Plant component names
 
 C     building construction common block data
       COMMON/C6/INDCFG
@@ -237,6 +246,10 @@ C logical value to assess if the zone has a coupled zone
       logical bCoupled_Zone
 
       character outs*124
+      
+C Variables used for reporting
+
+      INTEGER iNameLength        ! Used for the reporting
 C----------------------------------------------------------------------
 C     Flag indicating if radiant floor is active, number of radiant floors, indirect index for radiant_floor component
       COMMON/RadFloor/RadFloor_active, NRadFloor, IRadFloor,
@@ -686,6 +699,26 @@ C     2nd phase mass (ie. vapour) balance coefficients
                COUT(2)=0.
                COUT(3)=0.
             END IF
+            
+C---------------------------------------------------------------------------------
+C Make select results available in XML and CVS output.
+C---------------------------------------------------------------------------------
+
+         iNameLength = lnblnk(pcname(IPCOMP))
+      
+         call AddToReport(rvpltRadFloorTmin%Identifier,
+     &           Tmin,
+     &           pcname(IPCOMP)(1:iNameLength))  
+         
+         call AddToReport(rvpltRadFloorTmax%Identifier,
+     &           Tmax,
+     &           pcname(IPCOMP)(1:iNameLength))
+     
+         call AddToReport(rvpltRadFloorInj%Identifier,
+     &           Qnode,
+     &           pcname(IPCOMP)(1:iNameLength)) 
+     
+C---------------------------------------------------------------------------------- 
 
 C     Trace output
             IF(ITC.GT.0.AND.NSINC.GE.ITC.AND.NSINC.LE.ITCF.AND.
