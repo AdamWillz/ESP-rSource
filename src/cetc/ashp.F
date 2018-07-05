@@ -185,6 +185,11 @@ c temperature
       endif
 c GCEP (end)
 
+C Restrict the capacity calculation from providing a negative value
+C as this causes inappropriate PLR values
+      if (ss_heat_pump_cap<0) ss_heat_pump_cap=1
+	  
+
 C Save actual capacity of heat-pump system
       fH3KActualCapacity(iSYS) = ss_heat_pump_cap
 
