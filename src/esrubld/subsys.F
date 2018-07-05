@@ -1281,7 +1281,7 @@ c      real rTempnotioOverheat
 C      CHARACTER*2   cZone_Chars ! Padded zone number (two digits)
       
 C Logical flags for indicating which air flow model is in use.      
-      logical :: bOPR, bAFN, bAIM2, bNoFlow
+      logical :: bOPR, bAFN, bAIM2, bNoFlow, bAFNInfil
       
 C      Used to check if windows are open or not for AIM
       LOGICAL AreWindowsOpen
@@ -1667,14 +1667,22 @@ C to the above priority table.
         bOPR    = .false. 
         bNoFlow = .false. 
         
+        if (fAfnCondInfil(iComp) == 0.) then
+		! No infiltration is being calculated by the AFN
+            bAFNInfil = .false.
+        else
+		! There is infiltration for the zone calculated by the AFN
+            bAFNInfil = .true.
+        endif	
+        
         CheckAirflowMethod: select case (iAirFlowModel(iComp)) 
         
           case ( iAIM2model )
             ! Make sure AIM2 model is defined: otherwise revert to 
             ! afn/opr
-            if ( iAIM2 == 1 .and. .not. AreWindowsOpen(iComp) ) then
+            if ( iAIM2 == 1 .and. .not. bAFNInfil ) then
               bAIM2 = .true. 
-            elseif ( bAfnZoneActive(iComp) ) then
+            elseif ( bAfnZoneActive(iComp) .and. bAFNInfil) then
               bAFN = .true. 
             else
               bOPR = .true. 
@@ -1683,7 +1691,7 @@ C to the above priority table.
           case ( iFlowNetwork ) 
             ! Make sure air-flow network is active for this zone, 
             ! otherwise revert to aim2/opr.
-            if ( bAfnZoneActive(iComp) ) then 
+            if (bAfnZoneActive(iComp) .and. bAFNInfil) then 
               bAfn = .true. 
             elseif ( iAIM2 == 1 ) then 
               bAIM2 = .true. 
@@ -1826,7 +1834,7 @@ C where conductances are initially calculated for the bOPR and bAIM2 cases.
         IF(znotair(ICOMP))xmod=cvother/cvair  ! zone is not air filled
 
 C Computation of ventilation depends on wether the air flow network is active.      
-        AssignVent: if ( bAFN ) then 
+        AssignVent: if ( fAfnCondVent(iComp) /= 0. ) then 
 
 C Collect data from air flow module.
 
@@ -1837,7 +1845,7 @@ C are taken into account in the mfs module.
           ICF = iAfnIndex(iComp)
           TAF = fAfnCondNorm(iComp)
 
-        elseif ( bOPR .or. bAIM2 ) then 
+        else
 
 C Impose computed conductance for scheduled ventilation for .opr or 
 C .aim2 case. 
@@ -1936,14 +1944,23 @@ C         mass flow rate and moisture content; 3= product of
 C         mechanical system mass flow rate and moisture content;
 C         4= total mass flow rate lost from the zone (no moisture
 C         included).
-      MoistureByMethod: IF( bAFN ) THEN
+      MoistureByMethod: IF( bAFN .and. bAFNInfil ) THEN
 C........Read moisture balance data from air-flow network.
-         ZMBI(ICOMP,1) = fZoneMassBalance(ICOMP,1)
+         IF( iMech.eq.1) THEN
+C...........Include moisture from ventilation system        
+            ZMBI(ICOMP,1) = fZoneMassBalance(ICOMP,1)
+     &                      + ZONE_mechvent_moistFlow
+            ZMBI(ICOMP,4) = fZoneMassBalance(ICOMP,4)
+     &                      + ZONE_mechvent_airFlow
+         ELSE
+C...........No mechanical ventilation file
+            ZMBI(ICOMP,1) = fZoneMassBalance(ICOMP,1)
+            ZMBI(ICOMP,4) = fZoneMassBalance(ICOMP,4)
+         ENDIF
          ZMBI(ICOMP,2) = fZoneMassBalance(ICOMP,2)
          ZMBI(ICOMP,3) = fZoneMassBalance(ICOMP,3)
-         ZMBI(ICOMP,4) = fZoneMassBalance(ICOMP,4)    
       else 
-C No air-flow network. Establish air and moisture balance based
+C No air-flow network infiltration. Establish air and moisture balance based
 C on infiltration.  First initialize if there is no flow network or 
 C no node in the current zone.
 
@@ -1965,7 +1982,13 @@ c --- 27-08-2014: Patrice Pinel: This is the flow rate of dry air coming out of 
 
 C Check zone coupled ventilation, If no zone coupled ventilation
 C reset ZCVENT.
-         IF(ICF.GT.0) THEN
+         IF ( fAfnCondVent(iComp) /= 0. ) THEN
+C........Read moisture balance data from air-flow network and discard .opr data.
+            ZMBI(ICOMP,2) = fZoneMassBalance(ICOMP,2)
+            ZMBI(ICOMP,3) = fZoneMassBalance(ICOMP,3)
+            ZMBI(ICOMP,4)=ZMBI(ICOMP,4)+fZoneMassBalance(ICOMP,4)
+         ELSE IF(ICF.GT.0) THEN
+		 ! Only consider moisture contribution from .OPR
            ZMBI(ICOMP,2)=CVVF/1006.
            ZCVENT(ICOMP)=ZMBI(ICOMP,2)
            ZMBI(ICOMP,4)=ZMBI(ICOMP,4)+ZMBI(ICOMP,2)
@@ -1976,7 +1999,7 @@ C reset ZCVENT.
       ENDIF MoistureByMethod
 
 C Modify to relate to outside temperature.
-      IF( bAFN )THEN
+      IF( fAfnCondVent(iComp) /= 0. )THEN
 
 C In the case of a flow network.
         XX=TF
