@@ -198,11 +198,16 @@ C.........Source code version:
 C............' - Source:    BRANCH @ rXYZ (modified state)'
           
         if ( bVersioned ) then 
-            
+
+          write (cTemp_a,'(4A)') 
+     &      "  git origin -       ",
+     &      cSource(1:lnblnk(cSource))
+          call edisp(iuout,cTemp_a)
+
           write (cTemp_a,'(5A)') 
-     &      "  SVN source -       ",
+     &      "  git branch -       ",
      &      cBranch(1:lnblnk(cBranch)), 
-     &      "@r",
+     &      ", SHA1: ",
      &      cRevision(1:lnblnk(cRevision))
   
           if ( bModified ) then
@@ -212,12 +217,14 @@ C............' - Source:    BRANCH @ rXYZ (modified state)'
             write (cTemp_a,'(2A)') cTemp_a(1:lnblnk(cTemp_a)),
      &        " (unmodified)"
           endif
+          call edisp(iuout,cTemp_a)   
         
         else
            write (cTemp_a,'(A)') 
-     &       "  SVN source -       UNKNOWN"
+     &       "      source -       UNKNOWN"
+           call edisp(iuout,cTemp_a)   
         endif 
-        call edisp(iuout,cTemp_a)      
+C        call edisp(iuout,cTemp_a)      
           
 C.........Build Platform (e.g.: i686:LINUX:2.6.9-gentoo-r1)
         write (cTemp_a,'(6A)')   "  Platform -         ",

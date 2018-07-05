@@ -1865,7 +1865,7 @@ else
 
 fi    
  
-echo -n "${VersioningScheme})..."
+echo "${VersioningScheme})..."
  
  
  # Ensure that build information is always recompiled into
@@ -1903,7 +1903,24 @@ echo -n "${VersioningScheme})..."
    
       # Add code here.
       versioned_repository="yes"
-      echo " "
+      state=localMods
+      revision_number=`git log --pretty=format:'%h' -n 1`
+      branch_name=`git rev-parse --abbrev-ref HEAD`
+      URL=`git config --get remote.origin.url`
+      source=$(echo $URL| cut -d'/' -f 4)
+# Make sure there are no local commits      
+      NotUpToDate=`git status 2>&1 | grep "Your branch is up-to-date with"`
+      
+      if [ "${NotUpToDate}" != "" ]; then 
+# No local commits, check for local modifications
+         NoLocalMods=`git status 2>&1 | grep "modified:"`
+            if [ "${NoLocalMods}" == "" ]; then
+               state=Vanilla
+            fi
+      fi
+      echo "          Remote: ${URL}"
+      echo "          Branch: ${branch_name}"
+      echo "          SHA1: ${revision_number}"
    
  fi 
 
