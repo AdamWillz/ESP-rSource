@@ -1365,8 +1365,10 @@ C get net power at sending node
 
           if ( bPower_Zero ) then
 
+C ADW May 2015: In Type 175 in TRNSYS, if there is no power input, all outputs are set to zero
 C no power input, calculate idling losses
-             fPwrOutput = -1. * fIdleConst * fNomPower      ! losses are a load, -ve
+C             fPwrOutput = -1. * fIdleConst * fNomPower      ! losses are a load, -ve
+             fPwrOutput = 0.
 
           elseif ( iOpMode .eq. iConnPwrSource ) then
 
