@@ -23,7 +23,7 @@ default: $(PROG)
 	$(MCC) $(FFLAGS) -c $<
 
 
-MODULE_OBJECTS = h3kmodule.o aim2_module.o
+MODULE_OBJECTS = h3kmodule.o aim2_module.o CFC_Module.o
 
 OBJECTS = jdbm.o ascii_mat.o basesimp.o basesimp_inputs.o bscoeff.o bscoeff_extended.o \
 	bcffile.o c2fdum.o ctlexp.o ctread.o dbmedit.o dossupport.o edprof.o \
@@ -36,7 +36,7 @@ OBJECTS = jdbm.o ascii_mat.o basesimp.o basesimp_inputs.o bscoeff.o bscoeff_exte
 
 
 MODULES = aim2.mod aim2_calcdata.mod aim2_h2k_dummy.mod aim2_inputdata.mod \
-          h3kmodule.mod
+          h3kmodule.mod CFC_Module.mod
 
 $(PROG) : $(MODULE_OBJECTS) $(OBJECTS)
 	$(MFC) $(FFLAGS) -o $(PROG) $(FFLAGS) $(MODULE_OBJECTS) $(OBJECTS) $(ULIBS)
@@ -68,6 +68,9 @@ CDBCommon.F:
 CDBExplore.F:
 	rm -f CDBExplore.F
 	ln -s $(CDBdir)/CDBExplore.F .
+CFC_Module.f90:
+	rm -f CFC_Module.f90
+	ln -s $(BLDdir)/CFC_Module.f90 .
 c2fdum.F:
 	rm -f c2fdum.F
 	ln -s $(COMdir)/c2fdum.F .
@@ -142,7 +145,7 @@ clean :
 	c2fdum.F ctlexp.F ctread.F dossupport.F edatabase.F \
 	egeometry.F emfnetw.F emkcfgg.F eroper.F esru_misc.F filelist.F item.F mfcdat.F nwkrewr.F \
 	pltcfg.F sort.F tdfile.F readTrnsys.F h3kmodule.f90 \
-	FMIcom.F
+	FMIcom.F CFC_Module.f90
 
 distclean: clean
 

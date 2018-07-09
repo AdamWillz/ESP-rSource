@@ -677,71 +677,73 @@ C code from esruprj/eddb.F subroutine opendb.
           endif
         endif
       ENDIF
-
-      IF(.NOT.CFCDBOK)THEN
-  57    write(currentfile,'(a)') LCFCDB(1:lnblnk(LCFCDB))
-
-        if(ipathcfc.eq.0.or.ipathcfc.eq.1)then
-          ier=0
-          call EFOPRAN(ICFCDB,LCFCDB,40,1,IER)
-        elseif(ipathcfc.eq.2)then
-          ier=0
-          lndbp=lnblnk(standarddbpath)
-          write(lworking,'(3a)') standarddbpath(1:lndbp),fs,
-     &      LCFCDB(1:lnblnk(LCFCDB))
-          call EFOPRAN(ICFCDB,lworking,40,1,IER)
-        endif
-
-        if(ier.ne.0)then
-C Database was not found, or file could not be read.
-          if(dll)then
-            dllsubr='mzinpt'
-            dllmesg='Problem opening CFClayers database.'
-            ier=2
-            return
-
-C In interactive mode, prompt user for new database.
-          elseif ( .not. autook ) then
-
-            IER=0
-            helptopic='CFClayers_db_not_found'
-            call gethelptext(helpinsub,helptopic,nbhelp)
-            write(lltmp,'(a)') LCFCDB(1:lnblnk(LCFCDB))
-  58        CALL EASKS(lltmp,' CFClayers database? ',
-     &        ' ',144,DCFCDB,'CFClayers db file name',IER,nbhelp)
-            if(lltmp(1:2).ne.'  '.and.lltmp(1:4).ne.'UNKN')then
-              write(LCFCDB,'(a)') lltmp(1:lnblnk(lltmp))
-              goto 57
-            else
-              goto 58
-            endif
-          else
-
-C In silent running mode, notify user and terminate simulation.
-            call UsrMsg('CFClayers database could not be found',
-     &                  ' ', 'F')
-          endif ! <- matches 'if(ier.ne.0)then'
-        else
-
-          CALL ERPFREE(ICFCDB,ISTAT)  ! if a read error look at alternatives.
-          write(currentfile,'(a)') LCFCDB(1:lnblnk(LCFCDB))
-
-          if(ipathcfc.eq.0.or.ipathcfc.eq.1)then
-            call rascicfc(ICFCDB,LCFCDB,IER)  ! try current ascii format
-          elseif(ipathcfc.eq.2)then
-            lndbp=lnblnk(standarddbpath)
-            write(lworking,'(3a)') standarddbpath(1:lndbp),fs,
-     &        LCFCDB(1:lnblnk(LCFCDB))
-            call rascicfc(ICFCDB,lworking,IER)  ! try current ascii format
-          endif
-
-          if(ier.eq.0)then
-            call eclose(cfcver,1.1,0.001,closecfc1)
-            call eclose(cfcver,1.2,0.001,closecfc2)
-            if(closecfc1.or.closecfc2) CFCDBOK=.TRUE.
-          endif
-        endif      
-      ENDIF
+C ADW 2018: CFC databases are relatively large, and have lead to some 
+C memory issues. There is no need to load the database here
+C
+C      IF(.NOT.CFCDBOK)THEN
+C  57    write(currentfile,'(a)') LCFCDB(1:lnblnk(LCFCDB))
+C
+C        if(ipathcfc.eq.0.or.ipathcfc.eq.1)then
+C          ier=0
+C          call EFOPRAN(ICFCDB,LCFCDB,40,1,IER)
+C        elseif(ipathcfc.eq.2)then
+C          ier=0
+C          lndbp=lnblnk(standarddbpath)
+C          write(lworking,'(3a)') standarddbpath(1:lndbp),fs,
+C     &      LCFCDB(1:lnblnk(LCFCDB))
+C          call EFOPRAN(ICFCDB,lworking,40,1,IER)
+C        endif
+C
+C        if(ier.ne.0)then
+CC Database was not found, or file could not be read.
+C          if(dll)then
+C            dllsubr='mzinpt'
+C            dllmesg='Problem opening CFClayers database.'
+C            ier=2
+C            return
+C
+CC In interactive mode, prompt user for new database.
+C          elseif ( .not. autook ) then
+C
+C            IER=0
+C            helptopic='CFClayers_db_not_found'
+C            call gethelptext(helpinsub,helptopic,nbhelp)
+C            write(lltmp,'(a)') LCFCDB(1:lnblnk(LCFCDB))
+C  58        CALL EASKS(lltmp,' CFClayers database? ',
+C     &        ' ',144,DCFCDB,'CFClayers db file name',IER,nbhelp)
+C            if(lltmp(1:2).ne.'  '.and.lltmp(1:4).ne.'UNKN')then
+C              write(LCFCDB,'(a)') lltmp(1:lnblnk(lltmp))
+C              goto 57
+C            else
+C              goto 58
+C            endif
+C          else
+C
+CC In silent running mode, notify user and terminate simulation.
+C            call UsrMsg('CFClayers database could not be found',
+C     &                  ' ', 'F')
+C          endif ! <- matches 'if(ier.ne.0)then'
+C        else
+C
+C          CALL ERPFREE(ICFCDB,ISTAT)  ! if a read error look at alternatives.
+C          write(currentfile,'(a)') LCFCDB(1:lnblnk(LCFCDB))
+C
+C          if(ipathcfc.eq.0.or.ipathcfc.eq.1)then
+C            call rascicfc(ICFCDB,LCFCDB,IER)  ! try current ascii format
+C          elseif(ipathcfc.eq.2)then
+C            lndbp=lnblnk(standarddbpath)
+C            write(lworking,'(3a)') standarddbpath(1:lndbp),fs,
+C     &        LCFCDB(1:lnblnk(LCFCDB))
+C            call rascicfc(ICFCDB,lworking,IER)  ! try current ascii format
+C          endif
+C
+C          if(ier.eq.0)then
+C            call eclose(cfcver,1.1,0.001,closecfc1)
+C            call eclose(cfcver,1.2,0.001,closecfc2)
+C            if(closecfc1.or.closecfc2) CFCDBOK=.TRUE.
+C          endif
+C        endif      
+C      ENDIF
 
 C Read in the multilayer construction database so that it's
 C data may be accessed by control and reporting facilities.

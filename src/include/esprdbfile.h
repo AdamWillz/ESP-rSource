@@ -8,14 +8,10 @@ C parameters for generic databases
 C MGDB - (integer) number of generic databases
 C MGCL - (integer) number of categories in a generic database
 C MGIT - (integer) number of items in a generic database
-C MGCL_CFC - (integer) number of categories in a CFClayers database
-C MGIT_CFC - (integer) number of iterms in a CFClayers database
-      integer MGDB,MGCL,MGIT, MGCL_CFC, MGIT_CFC
+      integer MGDB,MGCL,MGIT
       parameter (MGDB=13)
       parameter (MGCL=36)
       parameter (MGIT=600)
-      parameter (MGCL_CFC=200) ! need to accommodate no. of IGDB glazing entries
-      parameter (MGIT_CFC=6000) ! need to accommodate no. of IGDB glazing entries
 
 C Array of generic database file names (72 char).
       common/gendbf/gendbfn(MGDB)

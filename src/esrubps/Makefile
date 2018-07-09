@@ -34,7 +34,7 @@ default: $(PROG)
 %.o : %.c
 	$(MCC) $(CFLAGS) -c $<
 
-MODULE_OBJECTS = h3kmodule.o startup.o aim2_module.o aim2_timestep.o TCC.o
+MODULE_OBJECTS = h3kmodule.o startup.o aim2_module.o aim2_timestep.o TCC.o CFC_Module.o
 
 BPS_OBJECTS = bps.o adaptconf1.o adaptconf2.o adjb.o adjp.o ascii_mat.o \
 	  bcfunc.o bctlf.o blibsv.o bmatsu.o bmatsv.o basesimp.o basesimp_inputs.o bscoeff.o bscoeff_extended.o \
@@ -73,7 +73,7 @@ BPS_OBJECTS = bps.o adaptconf1.o adaptconf2.o adjb.o adjp.o ascii_mat.o \
 	  AirFlowModelRoutines.o Res_elec_Ctl.o harmonizer_timing.o qrun.o azalt.o
 
 MODULES = aim2.mod aim2_calcdata.mod aim2_h2k_dummy.mod aim2_inputdata.mod aim2_timestep.mod start_up.mod parse_command_line.mod \
-          h3kmodule.f90
+          h3kmodule.f90 CFC_Module.mod
 PREBPS_OBJECTS = ESPrTrnsysData.o harmonizer_dummy.o
 
 $(PROG): $(MODULE_OBJECTS) $(BPS_OBJECTS)
@@ -172,6 +172,9 @@ cfcalc.F:
 cfconv.F:
 	rm -f cfconv.F
 	ln -s $(DFSdir)/cfconv.F .
+CFC_Module.f90:
+	rm -f CFC_Module.f90
+	ln -s $(BLDdir)/CFC_Module.f90 .
 cfdat.F:
 	rm -f cfdat.F
 	ln -s $(DFSdir)/cfdat.F .
@@ -812,7 +815,7 @@ clean:
 	tank_intank_hx.F mains_temp_draw_profiles.F stratified_tank.F \
 	FMIsim.F FMIc.c FMIsim_dummy.F FMIcom.F \
 	CFC_opt_props.F CFC_thermal_and_aux.F editCFC.F NCHE.F stratified_tank_1HX.F stratified_tank_2HX.F \
-	AirFlowModelRoutines.F Res_elec_Ctl.F h3kmodule.f90 qrun.F azalt.F
+	AirFlowModelRoutines.F Res_elec_Ctl.F h3kmodule.f90 qrun.F azalt.F CFC_Module.f90
 
 distclean: clean
 

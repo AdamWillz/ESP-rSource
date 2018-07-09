@@ -718,6 +718,8 @@ C Edit zone surface construction attributes in common block G6 and
 C allow this to be saved. ITRU unit number for user output, IER=0 OK,
 C IER=1 problem. Make use of construction information in common MLC.
       SUBROUTINE EDSCON(ITRU,ICOMP,ISUR,MODGEO,MODCON,IER)
+      use CFC_Module, Only: cfcver, ITMCFCDB, cfcitmindex, cfcdbcon,
+     & cfcdbden, cfcdbsht, CFCshdtp
 #include "building.h"
 #include "geometry.h"
 #include "esprdbfile.h"
@@ -1171,6 +1173,8 @@ C zone geometry file (surface attributes) and attempts to construct a
 C zone construction file with minimum intervention by the user.
 
       SUBROUTINE EDZCON(ICOMP,MODGEO,MODCON,IER)
+      use CFC_Module, Only: ITMCFCDB, cfcver, cfcdbcon, cfcdbden,
+     & cfcdbsht, CFCshdtp
 #include "building.h"
 #include "geometry.h"
 #include "esprdbfile.h"
