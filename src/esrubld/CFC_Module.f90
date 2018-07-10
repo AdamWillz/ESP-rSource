@@ -30,8 +30,8 @@
         character(len=248),allocatable :: cfcdoc(:) ! documentation
 
       ! Data for each CFC layer:
-        integer, ALLOCATABLE :: cfccatindex(:)  ! is pointer to index of the material category (MGIT_CFC)
-        integer, ALLOCATABLE :: cfcitmindex(:)  ! is pointer to item index (MGIT_CFC)
+        integer(KIND=2), ALLOCATABLE :: cfccatindex(:)  ! is pointer to index of the material category (MGIT_CFC)
+        integer(KIND=2), ALLOCATABLE :: cfcitmindex(:)  ! is pointer to item index (MGIT_CFC)
         real, ALLOCATABLE :: cfcdbcon(:)        ! is the conductivity () (MGIT_CFC)
         real, ALLOCATABLE :: cfcdbden(:)        ! is the density () (MGIT_CFC)
         real, ALLOCATABLE :: cfcdbsht(:)        ! is the specific heat () (MGIT_CFC)
@@ -46,7 +46,7 @@
         logical, DIMENSION(200, 16) :: CFC_layer_flipped
      
       ! Data structures associated with CFC layers (all will be allocated to MGIT_CFC)
-        integer, ALLOCATABLE :: CFCshdtp(:)        ! CFC shade type (defined in CFC_common.h)
+        integer(KIND=1), ALLOCATABLE :: CFCshdtp(:)        ! CFC shade type (defined in CFC_common.h)
         real, ALLOCATABLE :: CFCsolreflout(:)      ! CFC fabric/material solar reflectance, outside
         real, ALLOCATABLE :: CFCsolreflin(:)       ! CFC fabric/material solar reflectance, inside
         real, ALLOCATABLE :: CFCsoltrandir(:)      ! CFC fabric/material solar direct transmittance
@@ -73,11 +73,11 @@
         real, ALLOCATABLE :: CFCslatcrown(:)       ! CFC venetian blind slat crown (mm)
         real, ALLOCATABLE :: CFCslatwr(:)          ! CFC venetian blind slat width/radius of curvature ratio
         real, ALLOCATABLE :: CFCslatthk(:)         ! CFC venetian blind slat thickness (mm)
-        integer, ALLOCATABLE :: CFCfillAir(:)      ! CFC fill gas % mole fraction, Air
-        integer, ALLOCATABLE :: CFCfillAr(:)       ! CFC fill gas % mole fraction, argon
-        integer, ALLOCATABLE :: CFCfillKr(:)       ! CFC fill gas % mole fraction, krypton
-        integer, ALLOCATABLE :: CFCfillXe(:)       ! CFC fill gas % mole fraction, xenon
-        integer, ALLOCATABLE :: CFCfillSF6(:)      ! CFC fill gas % mole fraction, SF6
+        integer(KIND=1), ALLOCATABLE :: CFCfillAir(:)      ! CFC fill gas % mole fraction, Air
+        integer(KIND=1), ALLOCATABLE :: CFCfillAr(:)       ! CFC fill gas % mole fraction, argon
+        integer(KIND=1), ALLOCATABLE :: CFCfillKr(:)       ! CFC fill gas % mole fraction, krypton
+        integer(KIND=1), ALLOCATABLE :: CFCfillXe(:)       ! CFC fill gas % mole fraction, xenon
+        integer(KIND=1), ALLOCATABLE :: CFCfillSF6(:)      ! CFC fill gas % mole fraction, SF6
         character(len=6), allocatable :: CFC_IGDB_ID(:) ! CFC IGDB ID for glazings from the IGDB database
 
       ! DEFINITION OF SUBROUTINES HERE

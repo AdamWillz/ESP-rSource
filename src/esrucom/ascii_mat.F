@@ -1426,6 +1426,7 @@ C Determine number of classes and items in the database
       CALL ERPFREE(IFA,ISTAT)
 
 C Initialize CFC database arrays
+      if (allocated(cfccatitems) .eqv. .true.) CALL CFC_DB_DEALLO ! Deallocate if allocated
       CALL CFC_DB_INITIALIZE
 
 C Open the ASCII file for reading.
