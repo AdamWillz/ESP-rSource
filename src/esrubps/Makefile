@@ -72,8 +72,6 @@ BPS_OBJECTS = bps.o adaptconf1.o adaptconf2.o adjb.o adjp.o ascii_mat.o \
 	  ncm_overheating.o CFC_opt_props.o CFC_thermal_and_aux.o editCFC.o NCHE.o stratified_tank_1HX.o stratified_tank_2HX.o \
 	  AirFlowModelRoutines.o Res_elec_Ctl.o harmonizer_timing.o qrun.o azalt.o
 
-MODULES = aim2.mod aim2_calcdata.mod aim2_h2k_dummy.mod aim2_inputdata.mod aim2_timestep.mod start_up.mod parse_command_line.mod \
-          h3kmodule.f90 CFC_Module.mod
 PREBPS_OBJECTS = ESPrTrnsysData.o harmonizer_dummy.o
 
 $(PROG): $(MODULE_OBJECTS) $(BPS_OBJECTS)
@@ -82,7 +80,7 @@ PREBPSDLL_OBJECTS = ESPrTrnsysData.o harmonizer.o
 
 MODULES = aim2.mod aim2_calcdata.mod aim2_h2k_dummy.mod aim2_inputdata.mod aim2_timestep.mod \
 	parse_command_line.mod start_up.mod win32interface.mod dll_functions.mod tcc.mod cosimdatatypes.mod \
-	h3kmodule.mod
+	h3kmodule.mod CFC_Module.mod
 
 ifeq ($(FMIarg),enableFMI)
 	FMI_OBJECTS = FMIsim.o FMIcom.o FMIc.o
