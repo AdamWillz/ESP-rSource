@@ -770,37 +770,37 @@ C Use file unit IAPROB to read db.
         else
           call lusrmsg(outs248,' ','W')
         endif
-      else
-        write(currentfile,'(a)') lfmul(1:lnblnk(lfmul))
-        CALL ERMLDB(0,iuout,IER)
-        IF(IER.eq.4)THEN
-          CALL ERMLDB2(0,iuout,IER)
-          if(IER.eq.0)then
-            MLDBOK=.TRUE.
-          else
-
-C Note: the databases are not actually referenced by bps. This is a non-
-C       critical error --- warn user and clear error flag
-            call usrmsg(outs,' ','W')
-            ier = 0 
-          endif
-        ELSEIF(IER.EQ.1.or.IER.eq.2.or.IER.eq.3)THEN
-          outs='Problem during reading of construction database.'
-          if(dll)then
-            dllsubr='mzinpt'
-            dllmesg=outs
-            ier=2
-            return
-          else
-
-C Note: the databases are not actually referenced by bps. This is a non-
-C       critical error --- warn user and clear error flag
-            call usrmsg(outs,' ','W')
-            ier = 0 
-          endif
-        else
-          MLDBOK=.TRUE.
-        endif
+C      else
+C        write(currentfile,'(a)') lfmul(1:lnblnk(lfmul))
+C        CALL ERMLDB(0,iuout,IER)
+C        IF(IER.eq.4)THEN
+C          CALL ERMLDB2(0,iuout,IER)
+C          if(IER.eq.0)then
+C            MLDBOK=.TRUE.
+C          else
+C
+CC Note: the databases are not actually referenced by bps. This is a non-
+CC       critical error --- warn user and clear error flag
+C            call usrmsg(outs,' ','W')
+C            ier = 0 
+C          endif
+C        ELSEIF(IER.EQ.1.or.IER.eq.2.or.IER.eq.3)THEN
+C          outs='Problem during reading of construction database.'
+C          if(dll)then
+C            dllsubr='mzinpt'
+C            dllmesg=outs
+C            ier=2
+C            return
+C          else
+C
+CC Note: the databases are not actually referenced by bps. This is a non-
+CC       critical error --- warn user and clear error flag
+C            call usrmsg(outs,' ','W')
+C            ier = 0 
+C          endif
+C        else
+C          MLDBOK=.TRUE.
+C        endif
       endif
 
 C If a temporal file has been referenced in the configuration file
