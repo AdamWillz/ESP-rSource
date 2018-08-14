@@ -38,6 +38,7 @@ opt="-O1"                  # optimization to be applied
 FFLAGS="-I../include "     # Fortran compiler flags.
 CFLAGS="-I../include "     # C compiler flags.
 LD_FLAGS=" "               # Link-loader flags.
+complexity="2"             # Model complixity supported (medium is default).
 platform="auto-detect"     # Installation platform.
 install_dbs="yes"          # Install databases.
 install_training="yes"     # Install training models.
@@ -113,6 +114,9 @@ if [ $# -ne 0 ]; then
         --opt1)         opt="-O1";        shift;;
         --opt2)         opt="-O2";        shift;;
         --opt3)         opt="-O3";        shift;;
+        --small)        complexity="1";   shift;;
+        --medium)       complexity="2";   shift;;
+        --complex)      complexity="3";   shift;;
         --intel)        use_intel="yes";           shift;;
         --X11)          xLibs="X11";               shift;;
         --GTK)          xLibs="GTK";               shift;;
@@ -232,6 +236,13 @@ if [ $help -eq 1 ]; then
   echo "    --opt1: -O1 compiler optimization ~x1.5 speed"
   echo "    --opt2: -O2 compiler optimization ~x1.7 speed"
   echo "    --opt3: -O3 compiler optimization ~x1.8 speed"
+  echo " "
+  echo "    --small: constrained model size for older computers or"
+  echo "             with limited memory i.e. virtual computers."
+  echo "    --medium: standard model size for current computers"
+  echo "              this is the default."
+  echo "    --complex: complex models for computers with lots of"
+  echo "               memory and disk space."
   echo " "
   echo "    -h, --help:  Display this help message."
   echo " "
@@ -744,6 +755,36 @@ case $xLibs in
   noX) targets=" libnoX $targets";;
 esac
 
+# Level of model complexity supported.
+small_prompt="1"
+medium_prompt="2"
+large_prompt="3"
+default="$medium_prompt"
+
+case "$complexity" in
+   "$small_prompt") 
+     cp ${SRCdir}/include/building_small.h ${SRCdir}/include/building.h
+     cp ${SRCdir}/include/cfd_small.h ${SRCdir}/include/cfd.h
+     cp ${SRCdir}/include/control_small.h ${SRCdir}/include/control.h
+     cp ${SRCdir}/include/net_flow_small.h ${SRCdir}/include/net_flow.h
+     cp ${SRCdir}/include/tdf2_small.h ${SRCdir}/include/tdf2.h
+     ;;
+   "$medium_prompt") 
+     cp ${SRCdir}/include/building_medium.h ${SRCdir}/include/building.h
+     cp ${SRCdir}/include/cfd_medium.h ${SRCdir}/include/cfd.h
+     cp ${SRCdir}/include/control_medium.h ${SRCdir}/include/control.h
+     cp ${SRCdir}/include/net_flow_medium.h ${SRCdir}/include/net_flow.h
+     cp ${SRCdir}/include/tdf2_medium.h ${SRCdir}/include/tdf2.h
+     ;;
+   "$large_prompt") 
+     cp ${SRCdir}/include/building_large.h ${SRCdir}/include/building.h
+     cp ${SRCdir}/include/cfd_large.h ${SRCdir}/include/cfd.h
+     cp ${SRCdir}/include/control_large.h ${SRCdir}/include/control.h
+     cp ${SRCdir}/include/net_flow_large.h ${SRCdir}/include/net_flow.h
+     cp ${SRCdir}/include/tdf2_large.h ${SRCdir}/include/tdf2.h
+     ;;
+esac
+
 # Debugging symbols required?
 if [ "$mode" = "interactive" ]; then
   B="none"
@@ -1057,7 +1098,15 @@ fi
 case $compiler in
    # Note '-C' flag causes grief on older sun F90 compilers.
    sunF90) FFLAGS="$LOCAL_INCLUDES $fDefType -DF90 $debug_flag $ExtendedDebugFlags -C " ;;
-   GNU)    FFLAGS="$LOCAL_INCLUDES $fDefType $debug_flag $ExtendedDebugFlags -fno-automatic ";
+   GNU)    FFLAGS="$LOCAL_INCLUDES $fDefType $debug_flag $ExtendedDebugFlags -fno-automatic";
+# mcmodel=medium (needed for larger data structures) is only available on 64-bit machines.
+           if [ "$machine" = "x86_64" ]; then
+             if [ "$complexity" = "$medium_prompt" ]; then 
+               FFLAGS="$FFLAGS -mcmodel=medium"
+             elif [ "$complexity" = "$large_prompt" ]; then 
+               FFLAGS="$FFLAGS -mcmodel=medium"
+             fi
+           fi
            case $gnu_version in
              gcc4) FFLAGS="$FFLAGS -DGCC4"            ;;
            esac ;;
@@ -1545,7 +1594,7 @@ echo "       character cArchitecture*32  ! Machine architecture"        >> ${SRC
 echo "       character cOperSystem*32    ! Operating system"            >> ${SRCdir}/include/build_info.h
 echo "       character cOSversion*32     ! Operating system version"    >> ${SRCdir}/include/build_info.h
 echo "       character cHost*256         ! Host name"                   >> ${SRCdir}/include/build_info.h
-echo "       character cRelease_Num*24   ! Release version"             >> ${SRCdir}/include/build_info.h
+echo "       character cRelease_Num*26   ! Release version"             >> ${SRCdir}/include/build_info.h
 echo "       character cSource*32        ! Repository version"          >> ${SRCdir}/include/build_info.h
 echo "       character cBranch*48        ! Branch name"                 >> ${SRCdir}/include/build_info.h
 echo "       character cRevision*32      ! Revision number"             >> ${SRCdir}/include/build_info.h
@@ -2131,6 +2180,7 @@ fi
 
 # Temporary.
 ln -sf ${ESPdir}/bin/mrt ${ESPdir}/bin/vwf
+cp -r ${HOMEdir}/modish ${DESTdir}/bin
 
 echo " "
 echo " Installation complete."

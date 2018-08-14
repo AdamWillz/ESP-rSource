@@ -1485,7 +1485,7 @@ C Get help message set.
 
 C If LCMDFL is 'UNKNOWN' then scan list of weather files 
 C (the name of which is in the users .esprc file) (or from the
-C standard '/usr/esru/esp-r/climate/climatelist'. If clm is
+C standard '/opt/esp-r/climate/climatelist'. If clm is
 C running in silent mode the user is not expected to select
 C from a list so might as well exit the program.
       if(LCMDFL(1:7).eq.'UNKNOWN'.or.LCMDFL(1:2).eq.'  ')then

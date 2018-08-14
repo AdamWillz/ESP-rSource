@@ -7173,6 +7173,21 @@ C Alter vertex list by deleting/ copy / replicate / editing.
      &    'f delete unused vertices','g copy vertex from another zone',
      &    'h substitute vertices','i cancel ',' ',' ',' ',irt,idno,
      &    nbhelp)
+        if(IRT.eq.1.or.IRT.eq.3.or.IRT.eq.4.or.IRT.eq.7)then
+
+C Ask if fine tolerance to be used.
+          write(outs,'(a,f6.3,a)') 
+     &      'Current tolerance for vertex matching is:',CACC,'m.'
+          CALL EASKABC(outs,'options:','accept tolerance',
+     &      'use fine tolerances','cancel',INVT,nbhelp)
+          if(INVT.eq.1)then
+            continue
+          elseif(INVT.eq.2)then
+            CACC=0.002; ANGCC=1.0; DACC=1.0; COGCC=0.1; SNACC=0.1
+          elseif(INVT.eq.3)then
+            GOTO 92  ! jump
+          endif
+        endif
         if(IRT.eq.1)then
 
 C If user cancels jump back to menu setup, otherwise add the requested
@@ -7606,6 +7621,7 @@ C Strings for surface attributes to pass to insrec.
       integer ibopt    ! to specify which mass origin option
       integer mnulen,iwhich2   ! multi column lines
       logical greyok,odd,nozeros   ! for display of vertex info
+      integer icount,iecount,ibaseedge,ibasecount ! for looping
       
 #ifdef OSI
       integer iix,iiy,iicol,iixc,iiyc,iid1,iid2,iid3,iid4
@@ -8387,9 +8403,9 @@ C Loop once for the top and then again for each new edge.  .
           icount=0  ! icount keeps track of which surface is being composed
           iecount=0
           ibaseedge=NVER(IS)  ! nb of edges in the original surface
-          ibasecount=ibaseedge  ! counter for original edges left to process
+          ibasecount=NVER(IS) ! counter for original edges left to process
           itopcount = 1 ! counter for top edges to process
-          iwcount=(ibaseedge)+1  ! iwcount is the total number of new surfaces
+          iwcount=(NVER(IS))+1  ! iwcount is the total number of new surfaces
           itopsurf=NSUR+1  ! index of the top surface
 
  141      icount=icount+1
@@ -8424,7 +8440,7 @@ C Add the transformed points to the zone (later check for unique).
   242       continue
 
 C Assign edges for the top surface in reverse order of the original.
-            iecount=NTV
+            iecount=NZTV(icomp)
             do 144 ix = 1,ibaseedge
               JVN(itopsurf,ix)=iecount
 
@@ -10921,8 +10937,9 @@ C last vert to first vert.
             call pointtoline3d(px,py,pz,xp1,yp1,zp1,xp2,yp2,zp2,
      &        offset,match)
             if(offset.lt.0.1.and.match)then
-              write(6,*) 'might be',px,py,pz,' and ',
-     &          jvnatz(loop,loop2),jvnatz(loop,loop2+1),offset
+C Debug.
+C              write(6,*) 'might be',px,py,pz,' and ',
+C     &          jvnatz(loop,loop2),jvnatz(loop,loop2+1),offset
 
 C If the distance is greater than 1mm get the distance between the
 C start of the line (iwhich1) and the test point (iwhich3) and do this

@@ -115,7 +115,7 @@ C Name of current application
       character tg*1,delim*1,xfile*144
       character journcmd*20,jfile*72,uname*24,fs*1,cjfile*72
 
-      character cVnum*32      ! returned from ESPrVersionNum
+      character cVnum*36      ! returned from ESPrVersionNum
       character pagestitle*62 ! for banner title via epages call
 
       integer iglib   ! if 1 then X11, if 2 then GTK, if 3 then text only.

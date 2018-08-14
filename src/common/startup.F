@@ -1036,127 +1036,9 @@ C Local variables for GetCommandLineArguments.
 C*******************************************************************************************
 
       END MODULE START_UP
-C***********************************************************************************************************************
-C***********************************************************************************************************************
-C***********************************************************************************************************************
-C***********************************************************************************************************************
-C***********************************************************************************************************************
-C***********************************************************************************************************************
-C parcnv parse command line paramters for ecnv.
-      subroutine parcnv(iverb,conv,iobs,ichop,itmprm,iform,oform,
-     &                   inf,ouf,ucfg)
-      
-      integer lnblnk  ! function definition
-
-      COMMON/OUTIN/IUOUT,IUIN
-
-      integer iargc,m
-      integer termtype
-      integer i,iverb,itmprm,iobs,ichop
-      real conv
-      character argument*72,prog*72,inf*144,outs*248,appn*24
-      character iform*24,oform*24,ouf*144,ucfg*72,mode*8
-
-      inf  = 'UNKNOWN'
-      iform = 'UNKNOWN'
-      oform = 'UNKNOWN'
-      ouf  = 'UNKNOWN'
-      ucfg  = 'UNKNOWN'
-      conv = 0.001
-      iverb = 0
-      itmprm = 1
-      iobs  = 0
-      ichop = 0
-
-C Get number of arguments and command name.
-      termtype = -1
-      mode = 'text'
-      m = iargc()
-      i = 0
-      call getarg(i,prog)
-      call findapp(prog,appn)
-
-C If one parameter.
-      if(m.eq.0)then
-        stop
-      elseif(m.ge.1)then
-  41    i= i+1
-        if(i.gt.m)goto 42
-        call getarg(i,argument)
-        if(argument(1:5).eq.'-help')then
-      call edisp(iuout,'The product model filter. ')
-      call edisp(iuout,' Use: [-v] [{-mm|-metre}] ')
-      call edisp(iuout,'  -if {esp|dxf|ww} -in <file> ')
-      call edisp(iuout,
-     &  '  -of {esp|dxf|viewer|xfig|vrml} -out <file>')
-      call edisp(iuout,' ')
-      call edisp(iuout,'Where options are:')
-      call edisp(iuout,' -if [esp|dxf|ww] = input format')
-      call edisp(iuout,'      (dxf = AutoCAD V11-12)')
-      call edisp(iuout,'      (ww = ww graphic commands)')
-      call edisp(iuout,' -in [file]  = input file')
-      call edisp(iuout,
-     &  ' -of [esp|dxf|viewer|xfig|vrml] = dest format')
-      call edisp(iuout,' -out [file] = output file')
-      call edisp(iuout,' -v          = verbose mode')
-      call edisp(iuout,' -mm -metre  = dxf coords in mm (default)')
-      call edisp(iuout,' -keep       = retain scratch files')
-      call edisp(iuout,' -obs        = include esp-r obstructions')
-      call edisp(iuout,' ')
-      call edisp(iuout,'The following combinations are supported:')
-      call edisp(iuout,'  input format  output format')
-      call edisp(iuout,'  esp-r         dxf, viewer, vrml')
-      call edisp(iuout,'  dxf           esp-r, viewer')
-      call edisp(iuout,' ')
-      call edisp(iuout,'If converting to esp-r then an additional') 
-      call edisp(iuout,'parameter is allowed:')
-      call edisp(iuout,' -u [upgrade] when updating a model from ')
-      call edisp(iuout,'    registration stage.')
-      call edisp(iuout,' ')
-      call edisp(iuout,' -help :this help message.')
-      call edisp(iuout,' ')
-          stop
-        elseif(argument(1:2).eq.'-v')then
-          iverb = 2   ! tell application to run with debug on
-        elseif(argument(1:3).eq.'-mm')then
-          conv = 0.001
-        elseif(argument(1:6).eq.'-metre')then
-          conv = 1.00
-        elseif(argument(1:4).eq.'-obs')then
-          iobs = 1
-        elseif(argument(1:5).eq.'-chop')then
-          ichop = 1
-        elseif(argument(1:5).eq.'-keep')then
-          itmprm = 0
-        elseif(argument(1:3).eq.'-in')then
-          i=i+1
-          call getarg(i,inf)
-        elseif(argument(1:4).eq.'-out')then
-          i=i+1
-          call getarg(i,ouf)
-        elseif(argument(1:2).eq.'-u')then
-          i=i+1
-          call getarg(i,ucfg)
-          call edisp(iuout,'Will attempt to update configuration')
-        elseif(argument(1:3).eq.'-if')then
-          i=i+1
-          call getarg(i,iform)
-        elseif(argument(1:3).eq.'-of')then
-          i=i+1
-          call getarg(i,oform)
-        endif
-        goto 41
-
-  42    continue
-        write(outs,'(4a)') 'Starting ecnv in ',
-     &    oform(1:lnblnk(oform)),' mode with in file ',
-     &    inf(1:lnblnk(inf))
-        call edisp248(iuout,outs,100)
-        write(outs,'(3a)') 'and output file ',ouf(1:lnblnk(ouf)),'.'
-        call edisp248(iuout,outs,100)
-        return
-      endif
-      end
+C*******************************************************************************************
+C*******************************************************************************************
+C*******************************************************************************************
 
 C ******* FINDAPP
 C FINDAPP given a file name (string) see if it contains one of the esp-r module names.
@@ -1410,13 +1292,13 @@ C      write(6,*) 'lfdef is ',lfdef
         else
           localdot=.false.
           esprc=altdot  ! assign the install folder file as the esprc file.
-          if(itrc.ge.0) call edisp(iuout,
+          if(itrc.ge.1) call edisp(iuout,
      &      '  Preferences (esprc) file - standard version.')
           write(currentfile,'(a)') esprc(1:lnblnk(esprc))
         endif
       else
         localdot=.true.
-        if(itrc.ge.0) call edisp(iuout,
+        if(itrc.ge.1) call edisp(iuout,
      &    '  Preferences (.esprc) file - users version.')
         write(currentfile,'(a)') lfdef(1:lnblnk(lfdef))
       ENDIF

@@ -984,46 +984,108 @@ C is a DXF file.
           endif
         endif
         CALL STRIPC(ifun,OUTSTR,0,ND,1,'CAD first line',IER)
-        CALL STRIPC(ifun,OUTSTR,0,ND,1,'CAD 2nd line',IER)
-        if(OUTSTR(1:7).eq.'SECTION')then
-          call edisp(iuout,'Based on 2nd line of file:')
+        if(OUTSTR(1:13).eq.'<?xml version')then
+          call edisp(iuout,'Based on 1st line of file:')
           call edisp(iuout,outstr)
-          call edisp(iuout,'this file is assumed to be a DXF file.')
+          call edisp(iuout,'this file is assumed to be a gbXML file.')
+          call edisp(iuout,' ')
+          call edisp(iuout,'An example of [full path to model folder]:')
+          call edisp(iuout,'/home/fred/Models/office_block')
+          cadfmt='gbXML'
+          CALL EASKS(placemodelin,'Folder for model (give full path):',
+     &      ' ',96,' ','model folder',IER,nbhelp)
+
+C Setup various file names needed.
+          exemplar='  '
+          write(exemplar,'(5a)') placemodelin,fs,'cfg',fs,'bldg-1.cfg'
+          cfgpath='  '
+          write(cfgpath,'(3a)')  placemodelin,fs,'cfg'
+          thecfgis='  '
+          write(thecfgis,'(a)') 'bldg-1.cfg'
+          call edisp(iuout,'  ')
+          call edisp(iuout,'The full path is:')
+          call edisp(iuout,exemplar)
+          call edisp(iuout,'The model cfg folder is:')
+          call edisp(iuout,cfgpath)
+          call edisp(iuout,'The cfg file is is:')
+          call edisp(iuout,thecfgis)
+        else
+          CALL STRIPC(ifun,OUTSTR,0,ND,1,'CAD 2nd line',IER)
+          if(OUTSTR(1:7).eq.'SECTION')then
+            call edisp(iuout,'Based on 2nd line of file:')
+            call edisp(iuout,outstr)
+            call edisp(iuout,'this file is assumed to be a DXF file.')
+            cadfmt='DXF '
+          else
+            call edisp(iuout,
+     &      'Initial lines of file do not indicate the file is either')
+            call edisp(iuout,
+     &      'a DXF file or an ASCII gbXML file.')
+            cadfmt='UNKN'
+          endif
         endif
         CALL ERPFREE(ifun,ISTAT)
 
-        if(unixok)then
-          call addpath(LCFGF,longtfile,concat)
-        else
+        if(cadfmt(1:3).eq.'DXF')then
+          if(unixok)then
+            call addpath(LCFGF,longtfile,concat)
+          else
 
 C If running on a non-unix machine see if there are spaces in the name
 C and change any / to \.
-          call addpath(LCFGF,longtfile,concat)
-          call cmdfiledos(longtfile,longtfiledos,ier)
-          longtfile=' '
-          longtfile=longtfiledos
-        endif
-        call edisp(iuout,' Performing model conversion.')
-        call tstamp('>','PRJ: import from CAD')
-        if(itrc.le.1)then
-          write(doit,'(4a)') 'ecnv -obs -mm -if dxf -in ',
-     &      LFIL(1:lnblnk(LFIL)),' -of esp -u upgrade -out ',
-     &      longtfile(1:lnblnk(longtfile))
-        elseif(itrc.gt.1)then
-          write(doit,'(4a)')'ecnv -v -obs -mm -if dxf -in ',
-     &      LFIL(1:lnblnk(LFIL)),' -of esp -u upgrade -out ',
-     &      longtfile(1:lnblnk(longtfile))
-        endif
-        call usrmsg('doing conversion via',doit,'-')
-        call runit(doit,'-')
+            call addpath(LCFGF,longtfile,concat)
+            call cmdfiledos(longtfile,longtfiledos,ier)
+            longtfile=' '
+            longtfile=longtfiledos
+          endif
+          call edisp(iuout,' Performing model conversion.')
+          call tstamp('>','PRJ: import from CAD')
+          if(itrc.le.1)then
+            write(doit,'(4a)') 'ecnv -obs -mm -if dxf -in ',
+     &        LFIL(1:lnblnk(LFIL)),' -of esp -u upgrade -out ',
+     &        longtfile(1:lnblnk(longtfile))
+          elseif(itrc.gt.1)then
+            write(doit,'(4a)')'ecnv -v -obs -mm -if dxf -in ',
+     &        LFIL(1:lnblnk(LFIL)),' -of esp -u upgrade -out ',
+     &        longtfile(1:lnblnk(longtfile))
+          endif
+          call usrmsg('doing conversion via',doit,'-')
+          call runit(doit,'-')
 
 C Re-read the upgraded configuration file. Reconstruct the path.
-        itisanexemplar=.false.
-        browse=.false.
-        confirm=.true.
-        ckpath=.false.
-        LCMDFL=longtfile
-        call NEWPRB(ITRC,confirm,ckpath,itisanexemplar,IER)
+          itisanexemplar=.false.
+          browse=.false.
+          confirm=.true.
+          ckpath=.false.
+          LCMDFL=longtfile
+          call NEWPRB(ITRC,confirm,ckpath,itisanexemplar,IER)
+        elseif(cadfmt(1:5).eq.'gbXML')then
+          call edisp(iuout,' Performing model conversion.')
+          call tstamp('>','PRJ: parsing gbXML')
+          if(itrc.le.1)then
+            write(doit,'(4a)') 'ecnv -if gbxml -in ',
+     &        LFIL(1:lnblnk(LFIL)),' -of esp -out ',
+     &        placemodelin(1:lnblnk(placemodelin))
+          elseif(itrc.gt.1)then
+            write(doit,'(4a)')'ecnv -v -if gbxml -in ',
+     &        LFIL(1:lnblnk(LFIL)),' -of esp -out ',
+     &        placemodelin(1:lnblnk(placemodelin))
+          endif
+          write(6,*) doit
+          call usrmsg('doing conversion via',doit,'-')
+          call pausems(1000)
+          call runit(doit,'-')
+          call pausems(1000)
+
+C Use call to refocus to start a new prj within the model cfg folder.
+          call refocus(cfgpath,thecfgis,iret)
+          if(iret.eq.0)then
+            continue
+          elseif(iret.eq.-2)then
+            call edisp(iuout,
+     &      'Features using Radiance calls may not work as expected.')
+          endif
+        endif
       endif
       return
       end

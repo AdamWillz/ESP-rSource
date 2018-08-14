@@ -3,6 +3,7 @@ C parameter values.
 C 72 zone 62 surface version 12.08 updated
 C 82 zone 62 surface version 08.2011 updated
 C 82 zone 80 surface version 10.2011 updated
+C 82 zone 96 surface version 02.2016 updated
 C 3300 surfaces for MCON 3.2012 updated
 C 8 air gaps MGP and 16 layers ME 7.2012 updated
 C 82 zone 90 surface version 02.2017 updated - supports all exemplars

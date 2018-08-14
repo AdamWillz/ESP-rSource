@@ -810,7 +810,7 @@ c         (not used in the current implementation),
 
 c Read zone transparent multi-layer construction properties from file.
 C Read lines from file, discarding comments.
-      CALL STRIPC(IUA,OUTSTR,1,ND,1,'no zone surfaces',IER)
+      CALL STRIPC(IUA,OUTSTR,1,ND,1,'number of zone surfaces',IER)
       IF(IER.NE.0)GOTO 1001
       K=0
       CALL EGETWI(OUTSTR,K,NS,4,MS,'W','no zone tmc surf',IER)

@@ -4253,10 +4253,12 @@ C current menu line index. Build up text strings for the menu.
               endif
             else
               if(ISCNLIST(icc).eq.0)then
+                lnoth=36-(lnn+15+7+1)
                 WRITE(VERTS(M),'(7a)')KEY,'  ',SSNAME(icc)(1:lnn),
      &            '  ',SSMLCN(icc)(1:15),'  ',SSOTHER(icc,1)(1:lnoth)
               else
-                WRITE(VERTS(M),'(7a)')KEY,'  ',SSNAME(icc)(1:lnn),
+                lnoth=36-(lnn+15+9+1)
+                WRITE(VERTS(M),'(8a)')KEY,'  ',SSNAME(icc)(1:lnn),
      &            '  ',SSMLCN(icc)(1:15),'  ',SSOTHER(icc,1)(1:lnoth),
      &            ' *'
               endif

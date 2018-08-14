@@ -96,7 +96,7 @@ C Name of current application
       character journcmd*20,jfile*72,uname*24,cjfile*72
       character blank*2   ! string for edisp of blank line
 
-      character cVnum*32      ! returned from ESPrVersionNum
+      character cVnum*36      ! returned from ESPrVersionNum
       character pagestitle*62 ! for banner title via epages call
 
       LOGICAL OK,DOK,unixok,there,silent
@@ -443,8 +443,8 @@ C          write(6,*)outs248(1:lnblnk(outs248))
 C In interactive mode so do splash-screen and then read
 C in the weather file name via list
 C selection, editing or accepting the LCMDFL.
-          call edisp(IUOUT,blank)
-          CALL ESPrVersion("summary",cAppName,IUOUT)
+C          call edisp(IUOUT,blank)
+C          CALL ESPrVersion("summary",cAppName,IUOUT)
           call edisp(IUOUT,blank)
           paction='INTERACTIVE'
           silent=.false.

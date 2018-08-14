@@ -178,7 +178,7 @@ C IEEE callback (Solaris)
       character firstbit*72,secondbit*72
       character longtmp*144
 
-      character cVnum*32      ! returned from ESPrVersionNum
+      character cVnum*36      ! returned from ESPrVersionNum
       character pagestitle*62 ! for banner title via epages call
 
       integer iglib   ! if 1 then X11, if 2 then GTK, if 3 then text only.

@@ -307,6 +307,10 @@ C Mechanical Ventilation systems.
 C For reading in of bi-directional data.
       COMMON/BIDIRFL/bidirfile,bidirname(MSTMC)
 
+C Toggle for extreme silent running (endless) mode.
+      logical endless,issilient
+      common/endlessmode/endless,issilient
+
       CHARACTER*72 LGrdSt
 
       CHARACTER OUTSTR*124,MODE*4
@@ -430,9 +434,17 @@ C Find the path and local file name.
 C Use supplementary temporary unit number for IAPROB
         IAPROB=IFIL+22
         MODE='ALL '
-        call usrmsg('Scanning the model description...',' ','-')
+        if(endless.or.issilient)then
+          continue
+        else
+          call usrmsg('Scanning the model description...',' ','-')
+        endif
         CALL ERSYS_mmode(LCFGF,ifcfg,IAPROB,MODE,ITRC,IER,autook)
-        call usrmsg('Scanning the model description...done ',' ','-')
+        if(endless.or.issilient)then
+          continue
+        else
+          call usrmsg('Scanning the model description...done ',' ','-')
+        endif
 
 C Building and plant description now complete.
 C Unless error occured, initiate computation/setting-up of:
@@ -587,7 +599,11 @@ C Report specified start-up period.
       write(outs,'(a,I3,a)')
      &     'A systems and building simulation start-up period of ',
      &     ITCNST,' days has been specified.'
-      call edisp(iuout,outs)
+      if(endless.or.issilient)then
+        continue
+      else
+        call edisp(iuout,outs)
+      endif
 
       IF(GRND3D)THEN
 
@@ -904,8 +920,12 @@ C Take into account weather file location.
             READ(ICLIM,REC=IREC,IOSTAT=ISTAT,ERR=103)CLMLOC
             WRITE(OUTSTR,1000)CLMLOC,ICYEAR
  1000       FORMAT(' Climate data: ',A30,': ',I5)
-            CALL EDISP(IUOUT,' ')
-            CALL EDISP(IUOUT,OUTSTR)
+            if(endless.or.issilient)then
+              continue
+            else
+              CALL EDISP(IUOUT,' ')
+              CALL EDISP(IUOUT,OUTSTR)
+            endif
             IRTYPE=0
             IF(ICDNGH.EQ.123)IRTYPE=1
    
@@ -1117,6 +1137,10 @@ C Simulator parameters.
       LOGICAL     spfileok,perok,cfdperok,tstepok,saveok,autook,exitok,
      &  startupok
 
+C Toggle for extreme silent running (endless) mode.
+      logical endless,issilient
+      common/endlessmode/endless,issilient
+
 
       CHARACTER*72 LMOIST,LMSTR
       character outs*124,CXSTR*78,spflnam*72
@@ -1137,12 +1161,16 @@ C Zone-by-zone. Use IUNIT for geometry file.
 
 C Clear igarray() for inbuilt ground temps and iguarray()
 C for user defined ground temps. 
-       igttype=0
-       do 9 ij=1,mgrdp
-         igarray(ij)=0
-         if(ij.le.12) iguarray(ij)=0
-  9    continue
-      call usrmsg(' Checking zone descriptions... ',' ','-')
+      igttype=0
+      do 9 ij=1,mgrdp
+        igarray(ij)=0
+        if(ij.le.12) iguarray(ij)=0
+  9   continue
+      if(endless.or.issilient)then
+        continue
+      else
+        call usrmsg(' Checking zone descriptions... ',' ','-')
+      endif
       ILTHPS=.FALSE.
       BLDG3D=.FALSE.
       MSTROK=.FALSE.
@@ -1284,14 +1312,22 @@ C Assign two nodes per layer.
         CALL MZCOE1(IZ)
         IF(ICGC(IZ).EQ.1)CALL DAYFAC(IZ)
    10 CONTINUE
-      call usrmsg(' Checking zone descriptions...done ',' ','-')
+      if(endless.or.issilient)then
+        continue
+      else
+        call usrmsg(' Checking zone descriptions...done ',' ','-')
+      endif
       if (IREP.eq.1) return
 
 C Check connections between type 3 surfaces to ensure
 C no mismatch.
       IW=IWARN
       IWARN=0
-      call usrmsg(' Checking model topology...',' ','-')
+      if(endless.or.issilient)then
+        continue
+      else
+        call usrmsg(' Checking model topology...',' ','-')
+      endif
       call ckcurmatch(prob,iprob)
       if(prob.and.iprob.gt.1)then
         outs='More than one complaint about model contiguity'
@@ -1514,7 +1550,11 @@ C matched does not).
         endif
    20 continue
       IWARN=IWARN+IW
-      call usrmsg(' Checking model topology...done',' ','-')
+      if(endless.or.issilient)then
+        continue
+      else
+        call usrmsg(' Checking model topology...done',' ','-')
+      endif
 
 C Find out which was most often used in terms of ground temperatures.
       igmax=0
@@ -1804,6 +1844,7 @@ C *Save option - 1,2,3,4
 C *Results - building results file
 C *Flow_results - air flow results file
 C *Plant_results - plant results file
+C *CFD results file
 
 C Climate and control are as specified in the configuration file.
 

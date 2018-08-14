@@ -29,7 +29,7 @@ C Name of current application
       character outs*124,inf*144,path*72,LCMDFL*144,fs*1
       character outs248*248
 
-      character cVnum*32      ! returned from ESPrVersionNum
+      character cVnum*36      ! returned from ESPrVersionNum
       character pagestitle*62 ! for banner title via epages call
 
 #ifdef OSI

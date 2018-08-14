@@ -88,7 +88,7 @@ C Name of current application
       character outs248*248,L144*144
       character inz*16,inzone*16,outs*124,MODE*4
 
-      character cVnum*32      ! returned from ESPrVersionNum
+      character cVnum*36      ! returned from ESPrVersionNum
       character pagestitle*62 ! for banner title via epages call
 
       integer iglib   ! if 1 then X11, if 2 then GTK, if 3 then text only.

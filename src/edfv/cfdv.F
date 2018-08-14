@@ -168,7 +168,7 @@ C Commons from mocfd.F (RDCFDAT)
       character LCFDV*72
       character t24*24
 
-      character cVnum*32      ! returned from ESPrVersionNum
+      character cVnum*36      ! returned from ESPrVersionNum
       character pagestitle*62 ! for banner title via epages call
 
       LOGICAL INCALU,INCALV,INCALW,INCALK,INCALD,INCALT

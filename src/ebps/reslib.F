@@ -204,7 +204,11 @@ C      write(6,*)'nzrl iswid ncomp iswid+12 minwid ',nzrl,iswid,ncomp,
 C     &  iswid+12,iminwid
       if(iminwid.ne.nzrl)then
         write(outs,*)'Resetting results file record width to ',iminwid
-        call edisp(iuout,outs)
+        if(endless.or.issilient)then
+          continue
+        else
+          call edisp(iuout,outs)
+        endif
         nzrl=iminwid
         call pauses(1)   ! pause
       endif

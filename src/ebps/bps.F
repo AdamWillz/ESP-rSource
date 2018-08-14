@@ -335,7 +335,11 @@ C Flag for enabling h3k customizations
      
       real UNMETHRS  ! for each zone counter for unmet hours.
       COMMON/UNMET/UNMETHRS(MCOM)
-      
+
+C Toggle for extreme silent running (endless) mode.
+      logical endless,issilient
+      common/endlessmode/endless,issilient
+
       integer iverb     ! verbosity passed on command line
 
       LOGICAL OK,dok,OK3D
@@ -353,7 +357,7 @@ C      logical gopher  ! not references
       character journcmd*20,jfile*72,uname*24,cjfile*72,OUTSTR*124
       character dllsubr*12,dllmesg*124
       character t16*16,outs248*248
-      character cVnum*32      ! returned from ESPrVersionNum
+      character cVnum*36      ! returned from ESPrVersionNum
       character pagestitle*62 ! for banner title via epages call
 
 C Flags for multi-year simulation menus
@@ -460,6 +464,9 @@ C Default CFD coupling toggles.
 C Illuminance values held in database.
       NDBENT=0
 
+C Assume interactive or silent mode.
+      endless=.false.; issilient=.false.
+
 C Font sizes for graphic environment.
       IFS=1; ITFS=1; IMFS=1
 
@@ -508,6 +515,14 @@ C in browsing mode.
         browse=.true.
       endif
 
+C Check for endless running mode.
+      if(aut(1:7).eq.'endless')then
+        autook=.true.
+        endless=.true.
+        call edisp(iuout,'Reality-Emulator endless-running mode.')
+        call tstamp('>','SIM: Endless-running mode')
+      endif
+      
 C create new child thread to timeout simulation if required.
 C << Note this is temporarily commented out and should be
 C << re-established for CETC use.
@@ -666,8 +681,14 @@ C Set reasonable defaults for text mode.
       ENDIF
       CALL EDISP(IUOUT,' ')
 
-C Write version.
-      CALL ESPrVersion("summary",cAppName,IUOUT)
+C Write version (but only title if silent ro endless).
+      if(aut(1:6).eq.'silent')then
+        CALL ESPrVersion("silent",cAppName,IUOUT)
+      elseif(aut(1:7).eq.'endless')then
+        CALL ESPrVersion("silent",cAppName,IUOUT)
+      else
+        CALL ESPrVersion("summary",cAppName,IUOUT)
+      endif
 
 C Find the user's home folder then get users custom settings.
       call usrhome(upath)
@@ -785,9 +806,16 @@ C info in after reading the .cfg file.
             if(aut(1:6).eq.'silent')then
 C Debug.
 C              write(*,*)'Silent-running mode.'
-              autook=.true.
+              autook=.true.; issilient=.true.
               call edisp(iuout,'Silent-running mode.')
               call tstamp('>','SIM: Silent-running mode')
+            elseif(aut(1:7).eq.'endless')then
+C Debug.
+C              write(*,*)'Endless-running mode.'
+              autook=.true.
+              endless=.true.
+              call edisp(iuout,'Endless-running mode.')
+              call tstamp('>','SIM: Endless-running mode')
             else
               autook=.false.
             endif
@@ -1052,8 +1080,12 @@ C Cast expanded weather file name back to LCLIM.
           READ(ICLIM,REC=IREC,IOSTAT=ISTAT,ERR=103)CLMLOC
           WRITE(OUTS,1000)CLMLOC,ICYEAR
  1000     FORMAT(' Climate data: ',A30,':',I5)
-          CALL EDISP(IUOUT,' ')
-          CALL EDISP(IUOUT,OUTS)
+          if(endless.or.issilient)then
+            continue
+          else
+            CALL EDISP(IUOUT,' ')
+            CALL EDISP(IUOUT,OUTS)
+          endif
           IRTYPE=0
           IF(ICDNGH.EQ.123)IRTYPE=1
           if(icfgv.lt.3)then
@@ -1233,10 +1265,15 @@ C Delete any temporal scratch file if temporal data associated with
 C the model.
 
 C Debug write out unmet hours.
-        write(6,'(a)') 'Unmet hours for each zone at end of simulation.'
-        do I=1,NCOMP
-          write(6,'(a,i2,1x,a,f8.1)') 'Zone ',I,zname(I),UNMETHRS(I)
-        enddo
+        if(endless.or.issilient)then
+          continue
+        else
+          write(6,'(a)') 
+     &      'Unmet hours for each zone at end of simulation.'
+          do I=1,NCOMP
+            write(6,'(a,i2,1x,a,f8.1)') 'Zone ',I,zname(I),UNMETHRS(I)
+          enddo
+        endif
         if(ITDFLG.ne.0)then
           CALL ERPFREE(IUTDF,ISTAT)
           lnts=lnblnk(LTDF)

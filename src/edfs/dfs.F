@@ -117,7 +117,7 @@ C Saved state of the visualisation
       CHARACTER*72 LVEC,LBIT,t72,vecfil
       character*72 DECMPDBFL,DICONDBFL
 
-      character cVnum*32      ! returned from ESPrVersionNum
+      character cVnum*36      ! returned from ESPrVersionNum
       character pagestitle*62 ! for banner title via epages call
 
       LOGICAL INCALU,INCALV,INCALW,INCALK,INCALD,INCALT

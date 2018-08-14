@@ -3029,7 +3029,7 @@ C Remember current control type
         SALT(5)= 'senses wind speed actuates shade ON/OFF'
         SALT(6)= 'senses wind dir.  actuates shade ON/OFF'
         SALT(7)= 'no sensor (schedule only)              '
-        SALT(8)= '* not defined *                        '
+        SALT(8)= 'senses sol-rad    act. ON/OFF& 3 angles'
         SALT(9)= 'no sensor (temporal data file)         '
 
         call edisp(iuout,' Current controller type: ')
@@ -3077,6 +3077,15 @@ C control type.
             cm(1)=2.0
             cm(2)=1.0       ! 0 shade OFF, 1 shade ON
             cm(3)=45.0      ! default slat angle for current period[deg]
+          elseif(ictyp.eq.8)then ! senses solar radiation, actuates ON/OFF and slat angle
+            cm(1)=7.0
+            cm(2)=100.0      ! slats up setpoint     (shdOFFsetpoint) [W/m2]
+            cm(3)=150.0      ! slats down setpoint   (shdONsetpoint ) [W/m2]
+            cm(4)=250.0      ! slats mid setpoint    (shdMIDsetpoint) [W/m2]
+            cm(5)=400.0      ! slats closed setpoint (shdCLSsetpoint) [W/m2]
+            cm(6)=0.0        ! open slat angle (shdOFFslatPOSITION) [deg]
+            cm(7)=45.0       ! intermediate slat angle (shdINTslatPOSITION) [deg]
+            cm(8)=80.0       ! closed slat angle   (shdONslatPOSITION) [deg]
           elseif(ictyp.eq.9)then ! no control, temporal data file (tdf)
             cm(1)=2.0
             cm(2)=0.0       ! 0 shade OFF, 1 shade ON
@@ -3113,7 +3122,7 @@ C law can be jumped around.
         useold=.false.
         iclawt=-1
   77    if(useold)then
-          if((iclawt.ge.0.and.iclawt.le.2).or.iclawt.eq.9)then
+          if((iclawt.ge.0.and.iclawt.le.4).or.iclawt.eq.9) then
             iclaw=iclawt
             iCFCctllaw(II,JJ,KK)=iclaw
             useold=.false.
@@ -5828,8 +5837,8 @@ C Build up text strings for the menu.
         WRITE(VERT(1),'(a)')'a shading layer ON/OFF                 '
         WRITE(VERT(2),'(a)')'b slat angle of Venetian blind         '
         WRITE(VERT(3),'(a)')'c shade ON/OFF (& slat angle) schedule '
-        WRITE(VERT(4),'(a)')'d * undefined *                        '
-        WRITE(VERT(5),'(a)')'e * undefined *                        '
+        WRITE(VERT(4),'(a)')'d shade ON/OFF & three slat angles     '
+        WRITE(VERT(5),'(a)')'e shade ON/OFF & slat angle cut off    '
         WRITE(VERT(6),'(a)')'f * undefined *                        '
         WRITE(VERT(7),'(a)')'g * undefined *                        '
         WRITE(VERT(8),'(a)')'h * undefined *                        '
@@ -6154,6 +6163,8 @@ C Complex Fenestration
 C       ian1 = actuator type (0 - shade ON/OFF,
 C                             1 - slat angle,
 C                             2 - schedule,
+C                             3 - three angle choice,
+C                             4 - cut off
 C                             9 - tdf)
 C       ian2 = zone index
 C       ian3 = CFC type index for selected zone
@@ -6186,11 +6197,14 @@ C Check that slat-type shade exists for selected CFC type.
         endif
         CALL EPMENRC
 
-      elseif((ivert.eq.3.or.ivert.eq.9).and.(icfoc.eq.6))then
+      elseif((ivert.eq.3.or.ivert.eq.4.or.ivert.eq.5.or.ivert.eq.9)
+     &                                           .and.(icfoc.eq.6))then
 
 C       ian1 = actuator type (0 - shade ON/OFF,
 C                             1 - slat angle,
 C                             2 - schedule,
+C                             3 - three angle choice,
+C                             4 - cut off
 C                             9 - tdf)
 C       ian2 = zone index
 C       ian3 = CFC type index for selected zone
@@ -6198,6 +6212,10 @@ C       ian3 = CFC type index for selected zone
 C Actuates slat angle of a slat-type shade
         if (ivert.eq.3) then
           ian1=2
+        elseif (ivert.eq.4) then
+          ian1=3
+        elseif (ivert.eq.5) then
+          ian1=4
         else
           ian1=9
         endif
@@ -7999,8 +8017,7 @@ C individual items to be edited (in one big block).
           call gethelptext(helpinsub,helptopic,nbhelp)
           nctlhelp=nbhelp
           
-C Create prompts, min/max values for complex fen. data based on control type
-        
+C Create prompts, min/max values for complex fen. data based on control type.
          if(ictyp.eq.1)then     ! senses temp., actuates shade ON/OFF
           nmenulines=3
           prompt1(1)=' '
@@ -8109,6 +8126,40 @@ C Create prompts, min/max values for complex fen. data based on control type
           prompt2(3)=''
           ndec(3)=1; vmin(3)=-89.9; vmax(3)=89.9; vdef(3)=45.0
 
+         elseif(ictyp.eq.8)then ! senses solar radiation, actuates ON/OFF and 3 slat angles
+          nmenulines=8
+          prompt1(1)=' '
+          prompt2(1)=' '
+          ndec(1)=-1; vmin(1)=0.0; vmax(1)=0.0; vdef(1)=0.0
+          menu(2)='Shade OFF (open) setpoint (W/m2)'
+          prompt1(2)='Solar radiation (W/m2) below which'
+          prompt2(2)='shade is retracted. '
+          ndec(2)=1; vmin(2)=0.0; vmax(2)=1200.0; vdef(2)=100.0
+          menu(3)='Shade ON (close) setpoint (W/m2)'
+          prompt1(3)='Solar radiation (W/m2) above which shade is'
+          prompt2(3)='deployed at initial slat angle value.'
+          ndec(3)=1; vmin(3)=0.0; vmax(3)=1200.0; vdef(3)=150.0
+          menu(4)='Shade ON (close) setpoint (W/m2)'
+          prompt1(4)='Solar radiation (W/m2) above which slat'
+          prompt2(4)='angle changes to intermediate value.'
+          ndec(4)=1; vmin(4)=0.0; vmax(4)=1200.0; vdef(4)=250.0
+          menu(5)='Shade ON (close) setpoint (W/m2)'
+          prompt1(5)='Solar radiation (W/m2) above which slat'
+          prompt2(5)='angle changes to closed value.'
+          ndec(5)=1; vmin(5)=0.0; vmax(5)=1200.0; vdef(5)=400.0
+          menu(6)='Slat angle (initial) (deg)'
+          prompt1(6)='Slat angle (deg) for shade ON '
+          prompt2(6)='and low radiation. '
+          ndec(6)=1; vmin(6)=-89.9; vmax(6)=89.9; vdef(6)=0.0
+          menu(7)='Slat angle (intermediate) (deg)'
+          prompt1(7)='Slat angle (deg) for shade ON '
+          prompt2(7)='and medium radiation.'
+          ndec(7)=1; vmin(7)=-89.9; vmax(7)=89.9; vdef(7)=45.0
+          menu(8)='Slat angle (closed) (deg)'
+          prompt1(8)='Slat angle (deg) for shade ON '
+          prompt2(8)='and high radiation.'
+          ndec(8)=1; vmin(8)=-89.9; vmax(8)=89.9; vdef(8)=70.0
+
          elseif(ictyp.eq.9)then ! no control, temporal data file
           nmenulines=3
           prompt1(1)=' '
@@ -8177,7 +8228,9 @@ C---------if ndaytypes is 0 we have weekday, saturday, sunday types. Set daytype
           do 20 idaytype=1, ndaytypes
             do 30 iperiod=1, nCFCdayctlperiods(ictlfun,idaytype)
         
-              iact1 = iCFCactuator(ictlfun,1)           ! 0=shade ON/OFF, 1=slat angle, 2=both (for schedule
+              iact1 = iCFCactuator(ictlfun,1)           ! 0=shade ON/OFF, 1=slat angle, 2=both (for schedule),
+                                                        ! 3=shade ON/OFF & 3 angles, 4=ON/OFF & cut off,
+                                                        ! 9=tdf (ON/OFF & angle)
               iact2 = iCFCactuator(ictlfun,2)           ! zone index
               iact3 = iCFCactuator(ictlfun,3)           ! CFC type
 
@@ -8216,7 +8269,9 @@ C -------------------------------------------------------------------
                 elseif(ictype.eq.3)then    ! senses solar radiation, actuates shade ON/OFF
                   if((isen1.eq.-3.and.(isen2.eq.4.or.isen2.eq.5))
      &                            .or.isen1.eq.-4)then               
-                    if(iact1.eq.0.and.ilaw.eq.1)then
+                    if((iact1.eq.0.and.ilaw.eq.1).or.
+     &                  (iact1.eq.3.and.ilaw.eq.1).or.
+     &                  (iact1.eq.4.and.ilaw.eq.1)) then
                       checkOK=.true.
                     else
                       checkOK=.false.
@@ -8227,7 +8282,8 @@ C -------------------------------------------------------------------
                 elseif(ictype.eq.4)then    ! senses solar radiation, actuates slat angle
                   if((isen1.eq.-3.and.(isen2.eq.4.or.isen2.eq.5))
      &                            .or.isen1.eq.-4)then               
-                    if(iact1.eq.1.and.ilaw.eq.1)then
+                    if((iact1.eq.1.and.ilaw.eq.1).or.
+     &                 (iact1.eq.4.and.ilaw.eq.1)) then
                       checkOK=.true.
                     else
                       checkOK=.false.
@@ -8265,6 +8321,17 @@ C -------------------------------------------------------------------
                   else
                     checkOK=.false.
                   endif                
+                elseif(ictype.eq.8)then    ! senses solar radiation, actuates ON/OFF & three slat angles
+                  if((isen1.eq.-3.and.(isen2.eq.4.or.isen2.eq.5))
+     &                            .or.isen1.eq.-4)then               
+                    if(iact1.eq.3.and.ilaw.eq.1)then
+                      checkOK=.true.
+                    else
+                      checkOK=.false.
+                    endif
+                  else
+                    checkOK=.false.
+                  endif                      
                 elseif(ictype.eq.9)then    ! tdf
                   if(isen1.eq.-5.and.isen2.gt.0.and.isen3.eq.0)then
                     if(iact1.eq.9.and.ilaw.eq.9)then
@@ -8302,6 +8369,9 @@ C ----------------Construct user message
                   elseif(ictype.eq.7)then
                     write(ctype,'(A)')
      &               ' no sensor > schedule only'                 
+                  elseif(ictype.eq.8)then
+                    write(ctype,'(A)')
+     &               ' senses sol-rad > act. shade ON/OFF & 3 angles'                  
                   elseif(ictype.eq.9)then
                     write(ctype,'(A)')
      &               ' no sensor > temporal df  '
@@ -8328,4 +8398,4 @@ C ----------------Construct user message
       
       return
       end
-      
+

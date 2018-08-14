@@ -230,7 +230,7 @@ C WORDSS array of string tokens from each NWICHNIS.
       character dgtagatr*12,dgmenuatr*32,dgatrib*12
       character ddgtagatr*12,ddgmenuatr*32,ddgatrib*12
 
-      character cVnum*32      ! returned from ESPrVersionNum
+      character cVnum*36      ! returned from ESPrVersionNum
       character pagestitle*62 ! for banner title via epages call
 
       integer iglib   ! if 1 then X11, if 2 then GTK, if 3 then text only.

@@ -1781,8 +1781,13 @@ C user otherwise continue.
               goto 245
             endif
             if(closey)then
+              write(outs,'(a,3f8.3,a,i3,a,3f8.3)')
+     &          'Copied vertex @',X1(1),Y1(1),Z1(1),
+     &          ' is close (',dist,') to existing vertex',ixx,' @',
+     &          X(ixx),Y(ixx),Z(ixx)
+              call edisp(iuout,outs)
               dok=.true.
-              call askok('Copied point close to existing vertex.',
+              call askok('Copied point close to an existing vertex.',
      &          'Skip copying it?',found,dok,nbhelp)
               goto 245
             endif
@@ -1797,6 +1802,8 @@ C add a new vertex to the end of the zone list and update vcoord.
 
 C Merge the copied point into the zone and existing edges.
             QX=X1(1); QY=Y1(1); QZ=Z1(1)
+            write(outs,'(a,3F8.3)') 'Adding vertex @ ',QX,QY,QZ
+            call edisp(iuout,outs)
             CALL MERGEVERTINSURF(ICOMP,QX,QY,QZ,IER)
           endif
         endif

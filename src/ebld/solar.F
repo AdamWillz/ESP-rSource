@@ -337,12 +337,13 @@ C Required for WATSUN-PV model
 
 C COMMONS FOR CFC type CONSTRUCTIONS
       common/CFCsolarS/RadIncDirS(mcom,ms),RadIncDifS(mcom,ms),
+     &      RadIncDifSky(mcom,ms),RadIncDifGrd(mcom,ms),
      &      transBB_S(mcom,ms),transD_S(mcom,ms),refl_S(mcom,ms),
      &      issur_self_shd(mcom,ms),proang_s(mcom,mcfc,ms),
      &      qtmca_ext(mcom,ms,mn),omega_v_s(mcom,mcfc,ms),
      &      omega_h_s(mcom,mcfc,ms)
- 
-      real RadIncDirS,RadIncDifS,transBB_S,transD_S,refl_S
+      real RadIncDirS,RadIncDifS,RadIncDifSky,RadIncDifGrd
+      real transBB_S,transD_S,refl_S
       real proang_s,qtmca_ext,omega_v_s,omega_h_s
       integer issur_self_shd
 

@@ -272,8 +272,14 @@ c Close FC timstep output if open.
         IF(LSAVE.EQ.0)then
 
 C Message to recover save option 0 data from 'OUTPUT'.
-          call edisp(iuout,' Save option 0 data cannot be saved.')
-          call edisp(iuout,' Results recovered via menu command o.')
+          if(endless.or.issilient)then
+
+C << place to do what is in the menu command o. >>
+            continue
+          else
+            call edisp(iuout,' Save option 0 data cannot be saved.')
+            call edisp(iuout,' Results recovered via menu command o.')
+          endif
           return
         endif
 C No results dbs for save-level 5
@@ -290,20 +296,36 @@ C No results dbs for save-level 5
         elseif(INDCFG.eq.3)then
           write(outs,1870)ISIMN1
  1870     format(' Zones library simulation no.',I3,' and')
-          call edisp(iuout,outs)
+          if(endless.or.issilient)then
+            continue
+          else
+            call edisp(iuout,outs)
+          endif
           write(outs,1871)ISIMN2
  1871     format(' Plant library simulation no.',I3)
-          call edisp(iuout,outs)
+          if(endless.or.issilient)then
+            continue
+          else
+            call edisp(iuout,outs)
+          endif
         endif
         if (ISIM.le.1.or.ISIM.eq.NRSIM) then
           call edisp(iuout,' ')
           write(outs,1872)ISD1,ISM1
  1872     format(' Results saved for the period from day',I3,
      &                                           ' of month',I3)
-          call edisp(iuout,outs)
+          if(endless.or.issilient)then
+            continue
+          else
+            call edisp(iuout,outs)
+          endif
           write(outs,1873)ISD2,ISM2
  1873     format(32X,'to day',I3,' of month',I3)
-          call edisp(iuout,outs)
+          if(endless.or.issilient)then
+            continue
+          else
+            call edisp(iuout,outs)
+          endif
         endif
  100  continue
 
@@ -412,6 +434,11 @@ C Tolerance for iteration of hydrogen flow matrix
       COMMON/zfluid/znotair(mcom),zfldK,zfldD,zfldC,zfldA,
      &              zSWAp(mcom),zSWAf(mcom)
       real zfldK,zfldD,zfldC,zfldA,zSWAp,zSWAf
+
+C Toggle for extreme silent running (endless) mode.
+      logical endless,issilient
+      common/endlessmode/endless,issilient
+
       LOGICAL znotair
 
       CHARACTER*72 vsnam
@@ -653,7 +680,12 @@ c calculation approaches.
         if(isave.eq.6)then
           call MZOUT6  ! Output from 6 save
         elseif(isave.eq.0)then
-          call edisp(iuout,'To see save zero output select option o')
+          if(endless.or.issilient)then
+            continue
+C           CALL MZOUTP  ! << need silent variant >>
+          else
+            call edisp(iuout,'To see save zero output select option o')
+          endif
         endif
         call tstamp('>','SIM: exit simulate')
       elseif(ino.eq.10)then
@@ -2065,58 +2097,74 @@ C Determine the number of zone days simulated.
    41 NZTS=(NCOMP*(IDAYS+ITCNST))*NTSTEP*24
 
 C Write out appropriate message.
-      write(louts,'(a,a)')  ' Climate file         : ',
-     &  LCLIM(1:lnblnk(LCLIM))
-      call edisp248(icout,louts,100)
-      write(outs,'(a,a)')   ' Configuration file   : ',
-     &  LCFGF(1:lnblnk(LCFGF))
-      call edisp(icout,outs)
-      write(outs,'(a,a)')   ' Configuration name   : ',
-     &  modeltitle(:lnblnk(modeltitle))
-      call edisp(icout,outs)
-      call edisp(icout,' ')
-      if(NCF.eq.0.and.NCL.eq.0)then
-        call edisp(icout,   ' Control strategy     : free-floating')
-        call edisp(icout,' ')
+      if(endless.or.issilient)then
+        continue
       else
-        write(outs,'(a,a)') ' Control file name    : ',
-     &    LCTLF(1:lnblnk(LCTLF))
+        write(louts,'(a,a)')  ' Climate file         : ',
+     &    LCLIM(1:lnblnk(LCLIM))
+        call edisp248(icout,louts,100)
+        write(outs,'(a,a)')   ' Configuration file   : ',
+     &    LCFGF(1:lnblnk(LCFGF))
+        call edisp(icout,outs)
+        write(outs,'(a,a)')   ' Configuration name   : ',
+     &    modeltitle(:lnblnk(modeltitle))
+        call edisp(icout,outs)
+        call edisp(icout,' ')
+        if(NCF.eq.0.and.NCL.eq.0)then
+          call edisp(icout,   ' Control strategy     : free-floating')
+          call edisp(icout,' ')
+        else
+          write(outs,'(a,a)') ' Control file name    : ',
+     &      LCTLF(1:lnblnk(LCTLF))
+          call edisp(icout,outs)
+          call edisp(icout,' ')
+        endif
+
+        if(isave.eq.0)then
+          call edisp(icout,' Zone save option     : 0 (No db created)')
+        elseif(isave.eq.1)then
+          call edisp(icout,' Zone save option     : 1 (Minimum)')
+        elseif(isave.eq.2)then
+          call edisp(icout,' Zone save option     : 2 (Moderate)')
+        elseif(isave.eq.3)then
+          call edisp(icout,' Zone save option     : 3 (Node temps)')
+        elseif(isave.eq.4)then
+          call edisp(icout,' Zone save option     : 4 (Energy Balance)')
+c Hot 3000: Added save level 5 zone save level info
+        elseif(isave.eq.5)then
+          call edisp(icout,' Zone save option     : 5 H3K')
+        elseif(isave.eq.6)then
+          call edisp(icout,' Zone save option     : 6 (No db created)')
+        endif
+        write(outs,'(a,I6)') ' No. of warnings      : ',IWARN
         call edisp(icout,outs)
         call edisp(icout,' ')
       endif
-
-      if(isave.eq.0)then
-        call edisp(icout,' Zone save option     : 0 (No db created)')
-      elseif(isave.eq.1)then
-        call edisp(icout,' Zone save option     : 1 (Minimum)')
-      elseif(isave.eq.2)then
-        call edisp(icout,' Zone save option     : 2 (Moderate)')
-      elseif(isave.eq.3)then
-        call edisp(icout,' Zone save option     : 3 (Node temps)')
-      elseif(isave.eq.4)then
-        call edisp(icout,' Zone save option     : 4 (Energy Balance)')
-c Hot 3000: Added save level 5 zone save level info
-      elseif(isave.eq.5)then
-        call edisp(icout,' Zone save option     : 5 H3K')
-      elseif(isave.eq.6)then
-        call edisp(icout,' Zone save option     : 6 (No db created)')
-      endif
-      write(outs,'(a,I6)') ' No. of warnings      : ',IWARN
-      call edisp(icout,outs)
-      call edisp(icout,' ')
 
       NPTS=NTSTEP*NTSTPP
       TMIN=60.0/NTSTEP
       TMINP=TIMSEC/60.
       write(outs,'(a,I6,a)')' Simulation period    : ',IDAYS,' day(s)'
-      call edisp(icout,outs)
+      if(endless.or.issilient)then
+        continue
+      else
+        call edisp(icout,outs)
+      endif
 
 C Derive string for simulation period.
       CALL EPERSTR(IYEAR,ISDS,1,ISDF,24,1,2,0,PERST1,PERST2,PERST3,IER)
-      write(outs,'(16X,A44)')PERST2
+      if(endless.or.issilient)then
+        continue
+      else
+        write(outs,'(16X,A)')PERST2
+      endif
       call edisp(icout,outs)
       write(outs,'(a,I6,a)')' Start-up period      : ',ITCNST,' day(s)'
-      call edisp(icout,outs)
+      if(endless.or.issilient)then
+        continue
+      else
+        call edisp(icout,outs)
+      endif
 
       IF(INDCFG.EQ.2)goto 131
       if(irdact.eq.0)then
@@ -2126,11 +2174,23 @@ C Derive string for simulation period.
         write(outs,'(a,I7,a,F5.2,a)')' Zone time-steps      :',NTSTEP,
      &    ' / hr ( ',TMIN,' min. intervals saved once per hour)'
       endif 
-      call edisp(icout,outs)
+      if(endless.or.issilient)then
+        continue
+      else
+        call edisp(icout,outs)
+      endif
       write(outs,'(a,I6)') ' Number of zones      : ',NCOMP
-      call edisp(icout,outs)
+      if(endless.or.issilient)then
+        continue
+      else
+        call edisp(icout,outs)
+      endif
       write(outs,'(a,I7)') ' Zone-time increments :',NZTS
-      call edisp(icout,outs)
+      if(endless.or.issilient)then
+        continue
+      else
+        call edisp(icout,outs)
+      endif
 
       IF(INDCFG.EQ.1)goto 133
   131 write(outs,'(a,I5,a,F6.2,a)')' Plant time-steps     : ',NPTS,
@@ -2138,18 +2198,30 @@ C Derive string for simulation period.
       call edisp(icout,outs)
   133 IF(INDCFG.EQ.2)goto 135
       IF(ISAVE.GT.0)goto 42
-      call edisp(icout,    ' Zone results db size : Not applicable')
+      if(endless.or.issilient)then
+        continue
+      else
+        call edisp(icout,    ' Zone results db size : Not applicable')
+      endif
       goto 135
    42 IF(BYTE.GT.2000.0)goto 14
       write(outs,'(a,F8.1,a)')' Zone results db size : ',BYTE,' Kbytes'
       if(isave.eq.1.or.isave.eq.2.or.isave.eq.3.or.isave.eq.4)then
-        call edisp(icout,outs)
+        if(endless)then
+          continue
+        else
+          call edisp(icout,outs)
+        endif
       endif
       goto 135
    14 BYTE=BYTE/1024.0
       write(outs,'(a,F8.1,a)')' Zone results db size : ',BYTE,' Mbytes'
       if(isave.eq.1.or.isave.eq.2.or.isave.eq.3.or.isave.eq.4)then
-        call edisp(icout,outs)
+        if(endless)then
+          continue
+        else
+          call edisp(icout,outs)
+        endif
       endif
 
   135 IF(INDCFG.EQ.1)goto 136
@@ -2170,9 +2242,17 @@ C Derive string for simulation period.
 
 C Time-step controller status.
   136 IF(ITSFLG.EQ.0) THEN
-         call edisp(icout, ' Time-step controller :     Not active')
+        if(endless.or.issilient)then
+          continue
+        else
+          call edisp(icout, ' Time-step controller :     Not active')
+        endif
       ELSE
-         call edisp(icout, ' Time-step controller :     Active')
+        if(endless.or.issilient)then
+          continue
+        else
+          call edisp(icout, ' Time-step controller :     Active')
+        endif
       ENDIF
 
 C If appropriate, output special features invoked.
@@ -2299,7 +2379,11 @@ C Commence simulation.
      &    ' has now commenced.'
         call edisp(icout,outs)
       else
-        call edisp(icout,' Simulation has now commenced.')
+        if(endless)then
+          call edisp(icout,' Simulation is proceeding...')
+        else
+          call edisp(icout,' Simulation has now commenced.')
+        endif
       endif
       if(global)then
          call edisp(icout,' ')

@@ -2668,8 +2668,14 @@ C Actuator.
           ELSEIF(iCFCactuator(II,1).EQ.2)THEN
             WRITE(SSTR,'(5a)')'Shade ON/OFF and slat angle(schedule)',
      &       sn(1:lnblnk(sn)),' in ',zn(1:lnblnk(zn)),'.'     
+          ELSEIF(iCFCactuator(II,1).EQ.3)THEN
+            WRITE(SSTR,'(5a)')'Shade ON/OFF and three slat angles ',
+     &       sn(1:lnblnk(sn)),' in ',zn(1:lnblnk(zn)),'.'     
+          ELSEIF(iCFCactuator(II,1).EQ.4)THEN
+            WRITE(SSTR,'(5a)')'Cutoff shade control ',
+     &       sn(1:lnblnk(sn)),' in ',zn(1:lnblnk(zn)),'.'     
           ELSEIF(iCFCactuator(II,1).EQ.9)THEN
-            WRITE(SSTR,'(5a)')'Shade ON/OFF and slat angle via tdf  ',
+            WRITE(SSTR,'(5a)')'Shade ON/OFF and slat angle via tdf ',
      &       sn(1:lnblnk(sn)),' in ',zn(1:lnblnk(zn)),'.'     
           ENDIF
         ENDIF
@@ -2692,6 +2698,8 @@ C Complex fenestration control type.
      &         SSTR= 'wnd-dir >slat angle'
         IF(iCFCctltype(II,JJ,KK).eq.7)
      &         SSTR= 'none > sched. '
+        IF(iCFCctltype(II,JJ,KK).eq.8)
+     &         SSTR= 'rad > shd ON/OFF & angle '
         IF(iCFCctltype(II,JJ,KK).eq.9)
      &         SSTR= 'none > tdf.   '
       ELSEIF(WHICH.EQ.'L'.OR.WHICH.EQ.'l')THEN
@@ -2731,7 +2739,7 @@ C      COMMON/OUTIN/IUOUT,IUIN
 
 C sub-strings for describing multi-sensor flow controls.
       character msg1*24,msg2*24,msg3*24,msg4*24,msg*72,lmsg*248
-      character message*248
+      character message*248,vlmsg*372
       logical oka,okb
       integer I2,I7,I8,I9  ! for plant control decoding
 
@@ -3886,12 +3894,15 @@ C Ideal complex fenestration control law.
         SSTR='undefined control        '
         IF(iCFCctllaw(II,JJ,KK).EQ.1)then
           SSTR='basic control        '
-          msg1=' basic control:'
+          msg1=' Basic control:'
           cm(1)=CFCmiscdata(II,JJ,KK,1)
           cm(2)=CFCmiscdata(II,JJ,KK,2)
           cm(3)=CFCmiscdata(II,JJ,KK,3)
           cm(4)=CFCmiscdata(II,JJ,KK,4)
           cm(5)=CFCmiscdata(II,JJ,KK,5)
+          cm(6)=CFCmiscdata(II,JJ,KK,6)
+          cm(7)=CFCmiscdata(II,JJ,KK,7)
+          cm(8)=CFCmiscdata(II,JJ,KK,8)
 
           if(nint(cm(1)).eq.2)then
 
@@ -3899,6 +3910,7 @@ C Actuator is shading ON/OFF state.
             write(lmsg,'(2a,f9.1,a,f9.1,a,f9.1,a,f9.1)') 
      &        msg1,' [C] shade ON (close) setpoint ',cm(2),
      &        '[C] shade OFF (open) setpoint ',cm(3)
+
           elseif(nint(cm(1)).eq.4)then
 
 C Actuator is slat angle.
@@ -3907,13 +3919,26 @@ C Actuator is slat angle.
      &        '[C] shade OFF (open) setpoint ',cm(3),
      &        '[deg] close slat angle ',cm(4),
      &        '[deg] open slat angle ',cm(5)
+
+          elseif(nint(cm(1)).eq.7)then
+
+C Actuator is on/off and three slat angles.
+            write(lmsg,'(2a,f9.1,a,f9.1,a,f9.1,a,f9.1,
+     &                                   a,f9.1,a,f9.1,a,f9.1)')
+     &        msg1,' [W/m2] shade OFF (up) setp. ',cm(2),
+     &        '[W/m2] shade ON setp. ',cm(3),
+     &        '[W/m2] shade MID setp. ',cm(4),
+     &        '[W/m2] shade CLSD setp. ',cm(5),
+     &        '[deg] ON slat angle ',cm(6),
+     &        '[deg] MID slat angle ',cm(7),
+     &        '[deg] CLSD slat angle ',cm(8)
           endif
           call SDELIM(lmsg,message,'S',IW)
 
         ELSEIF(iCFCctllaw(II,JJ,KK).EQ.2)then
 C Schedule
           SSTR='schedule        '
-          msg1=' schedule:'
+          msg1=' Schedule:'
           cm(1)=CFCmiscdata(II,JJ,KK,1)
           cm(2)=CFCmiscdata(II,JJ,KK,2)
           cm(3)=CFCmiscdata(II,JJ,KK,3)

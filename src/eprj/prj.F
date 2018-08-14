@@ -212,7 +212,7 @@ C Returned parameters from silentread or silentxmlread.
       logical silent  ! for dependency checking on transform or rotate
       logical QUIET   ! to force silent rebuild of zone constructions
 
-      character cVnum*32      ! returned from ESPrVersionNum
+      character cVnum*36      ! returned from ESPrVersionNum
       character pagestitle*62 ! for banner title via epages call
       character subpath*84
       character sfile*144
@@ -982,7 +982,9 @@ C current number of zones if a model has been loaded.
             call viewtext(etext,iside,isize,ifont)
           endif
           CFGOK=.TRUE.
-          call siteinfo(iuout)
+
+C Uncomment next line to echo site info when model is scanned.
+C          call siteinfo(iuout)
 
 C Open core of databases if not already done so.
           if(MLDBOK.and.MATDBOK.and.OPTKOK)then
@@ -1136,7 +1138,7 @@ C      write(6,*) ' model management browse status ',browse
         ITEMS(14)=  '                              '
       endif
       ITEMS(15)   = ' .... Import & export ........'
-      ITEMS(16)   = 'n import CAD file                 '
+      ITEMS(16)   = 'n use CAD tool or parse gbxml file'
       if(CFGOK)then
         ITEMS(17) = 'o export current model            '
         ITEMS(18) = 'p archive current model           '
