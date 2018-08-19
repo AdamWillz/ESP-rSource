@@ -68,6 +68,8 @@ C                                   by WCH system
 C      CMP44S   2 node (ISV=20) WCH exponent model radiator
 C      CMP45S   1 node (ISV=20) WCH air source heat pump
 C      CMP46S   2 node (ISV=20) WCH advanced modulating boiler model
+C      CMP47S   1 node (ISV=20) WCH ground source heat pump (EXPERIMENTAL)
+C      CMP48S   2 node (ISV=20) WCH ground source heat pump (EXPERIMENTAL)
 C      CMP50S   1 node (ISV=29) WCH thermostatic valve
 C      CMP51S   1 node (ISV=29)     mechanical room thermostat
 C      CMP52S   1 node (ISV=29) WCH thermostatic valve (sensor only)
@@ -89,6 +91,7 @@ C      CMP70S   1 node (ISV=20) Flat plate solar collector (type1)
 C      CMP71S   1 node (ISV=20) Solar collector "segment"
 C      CMP72S   1 node (ISV=20) Water storage tank layer
 C      CMP73S   3 node (ISV=20) WCH 3-port valve
+C      CMP74S   1 node (ISV=20) WCH automatic control valve
 C      CMP79S   1 node (ISV=20) WCH stochastic hot water draw
 C      CMP90S   2 node (ISV>19)     air & water temperature source
 C      CMP91S   2 node (ISV>19)     imaginary building-like plant load
@@ -237,6 +240,10 @@ C Component by component, call routine to deal with relevant type
          CALL CMP45S(IPCOMP)
       ELSE IF(ITYPE.EQ.46) THEN
          CALL CMP46S(IPCOMP)
+      ELSE IF(ITYPE.EQ.47) THEN
+         CALL CMP47S(IPCOMP)
+      ELSE IF(ITYPE.EQ.48) THEN
+         CALL CMP48S(IPCOMP)
       ELSE IF(ITYPE.EQ.50) THEN
          CALL CMP50S(IPCOMP)
       ELSE IF(ITYPE.EQ.51) THEN
@@ -275,6 +282,8 @@ C Component by component, call routine to deal with relevant type
          CALL CMP72S(IPCOMP)
       ELSE IF(ITYPE.EQ.73) THEN
          CALL CMP73S(IPCOMP)
+      ELSE IF(ITYPE.EQ.74) THEN
+         CALL CMP74S(IPCOMP)
       ELSE IF(ITYPE.EQ.79) THEN
          CALL CMP79S(IPCOMP)
       ELSE IF(ITYPE.EQ.80) THEN
@@ -652,7 +661,7 @@ C
 C Trace output
       IF(ITC.GT.0.AND.ITRACE(35).NE.0) THEN
          WRITE(ITU,*) ' Component ',IPCOMP,' pre-simulation data for a:'
-         WRITE(ITU,*) ' 1 node (ISV=21) AC  cooling coil &',
+         WRITE(ITU,*) ' 1 node (ISV=21) AC  cooling coil & ',
      &                ' water mass flow rate control'
          NITMS=3
          WRITE(ITU,*) ' ADATA ',(ADATA(IPCOMP,J),J=1,NITMS)
@@ -991,7 +1000,7 @@ C Establish static data derivable from the data read from database
 C Trace output
       IF(ITC.GT.0.AND.ITRACE(35).NE.0) THEN
          WRITE(ITU,*) ' Component ',IPCOMP,' pre-simulation data for a:'
-         WRITE(ITU,*) ' 1 node (ISV=21) AC  cooling coil &',
+         WRITE(ITU,*) ' 1 node (ISV=21) AC  cooling coil & ',
      &                ' water mass flow rate control'
          NITMS=3
          WRITE(ITU,*) ' ADATA ',(ADATA(IPCOMP,J),J=1,NITMS)
@@ -1068,7 +1077,7 @@ C
 C Trace output
       IF(ITC.GT.0.AND.ITRACE(35).NE.0) THEN
          WRITE(ITU,*) ' Component ',IPCOMP,' pre-simulation data for a:'
-         WRITE(ITU,*) ' 1 node (ISV=21) AC  cooling coil &',
+         WRITE(ITU,*) ' 1 node (ISV=21) AC  cooling coil & ',
      &                ' water mass flow rate control'
          NITMS=3
          WRITE(ITU,*) ' ADATA ',(ADATA(IPCOMP,J),J=1,NITMS)
@@ -2227,7 +2236,7 @@ C
 C Trace output
       IF(ITC.GT.0.AND.ITRACE(35).NE.0) THEN
          WRITE(ITU,*) ' Component ',IPCOMP,' pre-simulation data for a:'
-         WRITE(ITU,*) ' 1 node (ISV=20) Water cooler &',
+         WRITE(ITU,*) ' 1 node (ISV=20) Water cooler & ',
      &                ' flux control'
          NITMS=3
          WRITE(ITU,*) ' ADATA ',(ADATA(IPCOMP,J),J=1,NITMS)
@@ -3619,7 +3628,7 @@ C Temp compensation gradient (-)
 C Trace output
       IF(ITC.GT.0.AND.ITRACE(35).NE.0) THEN
          WRITE(ITU,*) ' Component ',IPCOMP,' pre-simulation data for a:'
-         WRITE(ITU,*) ' 1 node (ISV=20) WCH heat rejection device'
+         WRITE(ITU,*) ' 1 node (ISV=20) WCH air-source heat pump '
          NITMS=3
          WRITE(ITU,*) ' ADATA ',(ADATA(IPCOMP,J),J=1,NITMS)
          NITMS=33
@@ -3768,7 +3777,528 @@ C Error handling
 C
       END
 C
+
+C ******************** CMP47S ********************
+C CMP47S establishes for a plant component with plant db code 470 ie.
+C 1 node (ISV=20) WCH ground-source heat pump feeding a hydronic heating system
+C whether the specified number of controlled variables is OK, and also
+C whether the number of connections to this component is correct
+C and whether the connected nodes are of a type as expected by the
+C corresponding coefficient generator routine.
+C
+      SUBROUTINE CMP47S(IPCOMP)
+
+      implicit none
+
+#include "plant.h"
+#include "building.h"
+C
+      COMMON/OUTIN/IUOUT,IUIN
+      COMMON/TC/ITC,ICNT
+      COMMON/TRACE/ITCF,ITRACE(MTRACE),IZNTRC(MCOM),ITU
+
+      COMMON/C9/NPCOMP,NCI(MPCOM),CDATA(MPCOM,MMISCD)
+      COMMON/PDBDT/ADATA(MPCOM,MADATA),BDATA(MPCOM,MBDATA)
+      COMMON/PCOND/CONVAR(MPCON,MCONVR),ICONTP(MPCON),
+     &             ICONDX(MPCOM,MNODEC,MPCONC)
+
+      COMMON/GSHPvar1/CompMass,AveSpHt,UAMod,CarEffMod,COPa0,COPa1,
+     &COPa2,COPa3,Compa0,Compa1,Compa2,Compa3,
+     &CompressPf,PumpRating,PumpPf,RatedFlow,
+     &CtlRating,CtlPf,ToutMax,TinMax,
+     &NomRetT,NomRetTDeadB,TempCompS,TempCompE,TempCompc0
+
+      COMMON/GSHPvar2/COPModel,CompModel,AmbientTempComp,
+     &                DeviceONOFFp,DeviceONOFF
+
+      COMMON/GSHPvar3/CallforHeat,InDeadB
+
+      COMMON/GSHPvar4/INSO,ITSBO,bSwitched,BLKOUT,NTSBO,bBLKOUT
+      INTEGER INSO,ITSBO,NTSBO
+      REAL BLKOUT
+      LOGICAL bSwitched,bBLKOUT
+
+      REAL SMALL
+      PARAMETER (SMALL=1.0E-20)
+
+      INTEGER COPModel,CompModel,AmbientTempComp,
+     &DeviceONOFFp,DeviceONOFF
+
+      REAL CompMass,AveSpHt,UAMod,CarEffMod,COPa0,COPa1,
+     &COPa2,COPa3,Compa0,Compa1,Compa2,Compa3,CompressPf,
+     &PumpRating,PumpPf,RatedFlow,CtlRating,CtlPf,
+     &ToutMax,TinMax,NomRetT,NomRetTDeadB,
+     &TempCompS,TempCompE,TempCompc0
+
+      LOGICAL CallforHeat,InDeadB,ConError
+
+      INTEGER IUOUT,IUIN,ITC,ICNT,ITCF,ITRACE,IZNTRC,ITU,NPCOMP,NCI,
+     &ICONTP,ICONDX,J,NCITM,NCONS,IPCONC,IPCOMP,IPCON,IX1,NITMS
       
+      REAL CDATA,ADATA,BDATA,CONVAR
+
+      INTEGER IDAT
+
+      CHARACTER OUTS*248
+      
+C To be edited to include increased data entry nos. 
+
+C Establish static data derivable from the data read from database
+      DO 10 IDAT=4,33
+10      BDATA(IPCOMP,IDAT-3)=ADATA(IPCOMP,IDAT)
+
+C Initialise parameters      
+      InDeadB=.false.
+      CallforHeat=.false.
+
+C Assign variables to be used in coeff generator. 
+C ADATA: 
+C Mass of component (solids+liquid) (kg)
+      CompMass=ADATA(IPCOMP,1)
+C Mass weighted average specific heat node (J/kgK)
+      AveSpHt=ADATA(IPCOMP,2)
+C UA modulus for component (W/K)
+      UAMod=ADATA(IPCOMP,3)
+
+C BDATA: 
+C COP model [1- fixed 2 - modified Carnot efficiency; 3- cubic polynomial]
+      COPModel=NINT(BDATA(IPCOMP,1))
+
+C COP empirical coefficient a0 (or fixed COP, or Eff. modifier)
+      COPa0=BDATA(IPCOMP,2)
+
+C COP empirical coefficient a1 [Ti]
+      COPa1=BDATA(IPCOMP,3)
+
+C COP empirical coefficient a2 [Ti^2]
+      COPa2=BDATA(IPCOMP,4)
+
+C COP empirical coefficient a3 [Ti^3]
+      COPa3=BDATA(IPCOMP,5)
+
+C Compressor model (W) 
+      CompModel=NINT(BDATA(IPCOMP,6))
+
+C Comp empirical coefficient a0 (or fixed COP, or Eff. modifier)
+      Compa0=BDATA(IPCOMP,7)
+
+C Comp empirical coefficient a1 
+      Compa1=BDATA(IPCOMP,8)
+
+C Comp empirical coefficient a2 
+      Compa2=BDATA(IPCOMP,9)
+
+C Comp empirical coefficient a3 
+      Compa3=BDATA(IPCOMP,10)
+C ****
+C Compressor pf (-)
+      CompressPf=BDATA(IPCOMP,11)
+      IF(CompressPf.LT.SMALL)THEN
+        WRITE(OUTS,'(a)')'Error in GSHP: comp pf is close to zero!'
+        CALL EDISP(IUOUT,OUTS)
+        STOP
+      
+      ENDIF
+
+C Pump rating (W)
+      PumpRating=BDATA(IPCOMP,12)
+
+C Pump pf (-)
+      PumpPf=BDATA(IPCOMP,13)
+
+C Flowrate at rated pump power (l/s)
+      RatedFlow=BDATA(IPCOMP,14)
+      IF(RatedFlow.LT.SMALL)THEN
+        WRITE(OUTS,'(a)')'Error in GSHP: rated flow is close to zero!'
+        CALL EDISP(IUOUT,OUTS)
+        STOP
+      ENDIF
+
+C Controller power (W)
+      CtlRating=BDATA(IPCOMP,15)
+
+C Controller power factor (W)
+      CtlPf=BDATA(IPCOMP,16)
+      IF(CtlPf.LT.SMALL)THEN
+        WRITE(OUTS,'(a)')'Error in GSHP: ctl pf is close to zero!'
+        CALL EDISP(IUOUT,OUTS)
+        STOP
+      ENDIF
+
+C To max (degC)
+      ToutMax=BDATA(IPCOMP,17)
+
+C Ti max (degC)
+      TinMax=BDATA(IPCOMP,18)
+
+C AmbientTemp compensation on/off
+      AmbientTempComp=NINT(BDATA(IPCOMP,19))
+
+C Nominal water return temperature (Deg C)
+      NomRetT=BDATA(IPCOMP,20)
+      IF(NomRetT.GE.TinMax)THEN
+        WRITE(OUTS,'(a)')'Error in GSHP Tnom >= Tin max'
+        call EDISP(IUOUT,OUTS)
+        STOP
+      ENDIF
+
+C Nominal water return deadband (Deg C)
+      NomRetTDeadB=BDATA(IPCOMP,21)
+      IF((NomRetT+0.5*(NomRetTDeadB)).GE.TinMax)THEN
+        WRITE(OUTS,'(a)')'Error in GSHP Tnom + TdeadB >= Tin max'
+        call EDISP(IUOUT,OUTS)
+        STOP
+      ENDIF
+
+C Ambient temperature for temp compensation start [Deg C]
+      TempCompS=BDATA(IPCOMP,22)
+
+C Ambient temperature for temp compensation end [Deg C]
+      TempCompE=BDATA(IPCOMP,23)
+
+C Temp compensation gradient (-)
+      TempCompc0=BDATA(IPCOMP,24)
+
+C Nominal water return temperature DHW (Deg C)
+cx      NomRetT=BDATA(IPCOMP,20)
+cx      IF(NomRetT.GE.TinMax)THEN
+      IF(BDATA(IPCOMP,28).GE.BDATA(IPCOMP,30))THEN
+        WRITE(OUTS,'(a)')'Error in GSHP Tnom DHW >= Tin max DHW'
+        call EDISP(IUOUT,OUTS)
+        STOP
+      ENDIF
+
+C Is a lock out time defined?
+      BLKOUT=BDATA(IPCOMP,25)*60.
+
+      if (BLKOUT.gt.0.) then
+        bBLKOUT=.true.
+      else
+        bBLKOUT=.false.
+      endif
+
+      bSwitched=.false.
+
+C Nominal water return deadband DHW (Deg C)
+cx      IF((NomRetT+0.5*(NomRetTDeadB)).GE.TinMax)THEN
+      IF((BDATA(IPCOMP,28)+0.5*(NomRetTDeadB)).GE.BDATA(IPCOMP,30))THEN
+        WRITE(OUTS,'(a)')'Error in GSHP Tnom DHW+TdeadB >= Tin max DHW'
+        call EDISP(IUOUT,OUTS)
+        STOP
+      ENDIF
+
+C Trace output
+      IF(ITC.GT.0.AND.ITRACE(35).NE.0) THEN
+        WRITE(ITU,*) ' Component ',IPCOMP,' pre-simulation data for a:'
+        WRITE(ITU,*) ' 1 node (ISV=20) ground source heat pump '
+        NITMS=3
+        WRITE(ITU,*) ' ADATA ',(ADATA(IPCOMP,J),J=1,NITMS)
+        NITMS=30
+        WRITE(ITU,*) ' BDATA ',(BDATA(IPCOMP,J),J=1,NITMS)
+        NITMS=2
+        WRITE(ITU,*) ' CDATA ',(CDATA(IPCOMP,J),J=1,NITMS)
+        IF(ITU.EQ.IUOUT) THEN
+           IX1=(IPCOMP/5)*5
+           IF(IX1.EQ.IPCOMP.OR.IPCOMP.EQ.NPCOMP) call epagew
+        ENDIF
+      ENDIF
+C
+C Check user specified number of controlled variables
+      NCITM=1
+      IF(NCI(IPCOMP).NE.NCITM)
+     &   WRITE(ITU,*) ' CMP47S warning: user specified wrong number',
+     &                ' of controlled variables'
+
+C Check for a single connection to water.
+      ConError=.false.
+      NCONS=1
+      IPCONC=1
+      DO WHILE(IPCONC.LE.MPCONC.AND..NOT.ConError)
+        IPCON=ICONDX(IPCOMP,1,IPCONC)
+        IF(IPCONC.LE.NCONS) THEN
+          IF(IPCON.EQ.0) THEN
+            ConError=.true.
+          ELSE IF(ICONTP(IPCON).NE.20) THEN
+            ConError=.true.
+          END IF
+        ELSE IF(IPCON.NE.0) THEN
+          ConError=.true.
+        END IF
+        IPCONC=IPCONC+1
+      ENDDO
+
+C Error handling
+      IF(ConError)THEN
+        WRITE(IUOUT,*) 'CMP47S: connection error for component ',IPCOMP
+        WRITE(IUOUT,*) '        should be ',NCONS,' water connection(s)'
+        STOP 'CMP47S: unresolvable error'
+      ENDIF
+C
+      END
+
+C ******************** CMP48S ********************
+C CMP48S establishes for a plant component with plant db code 480 ie.
+C 2 node (ISV=20) WCH ground-source heat pump feeding a hydronic heating system
+C whether the specified number of controlled variables is OK, and also
+C whether the number of connections to this component is correct
+C and whether the connected nodes are of a type as expected by the
+C corresponding coefficient generator routine.
+C
+      SUBROUTINE CMP48S(IPCOMP)
+
+      implicit none
+
+#include "plant.h"
+#include "building.h"
+C
+      COMMON/OUTIN/IUOUT,IUIN
+      COMMON/TC/ITC,ICNT
+      COMMON/TRACE/ITCF,ITRACE(MTRACE),IZNTRC(MCOM),ITU
+
+      COMMON/C9/NPCOMP,NCI(MPCOM),CDATA(MPCOM,MMISCD)
+      COMMON/PDBDT/ADATA(MPCOM,MADATA),BDATA(MPCOM,MBDATA)
+      COMMON/PCOND/CONVAR(MPCON,MCONVR),ICONTP(MPCON),
+     &             ICONDX(MPCOM,MNODEC,MPCONC)
+
+      COMMON/GSHPvar1/CompMass,AveSpHt,UAMod,CarEffMod,COPa0,COPa1,
+     &COPa2,COPa3,Compa0,Compa1,Compa2,Compa3,
+     &CompressPf,PumpRating,PumpPf,RatedFlow,
+     &CtlRating,CtlPf,ToutMax,TinMax,
+     &NomRetT,NomRetTDeadB,TempCompS,TempCompE,TempCompc0
+
+      COMMON/GSHPvar2/COPModel,CompModel,AmbientTempComp,
+     &                DeviceONOFFp,DeviceONOFF
+
+      COMMON/GSHPvar3/CallforHeat,InDeadB
+
+      COMMON/GSHPvar4/INSO,ITSBO,bSwitched,BLKOUT,NTSBO,bBLKOUT
+      INTEGER INSO,ITSBO,NTSBO
+      REAL BLKOUT
+      LOGICAL bSwitched,bBLKOUT
+
+      REAL SMALL
+      PARAMETER (SMALL=1.0E-20)
+
+      INTEGER COPModel,CompModel,AmbientTempComp,
+     &DeviceONOFFp,DeviceONOFF
+
+      REAL CompMass,AveSpHt,UAMod,CarEffMod,COPa0,COPa1,
+     &COPa2,COPa3,Compa0,Compa1,Compa2,Compa3,CompressPf,
+     &PumpRating,PumpPf,RatedFlow,CtlRating,CtlPf,
+     &ToutMax,TinMax,NomRetT,NomRetTDeadB,
+     &TempCompS,TempCompE,TempCompc0
+
+      LOGICAL CallforHeat,InDeadB,ConError
+
+      INTEGER IUOUT,IUIN,ITC,ICNT,ITCF,ITRACE,IZNTRC,ITU,NPCOMP,NCI,
+     &  ICONTP,ICONDX,J,NCITM,NCONS,IPCONC,IPCOMP,IPCON1,IX1,NITMS,
+     &  NCONPN,IPCON2
+      
+      REAL CDATA,ADATA,BDATA,CONVAR
+
+      INTEGER IDAT
+
+      CHARACTER OUTS*248
+      
+C To be edited to include increased data entry nos. 
+
+C Establish static data derivable from the data read from database
+      DO 10 IDAT=4,34
+10      BDATA(IPCOMP,IDAT-3)=ADATA(IPCOMP,IDAT)
+
+C Initialise parameters      
+      InDeadB=.false.
+      CallforHeat=.false.
+
+C Assign variables to be used in coeff generator. 
+C ADATA: 
+C Mass of component (solids+liquid) (kg)
+      CompMass=ADATA(IPCOMP,1)
+C Mass weighted average specific heat node (J/kgK)
+      AveSpHt=ADATA(IPCOMP,2)
+C UA modulus for component (W/K)
+      UAMod=ADATA(IPCOMP,3)
+
+C BDATA: 
+C COP model [1- fixed 2 - modified Carnot efficiency; 3- cubic polynomial]
+      COPModel=NINT(BDATA(IPCOMP,1))
+
+C COP empirical coefficient a0 (or fixed COP, or Eff. modifier)
+      COPa0=BDATA(IPCOMP,2)
+
+C COP empirical coefficient a1 [Ti]
+      COPa1=BDATA(IPCOMP,3)
+
+C COP empirical coefficient a2 [Ti^2]
+      COPa2=BDATA(IPCOMP,4)
+
+C COP empirical coefficient a3 [Ti^3]
+      COPa3=BDATA(IPCOMP,5)
+
+C Compressor model (W) 
+      CompModel=NINT(BDATA(IPCOMP,6))
+
+C Comp empirical coefficient a0 (or fixed COP, or Eff. modifier)
+      Compa0=BDATA(IPCOMP,7)
+
+C Comp empirical coefficient a1 
+      Compa1=BDATA(IPCOMP,8)
+
+C Comp empirical coefficient a2 
+      Compa2=BDATA(IPCOMP,9)
+
+C Comp empirical coefficient a3 
+      Compa3=BDATA(IPCOMP,10)
+C ****
+C Compressor pf (-)
+      CompressPf=BDATA(IPCOMP,11)
+      IF(CompressPf.LT.SMALL)THEN
+        WRITE(OUTS,'(a)')'Error in 2n-GSHP: comp pf is close to zero!'
+        CALL EDISP(IUOUT,OUTS)
+        STOP
+      
+      ENDIF
+
+C Pump rating (W)
+      PumpRating=BDATA(IPCOMP,12)
+
+C Pump pf (-)
+      PumpPf=BDATA(IPCOMP,13)
+
+C Flowrate at rated pump power (l/s)
+      RatedFlow=BDATA(IPCOMP,14)
+      IF(RatedFlow.LT.SMALL)THEN
+      WRITE(OUTS,'(a)')'Error in 2n-GSHP: rated flow is close to zero!'
+        CALL EDISP(IUOUT,OUTS)
+        STOP
+      ENDIF
+
+C Controller power (W)
+      CtlRating=BDATA(IPCOMP,15)
+
+C Controller power factor (W)
+      CtlPf=BDATA(IPCOMP,16)
+      IF(CtlPf.LT.SMALL)THEN
+        WRITE(OUTS,'(a)')'Error in 2n-GSHP: ctl pf is close to zero!'
+        CALL EDISP(IUOUT,OUTS)
+        STOP
+      ENDIF
+
+C To max (degC)
+      ToutMax=BDATA(IPCOMP,17)
+
+C Ti max (degC)
+      TinMax=BDATA(IPCOMP,18)
+
+C AmbientTemp compensation on/off
+      AmbientTempComp=NINT(BDATA(IPCOMP,19))
+
+C Nominal water return temperature (Deg C)
+      NomRetT=BDATA(IPCOMP,20)
+      IF(NomRetT.GE.TinMax)THEN
+        WRITE(OUTS,'(a)')'Error in 2n-GSHP Tnom => Tin max'
+        call EDISP(IUOUT,OUTS)
+        STOP
+      ENDIF
+
+C Nominal water return deadband (Deg C)
+      NomRetTDeadB=BDATA(IPCOMP,21)
+      IF((NomRetT+0.5*(NomRetTDeadB)).GE.TinMax)THEN
+        WRITE(OUTS,'(a)')'Error in 2n-GSHP Tnom + TdeadB >= Tin max'
+        call EDISP(IUOUT,OUTS)
+        STOP
+      ENDIF
+
+C Ambient temperature for temp compensation start [Deg C]
+      TempCompS=BDATA(IPCOMP,22)
+
+C Ambient temperature for temp compensation end [Deg C]
+      TempCompE=BDATA(IPCOMP,23)
+
+C Temp compensation gradient (-)
+      TempCompc0=BDATA(IPCOMP,24)
+
+C Is a lock out time defined?
+      BLKOUT=BDATA(IPCOMP,25)*60.
+
+      if (BLKOUT.gt.0.) then
+        bBLKOUT=.true.
+      else
+        bBLKOUT=.false.
+      endif
+
+      bSwitched=.false.
+
+C Nominal water return temperature DHW (Deg C)
+cx      NomRetT=BDATA(IPCOMP,20)
+cx      IF(NomRetT.GE.TinMax)THEN
+      IF(BDATA(IPCOMP,29).GE.BDATA(IPCOMP,31))THEN
+        WRITE(OUTS,'(a)')'Error in 2n-GSHP Tnom DHW => Tin max DHW'
+        call EDISP(IUOUT,OUTS)
+        STOP
+      ENDIF
+
+C Nominal water return deadband DHW (Deg C)
+cx      IF((NomRetT+0.5*(NomRetTDeadB)).GE.TinMax)THEN
+      IF((BDATA(IPCOMP,29)+0.5*(NomRetTDeadB)).GE.BDATA(IPCOMP,31))THEN
+        WRITE(OUTS,'(a)')
+     &     'Error in 2n-GSHP Tnom DHW+TdeadB >= Tin max DHW'
+        call EDISP(IUOUT,OUTS)
+        STOP
+      ENDIF
+
+C Trace output
+      IF(ITC.GT.0.AND.ITRACE(35).NE.0) THEN
+         WRITE(ITU,*) ' Component ',IPCOMP,' pre-simulation data for a:'
+         WRITE(ITU,*) ' 2 node (ISV=20) ground source heat pump '
+         NITMS=3
+         WRITE(ITU,*) ' ADATA ',(ADATA(IPCOMP,J),J=1,NITMS)
+         NITMS=31
+         WRITE(ITU,*) ' BDATA ',(BDATA(IPCOMP,J),J=1,NITMS)
+         NITMS=1
+         WRITE(ITU,*) ' CDATA ',(CDATA(IPCOMP,J),J=1,NITMS)
+         IF(ITU.EQ.IUOUT) THEN
+            IX1=(IPCOMP/5)*5
+            IF(IX1.EQ.IPCOMP.OR.IPCOMP.EQ.NPCOMP) call epagew
+         ENDIF
+      ENDIF
+C
+C Check user specified number of controlled variables
+      NCITM=1
+      IF(NCI(IPCOMP).NE.NCITM)
+     &   WRITE(ITU,*) ' CMP48S warning: user specified wrong number',
+     &                ' of controlled variables'
+
+C Check component has 2 connections only, one per node,
+C both to water
+      ConError=.false.
+      NCONS=2
+      NCONPN=1
+      DO 15 IPCONC=1,MPCONC
+        IPCON1=ICONDX(IPCOMP,1,IPCONC)
+        IPCON2=ICONDX(IPCOMP,2,IPCONC)
+        IF(IPCONC.LE.NCONPN) THEN
+          IF(IPCON1.EQ.0.OR.IPCON2.EQ.0) THEN
+            ConError=.true.
+          ELSE IF(ICONTP(IPCON1).NE.20.OR.ICONTP(IPCON2).NE.20) THEN
+            ConError=.true.
+          END IF
+        ELSE IF(IPCON1.NE.0.OR.IPCON2.NE.0) THEN
+          ConError=.true.
+        END IF
+   15 CONTINUE
+
+C Error handling
+      IF(ConError)THEN
+        WRITE(IUOUT,*) 'CMP48S: connection error for component ',IPCOMP
+        WRITE(IUOUT,*) '        should be ',NCONS,
+     &                                     ' water connection(s)'
+        STOP 'CMP48S: unresolvable error'
+      ENDIF
+C
+      END
+
+
 C ******************** CMP50S ********************
 C
 C CMP50S establishes for a plant component with plant db code 500 ie.
@@ -4339,6 +4869,67 @@ C Error handling
       WRITE(IUOUT,*) '         to water.'
       STOP ' CMP73S: unresolvable error'
 C
+      END
+
+C ******************** CMP74S ********************
+C CMP74S establishes for a plant component with plant db code 740 ie.
+C 1 node (ISV=20) WCH automatic flow control valve
+C whether the specified number of controlled variables is OK, and also
+C whether the number of connections to this component is correct
+C and whether the connected nodes are of a type as expected by the
+C corresponding coefficient generator routine
+      subroutine cmp74s(ipcomp)
+#include "plant.h"
+#include "building.h"
+C
+      COMMON/OUTIN/IUOUT,IUIN
+      COMMON/TC/ITC,ICNT
+      COMMON/TRACE/ITCF,ITRACE(MTRACE),IZNTRC(MCOM),ITU
+C
+      COMMON/C9/NPCOMP,NCI(MPCOM),CDATA(MPCOM,MMISCD)
+      COMMON/PDBDT/ADATA(MPCOM,MADATA),BDATA(MPCOM,MBDATA)
+      COMMON/PCOND/CONVAR(MPCON,MCONVR),ICONTP(MPCON),
+     &             ICONDX(MPCOM,MNODEC,MPCONC)
+C
+C Trace output
+      IF(ITC.GT.0.AND.ITRACE(35).NE.0) THEN
+         WRITE(ITU,*) ' Component ',IPCOMP,' pre-simulation data for a:'
+         WRITE(ITU,*) ' 1 node (ISV=20) WCH automatic control valve'
+         NITMS=4
+         WRITE(ITU,*) ' ADATA ',(ADATA(IPCOMP,J),J=1,NITMS)
+         IF(ITU.EQ.IUOUT) THEN
+            IX1=(IPCOMP/5)*5
+            IF(IX1.EQ.IPCOMP.OR.IPCOMP.EQ.NPCOMP) call epagew
+         END IF
+      END IF
+C
+C Check user specified number of controlled variables
+      NCITM=0
+      IF(NCI(IPCOMP).NE.NCITM)
+     &   WRITE(ITU,*) ' CMP74S warning: user specified wrong number',
+     &                ' of controlled variables'
+C
+C Check component has 1 connection only, to "water"
+      NCONS=1
+      DO 10 IPCONC=1,MPCONC
+      IPCON=ICONDX(IPCOMP,1,IPCONC)
+      IF(IPCONC.LE.NCONS) THEN
+         IF(IPCON.EQ.0) THEN
+            GOTO 990
+         ELSE IF(ICONTP(IPCON).NE.20) THEN
+            GOTO 990
+         END IF
+      ELSE IF(IPCON.NE.0) THEN
+         GOTO 990
+      END IF
+   10 CONTINUE
+
+C Return to calling module
+      RETURN
+C Error handling
+  990 WRITE(IUOUT,*) ' CMP74S: connection error for component ',IPCOMP
+      WRITE(IUOUT,*) '         should be ',NCONS,' connection(s) to air'
+      STOP ' CMP74S: unresolvable error'
       END
 
 C ******************** CMP79S ********************

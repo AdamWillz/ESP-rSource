@@ -478,7 +478,6 @@ C Jump out when inthenetwork becomes true.
             write(name,'(a)') CMNAM(loop2)(1:lnblnk(CMNAM(loop2)))
             xc=HCMP(loop2,1,1); yc=HCMP(loop2,1,2) ! recover
             zc=HCMP(loop2,1,3) 
-            write(6,*) 'match ',iz,loop,loop2,name,xc,yc,zc
             inthenetwork=.true.
             EXIT
           endif

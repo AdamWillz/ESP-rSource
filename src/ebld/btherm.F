@@ -483,6 +483,7 @@ C a function of moisture content.
 C **********************************************************************
       FUNCTION CONMST(ICOMP,I,INM,IL)
 #include "building.h"
+#include "moist.h"
 
       COMMON/VTHP14/THRMLI(MCOM,MS,ME,7)
       COMMON/MOIST06/ISORP(MCOM,MS,ME),SORP(MCOM,MS,ME,3)
@@ -495,7 +496,7 @@ C **********************************************************************
       CFF=SORP(ICOMP,I,IL,2)
       EXPT=SORP(ICOMP,I,IL,3)
       DNSTY=THRMLI(ICOMP,I,IL,2)
-      U=U02(RH,Uh,CFF,EXPT,DNSTY)
+      U=U02(iMoistModel(ICOMP),RH,Uh,CFF,EXPT,DNSTY)
 
 C Thermal conductivity = 
 C       dry conductivity * moisture dependence factor * moisture content

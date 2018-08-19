@@ -1775,7 +1775,7 @@ C Read extra data for specific turb models.
           elseif (ITURB(ICFD).eq.4) then
             CALL EGETWR(OUTSTR,K,VALS,0.,500.,'W','rMOOT',IER)
             rMOOT(ICFD)=VALS
-            CALL EGETWI(OUTSTR,K,IVAL,1,1000,'W','niter',IER)
+            CALL EGETWI(OUTSTR,K,IVAL,1,8000,'W','niter',IER)
             nZtoKE(ICFD)=IVAL
           endif
 
@@ -2124,7 +2124,7 @@ C          endif
 C Read iteration control data.
       CALL STRIPC(IFL,OUTSTR,0,ND,1,'iteration control',IER)
       K=0
-      CALL EGETWI(OUTSTR,K,IVAL,10,1000,'W','max iter',IER)
+      CALL EGETWI(OUTSTR,K,IVAL,10,8000,'W','max iter',IER)
       MAXITR(ICFD)=IVAL
       CALL EGETWR(OUTSTR,K,VAL,0.,0.,'-','conv crit',IER)
       SRMAX(ICFD)=VAL

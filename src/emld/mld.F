@@ -230,7 +230,7 @@ C Use askabout to instanciate the initial help messages (2nd parameter is one).
       if(ino.eq.1) then
 
 C Recover mould names and display menu of moulds.
-       call mycorecv(ino,1)
+       call mycorecv(ino,1,0)
 
       elseif(ino.eq.3) then
 

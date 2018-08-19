@@ -38,22 +38,28 @@ C-------------------------------------------------------------------------------
       common/BATTERY_STATE/
      & abuseFlag(MPOWCOM),
      & activeBatLifeControl(MPOWCOM),
-     & batTemp(MPOWCOM),
+     & ageing_cycle(MPOWCOM),
+     & ageing_time_ini(MPOWCOM),
+     & batCapRep(MPOWCOM),
+     & batDemandP(MPOWCOM),
      & batDOD(MPOWCOM),
      & batLifeUsed(MPOWCOM),
+     & batSOE(MPOWCOM),
+     & batTemp(MPOWCOM),
      & cumBatLifeUsed(MPOWCOM),
-     & lifeUseFactor(MPOWCOM),
+     & cycles_used_Lion(MPOWCOM),
      & mandChargeCycle(MPOWCOM),
      & mandChargePhase(MPOWCOM),
      & mandChargePhaseIncrease(MPOWCOM),
-     & timeSinceLastFullCharge(MPOWCOM),
-     & nPreviousTS,
-     & batDemandP(MPOWCOM),
-     & loVoltLion(MPOWCOM),
-     & hiVoltLion(MPOWCOM),
-     & loTempLion(MPOWCOM),
      & hiTempLion(MPOWCOM),
-     & cycles_used_Lion(MPOWCOM)
+     & hiVoltLion(MPOWCOM),
+     & lifeUseFactor(MPOWCOM),
+     & loTempLion(MPOWCOM),
+     & loVoltLion(MPOWCOM),
+     & nPreviousTS,
+     & state_of_health(MPOWCOM),
+     & timeSinceLastFullCharge(MPOWCOM)
+
 
 C---------------------------------------------------------------------------------
 C Declaration of variable type and definition
@@ -69,6 +75,9 @@ C       activeBatLifeControl = 1 : active battery life control
 
 C Battery temperature (C)
       REAL batTemp
+
+C Battery state of energy (Wh)
+      REAL batSOE
 
 C Battery Depth Of Discharge (%)
       REAL batDOD
@@ -114,6 +123,7 @@ C-------------------------------------------------------------------------------
       INTEGER loVoltLion, hiVoltLion, loTempLion, hiTempLion
 
 C-------------------------------------------------------------------------------
-C Li-on degradation, number of cycles used
+C Li-on degradation, number of cycles used & calendaric ageing factor
 C-------------------------------------------------------------------------------      
-      REAL cycles_used_Lion
+      REAL cycles_used_Lion,ageing_cycle,batCapRep
+      REAL ageing_time_ini,state_of_health

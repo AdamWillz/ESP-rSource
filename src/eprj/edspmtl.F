@@ -684,8 +684,9 @@ c      IVAL=IFOC
       CALL ADJVIEW(IER)
       MODIFYVIEW=.TRUE.
       MODBND=.TRUE.
-      if(SOTF(ISO)(1:4).eq.'OPAQ'.or.SOTF(ISO)(1:4).eq.'CFC '.or.
-     &   SOTF(ISO)(1:4).eq.'CFC2')then
+C      if(SOTF(ISO)(1:4).eq.'OPAQ'.or.SOTF(ISO)(1:4).eq.'CFC '.or.
+C     &   SOTF(ISO)(1:4).eq.'CFC2')then
+      if(SOTF(ISO)(1:4).eq.'OPAQ')then
         ISPMF=1
       else
         ISPMF=0

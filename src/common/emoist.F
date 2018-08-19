@@ -26,6 +26,7 @@ C *********************************************************************
 
 C espriou.h provides current file.
 #include "espriou.h"
+#include "moist.h"
 
       COMMON/OUTIN/IUOUT,IUIN
       COMMON/PREC9/NCONST(MCOM),NELTS(MCOM,MS),NGAPS(MCOM,MS),
@@ -35,8 +36,13 @@ C espriou.h provides current file.
       COMMON/MOIST06/ISORP(MCOM,MS,ME),SORP(MCOM,MS,ME,3)
       COMMON/MOIST07/ITVAPD(MCOM,MS,ME),TVAPD(MCOM,MS,ME)
 
+      logical dll
+      character dllsubr*12,dllmesg*124
       CHARACTER LMSTR*72,OUTSTR*124,outs*124
       IER=0
+
+C Check if running in dll mode.
+      call isadll(dll)
 
 C Open existing ASCII moisture data file as unit IUNIT.
       CALL EFOPSEQ(IUNIT,LMSTR,1,IER)
@@ -45,6 +51,43 @@ C Open existing ASCII moisture data file as unit IUNIT.
         RETURN
       ENDIF
       write(currentfile,'(a)') LMSTR(1:lnblnk(LMSTR))
+
+C Check moisture file version
+C (legacy files begin with "#  moisture nodes/layer")
+
+C Read lines from file, discarding comments. Look for header on
+C newer files. Older files will begin with a description. To allow for
+C description with spaces copy directly from OUTSTR rather than parsing
+C it into words.
+ 
+      CALL STRIPC(IUNIT,OUTSTR,0,ND,1,'moist version or header',IER)
+      IF(IER.NE.0) goto 102
+      if(outstr(1:9).eq.'*Moisture')then
+        if(outstr(11:13).eq.'1.0')then
+          iMoistVer(icomp)=1
+C         Defaults to legacy model
+          iMoistModel(icomp)=LEGACY
+
+        elseif(outstr(11:13).eq.'2.0')then
+          iMoistVer(icomp)=2
+C         If moisture file version 2.0, read permeability / sorption
+C         isotherm model switch (legacy or Otto)
+
+          CALL STRIPC(IUNIT,OUTSTR,0,ND,1,'moisture model',IER)
+          IF(IER.NE.0) goto 103
+          if(outstr(1:6).eq.'LEGACY')then
+            iMoistModel(icomp)=LEGACY
+          elseif(outstr(1:6).eq.'OTTO  ')then
+            iMoistModel(icomp)=OTTO
+          else
+            goto 104
+          endif
+        endif
+      else
+C       Rewind legacy file for read and set model to LEGACY
+        REWIND(IUNIT,ERR=999)
+        iMoistModel(icomp)=LEGACY
+      endif
 
 C Read the moisture node distribution information.
       MNDS=MNDS-MNDZ(ICOMP)
@@ -131,19 +174,58 @@ C Read thermal vapor diffusion coefficient for each layer.
    70 CONTINUE
 
 c Close zone moisture data file.
-      CALL ERPFREE(IUNIT,ISTAT)
+   6  CALL ERPFREE(IUNIT,ISTAT)
 
 c Trace output ?
       IF(ITRC.GE.1)THEN
-        CALL EDISP(ITRU,'zone moisture data file successfully read.')
+        CALL EDISP(ITRU,'Zone moisture data file successfully read.')
       ENDIF
       RETURN
+
+C Error messages
 
  101  write(outs,'(3a)') 'EMSTRR: error reading ',OUTSTR(1:50),'...'
       call edisp(iuout,outs)
       ier=1
       CALL ERPFREE(IUNIT,ISTAT)
       return
+
+ 102  write(outs,'(5a)') 'EMSTRR: error reading first line of file ',
+     &   LMSTR(1:lnblnk(LMSTR)),'  ',
+     &   OUTSTR(1:50),'...'
+      call edisp(iuout,outs)
+      ier=1
+      CALL ERPFREE(IUNIT,ISTAT)
+      return
+
+ 103  write(outs,'(3a)') 'EMSTRR: error reading MoistureModel ',
+     &   OUTSTR(1:50),'...'
+      call edisp(iuout,outs)
+      ier=1
+      CALL ERPFREE(IUNIT,ISTAT)
+      return
+
+ 104  write(outs,'(3a)') 'EMSTRR: unknown MoistureModel ',
+     &   OUTSTR(1:50),'...'
+      call edisp(iuout,outs)
+      ier=1
+      CALL ERPFREE(IUNIT,ISTAT)
+      return
+
+C File rewind errors.
+  999 if(dll)then
+        dllsubr='ersys'
+        WRITE(dllmesg,'(2a)') 
+     &  ' Error rewinding moisture definition file ',LMSTR(1:32)
+        ier=2
+        return
+      else
+        CALL USRMSG('Error rewinding moisture definition file:',
+     &    LMSTR,'W')
+        IER=1
+        GOTO 6
+      endif 
+
       END
 
 C *********************************************************************
@@ -151,6 +233,7 @@ C EMSTRW writes a zone moisture data file.
 C *********************************************************************
       SUBROUTINE EMSTRW(LMSTR,IUNIT,ICOMP,ITRC,ITRU,IER)
 #include "building.h"
+#include "moist.h"
 
       COMMON/OUTIN/IUOUT,IUIN
       COMMON/PREC9/NCONST(MCOM),NELTS(MCOM,MS),NGAPS(MCOM,MS),
@@ -170,7 +253,21 @@ C Open ASCII moisture data file as unit IUNIT.
         RETURN
       ENDIF
 
-C Write the moisture node distribution information.
+C Write the moisture node distribution information,
+C depending on file version.
+      if (iMoistVer(ICOMP).eq.1) then
+        WRITE(IUNIT,'(A)')'*Moisture 1.0'
+        WRITE(IUNIT,'(A)')'LEGACY'
+
+      elseif (iMoistVer(ICOMP).eq.2) then
+        WRITE(IUNIT,'(A)')'*Moisture 2.0'
+          if (iMoistModel(ICOMP).eq.LEGACY) then
+          WRITE(IUNIT,'(A)')'LEGACY'
+          elseif (iMoistModel(ICOMP).eq.OTTO) then
+          WRITE(IUNIT,'(A)')'OTTO  '
+          endif
+      endif
+
       WRITE(IUNIT,'(A)')'#  moisture nodes/layer'
       NC=NCONST(ICOMP)
       DO 10 I=1,NC

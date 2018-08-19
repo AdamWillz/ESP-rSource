@@ -59,26 +59,41 @@ C relative humidity and sorption isotherms provided by (Marieke 1994,
 C Hansen 1986 Technical reprort 162/86 Technical University of Denmark).
 C U01   moisture content (kg/m3)
 C RH    relative humidity
-C Uh    max hygroscopic moisture content (kg/kg)
+C Uh    max hygroscopic moisture content (kg/m3) ((?? unit??))
 C CFF   coefficient used to calculate u=f(RH) and xi
 C EXPT  exponent used to calculate u=f(RH) and xi
+C
+C Otto Model: PhD Thesis by Frank Otto, 1995, University of Kassel
+C   "The Influence of Sorption Processes on Indoor Air Humidity"
+C   (in German).
+C   Parameter mapping:
+C     Uh -> a1
+C    CFF -> a2
+C   EXPT -> a3
 C *********************************************************************
-      FUNCTION U01(RH,Uh,CFF,EXPT)
+      FUNCTION U01(iMM,RH,Uh,CFF,EXPT)
       COMMON/MOIST17/RHmax
 
       IF(RH.GT.RHmax)RH=RHmax
-      U01=Uh*(1.0-ALOG(RH)/CFF)**(-1.0/EXPT)
-      IF(U01.LT.0.0)STOP 'Error (703): negative moisture content.'
+      if (iMM.eq.1) then
+C       Legacy model
+        U01=Uh*(1.0-ALOG(RH)/CFF)**(-1.0/EXPT)
+      elseif (iMM.eq.2) then
+C       Otto model
+        U01=1000.*(exp(Uh*RH+CFF*RH**2+EXPT*RH**3)-1.)
+      endif
+cx      IF(U01.LT.0.0)STOP 'Error (703): negative moisture content.'
+      IF (U01.LT.0.0) U01=0.00001
       RETURN
       END
 C *********************************************************************
 C U02   moisture content (kg/kg dry material)
 C *********************************************************************
-      FUNCTION U02(RH,Uh,CFF,EXPT,DNSTY)
+      FUNCTION U02(iMM,RH,Uh,CFF,EXPT,DNSTY)
       COMMON/MOIST17/RHmax
 
       IF(RH.GT.RHmax)RH=RHmax
-      U02=U01(RH,Uh,CFF,EXPT)/DNSTY
+      U02=U01(iMM,RH,Uh,CFF,EXPT)/DNSTY
       IF(U02.LT.0.0)STOP 'Error (704): negative moisture content.'
       RETURN
       END
@@ -90,18 +105,31 @@ C provided by (Marieke 1994, Hansen 1986 Technical reprort 162/86
 C Technical University of Denmark).
 C XI01  moisture capacity (kg/m3)
 C RH    relative humidity (-)
-C Uh    max hygroscopic moisture content (kg/kg)
+C Uh    max hygroscopic moisture content (kg/m3) ((unit?? ))
 C CFF   coefficient used to calculate u=f(RH) and xi
 C EXPT  exponent used to calculate u=f(RH) and xi
+C
+C Otto Model parameter mapping:
+C     Uh -> a1
+C    CFF -> a2
+C   EXPT -> a3
 C *********************************************************************
-      FUNCTION XI01(RH,Uh,CFF,EXPT)
+      FUNCTION XI01(iMM,RH,Uh,CFF,EXPT)
       COMMON/OUTIN/IUOUT,IUIN
       COMMON/MOIST17/RHmax
       DOUBLE PRECISION XI01
       SMALL=1.0E-15
 
       IF(RH.GT.RHmax)RH=RHmax
-      XI01=Uh/(EXPT*CFF*RH)*(1.0-ALOG(RH)/CFF)**(-(EXPT+1.0)/EXPT)
+      if (iMM.eq.1) then
+C       Legacy model
+        XI01=Uh/(EXPT*CFF*RH)*(1.0-ALOG(RH)/CFF)**(-(EXPT+1.0)/EXPT)
+      elseif (iMM.eq.2) then
+C       Otto model
+        XI01=1000.*exp(Uh*RH+CFF*RH**2+EXPT*RH**3)
+     &         *(3.*EXPT*RH**2+2.*CFF*RH+Uh)
+        XI01=max(DBLE(SMALL),XI01)
+      endif
       IF(XI01.LT.DBLE(SMALL))then
         call edisp(iuout,'XI01: (705) very small moisture capacity.')
         call epwait
@@ -114,14 +142,14 @@ C *********************************************************************
 C *********************************************************************
 C XI02  moisture capacity (kg/kg)
 C *********************************************************************
-      FUNCTION XI02(RH,Uh,CFF,EXPT,DNSTY)
+      FUNCTION XI02(iMM,RH,Uh,CFF,EXPT,DNSTY)
       COMMON/OUTIN/IUOUT,IUIN
       COMMON/MOIST17/RHmax
       DOUBLE PRECISION XI01, XI02
       SMALL=1.0E-15
 
       IF(RH.GT.RHmax)RH=RHmax
-      XI02=XI01(RH,Uh,CFF,EXPT)/DNSTY
+      XI02=XI01(iMM,RH,Uh,CFF,EXPT)/DNSTY
       IF(XI02.LT.DBLE(SMALL))then
         call edisp(iuout,'XI02: (706) very small moisture capacity.')
         call epwait
@@ -134,7 +162,7 @@ C *********************************************************************
 C *********************************************************************
 C XI03  moisture capacity (kg/m3).  The numerical equivalent for XI01.
 C *********************************************************************
-      FUNCTION XI03(RHp,RHf,Uh,CFF,EXPT)
+      FUNCTION XI03(iMM,RHp,RHf,Uh,CFF,EXPT)
       COMMON/OUTIN/IUOUT,IUIN
       COMMON/MOIST17/RHmax
       DOUBLE PRECISION XI01, XI03
@@ -144,12 +172,12 @@ C *********************************************************************
       IF(RHf.GT.RHmax)RHf=RHmax
       RHfp=RHf-RHp
       IF(ABS(RHfp).LT.1.0e-6)THEN
-        XI03=XI01(RHp,Uh,CFF,EXPT)
+        XI03=XI01(iMM,RHp,Uh,CFF,EXPT)
       ELSE
-        Up=U01(RHp,Uh,CFF,EXPT)
-        Uf=U01(RHf,Uh,CFF,EXPT)
+        Up=U01(iMM,RHp,Uh,CFF,EXPT)
+        Uf=U01(iMM,RHf,Uh,CFF,EXPT)
         XI03=(Uf-Up)/RHfp
-        IF(XI03.LT.0.0)XI03=XI01(RHp,Uh,CFF,EXPT)
+        IF(XI03.LE.0.0)XI03=XI01(iMM,RHp,Uh,CFF,EXPT)
       ENDIF
       IF(XI03.LT.DBLE(SMALL))then
         call edisp(iuout,'XI03: very small moisture capacity.')
@@ -184,16 +212,23 @@ C *********************************************************************
       RHfp=RHf-RHp
       IF(ABS(RHfp).LT.1.0e-6)THEN
         XIair01=XIair02(Pvp,TCp,Pt)
+        iSource=1
       ELSE
-        Xp=X03(TCp,RHp,Pt)
-        Xf=X03(TCf,RHf,Pt)
+        Xp=X03(TCp,RHp,Pt) ! kg_vap / kg_dry-air
+        Xf=X03(TCf,RHf,Pt) ! kg_vap / kg_dry-air
         XIair01=(Xf-Xp)/RHfp
-        IF(XIair01.LT.0.0)XIair01=XIair02(Pvp,TCp,Pt)
+        iSource=2
+        IF(XIair01.LE.0.0) then
+          XIair01=XIair02(Pvp,TCp,Pt)
+          iSource=3
+        ENDIF
       ENDIF
       IF(XIair01.LT.DBLE(SMALL))then
-        call edisp(iuout,
-     &'XIair01: small moisture cap for case of: Pvp Pvf TCp TCf Pt')
-        write(outs,*) Pvp,Pvf,TCp,TCf,Pt,' resetting'
+        write(outs,'(A,A)')'XIair01: small moist. cap for case of:',
+     &   ' Pvp Pvf TCp TCf  RHfp Xp Xf  Pabs iS'
+        call edisp(iuout,outs)
+        write(outs,'(4(F8.3,1X),3(F8.5,1X),I6,I2,A)')
+     &    Pvp,Pvf,TCp,TCf,RHfp,Xp,Xf,int(Pt),iSource,' resetting'
         call edisp(iuout,outs)
         XIair01=1.0E-10
       endif
@@ -217,7 +252,7 @@ C *********************************************************************
       Ps=Psat01(TC)
       RH=Pv/Ps
       IF(RH.GT.RHmax)RH=RHmax
-      XIair02=RATIO*Ps*Pt/(Pt-Ps*RH)**2
+      XIair02=RATIO*Ps*Pt/(Pt-Ps*RH)**2 ! Unit [-]? Should be kg/m3 !!?
       IF(XIair02.LT.DBLE(SMALL))then
         call edisp(iuout,'XIair02: very small moisture capacity.')
         call epwait
@@ -344,21 +379,46 @@ C VPRMa   vapour permeability factor a
 C VPRMb   vapour permeability factor b
 C VPRMc   vapour permeability factor c
 C RH      relative humidity (-)
+C
+C Otto Model: PhD Thesis by Frank Otto, 1995, University of Kassel
+C   "The Influence of Sorption Processes on Indoor Air Humidity"
+C   (in German).
+C   Parameter mapping:
+C   VPRMa -> a0
+C   VPRMb -> a2
+C   VPRMc -> a4
+C   a1 = a3 = 0.
 C *********************************************************************
-      FUNCTION DELT01(RH,VPRMa,VPRMb,VPRMc)
+      FUNCTION DELT01(iMM,RH,VPRMa,VPRMb,VPRMc)
       COMMON/OUTIN/IUOUT,IUIN
       COMMON/MOIST17/RHmax
       character outs*124
+      real my
       SMALL=1.0E-15
 
       IF(RH.GT.RHmax)RH=RHmax
-      DELT01=1.89923e-10*(VPRMa+VPRMb*EXP(VPRMc*RH))
+      if (iMM.eq.1) then
+C       Legacy model
+        DELT01=1.89923e-10*(VPRMa+VPRMb*EXP(VPRMc*RH))
+      elseif (iMM.eq.2) then
+C       Otto model
+        my=exp(VPRMa+VPRMb*RH**2+VPRMc*RH**4)
+        if (my.gt.0.) then
+          DELT01=1.883e-10/my
+        else
+          write(outs,'(a,4F12.6,a)')
+     &     'DELT01: small my for: VPRMa VPRMb VPRMc RH',
+     &      VPRMa,VPRMb,VPRMc,RH,' resetting to .1'
+          call edisp(iuout,outs)
+          DELT01=1.883e-9
+        endif
+      endif
       IF(DELT01.LT.SMALL)then
         write(outs,'(a,4F12.6,a)') 
      &   'DELT01: small vapour perm for: VPRMa VPRMb VPRMc RH',
      &    VPRMa,VPRMb,VPRMc,RH,' resetting to 1.0E-13'
         call edisp(iuout,outs)
-        DELT01=1.0E-13
+        DELT01=1.0E-15
       endif
       RETURN
       END

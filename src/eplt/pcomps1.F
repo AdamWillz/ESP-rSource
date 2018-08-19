@@ -351,7 +351,7 @@ C Trace output
 C Check user specified number of controlled variables
       NCITM=0
       IF(NCI(IPCOMP).NE.NCITM)
-     &   WRITE(ITU,*) ' CMP58S warning: user specified wrong number',
+     &   WRITE(ITU,*) ' CMP57S warning: user specified wrong number',
      &                ' of controlled variables'
 
 C Check component has 1st connection to "water"
@@ -848,7 +848,7 @@ C Trace output
 C Check user specified number of controlled variables
       NCITM=0
       IF(NCI(IPCOMP).NE.NCITM)
-     &   WRITE(ITU,*) ' CMP22S warning: user specified wrong number',
+     &   WRITE(ITU,*) ' CMP95S warning: user specified wrong number',
      &                ' of controlled variables'
 
 C Check component has 1 connection only to water
@@ -868,8 +868,8 @@ C Check component has 1 connection only to water
       RETURN
 
 C Error handling
-  990 WRITE(IUOUT,*) ' CMP68S: connection error for component ',IPCOMP
+  990 WRITE(IUOUT,*) ' CMP95S: connection error for component ',IPCOMP
       WRITE(IUOUT,*) '         should be ',NCONS,' air connection(s)'
-      STOP ' CMP68S: unresolvable error'
+      STOP ' CMP95S: unresolvable error'
       END
 

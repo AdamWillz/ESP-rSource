@@ -36,8 +36,11 @@ c  cmp99c   3 node (isv=20) CHP engine component.
 c ******************** CMP30C ********************
 
       subroutine cmp30c(ipcomp,cout,istats)
+      use h3kmodule
 #include "plant.h"
 #include "building.h"
+
+      integer lnblnk  ! function definition
 
       common/outin/iuout,iuin
       common/tc/itc,icnt
@@ -61,6 +64,9 @@ c ******************** CMP30C ********************
      &             pcntmp(mpcom)
       common/pcond/convar(mpcon,mconvr),icontp(mpcon),
      &             icondx(mpcom,mnodec,mpconc)
+
+      common/pcnam/pcname(mpcom)       ! Plant component names
+      character*15 pcname
 
       parameter (small=1.0e-15)
       real      cout(mpcoe)
@@ -165,6 +171,13 @@ c Trace output
       end if
       if(itc.gt.0.and.nsinc.ge.itc.and.nsinc.le.itcf.and.
      &   ITRACE(37).ne.0) write(itu,*) ' Leaving subroutine CMP30C'
+
+C------------------------------------------------------
+C XML output
+C------------------------------------------------------
+       call AddToReport(rvPltQExtractedH%Identifier,
+     &         Q,
+     &         pcname(IPCOMP)(1:lnblnk(pcname(IPCOMP))))
 
 C Return to calling module
       return
@@ -2185,7 +2198,7 @@ C            2 Hot fluid temperature (C)
 
 C Trace output
       IF(ITC.GT.0.AND.NSINC.GE.ITC.AND.NSINC.LE.ITCF.AND.
-     &   ITRACE(37).NE.0) WRITE(ITU,*) ' Entering subroutine CMP27C'
+     &   ITRACE(37).NE.0) WRITE(ITU,*) ' Entering subroutine CMP93C'
 
 C Initialise number of nodes for this component.
       inodes=npcdat(ipcomp,8)
@@ -2427,14 +2440,14 @@ C          5. Conduction coefft from shell fluid - casing (W/K)
 C          6. Conduction coefft from tube fluid - casing  (W/K)
 C          7. Number of tubes
 C          8. Internal tube radius (m)
-C               9. External tube radius (m)
-C              10. Length of segment (m)
-C              11. Spacing between tubes (m)
-C              12. Conductivity of tubing material (W/mK)
-C              13. Mass weighted average specific heat
-C       BDATA: none
-  
-C       CDATA: none
+C          9. External tube radius (m)
+C         10. Length of segment (m)
+C         11. Spacing between tubes (m)
+C         12. Conductivity of tubing material (W/mK)
+C         13. Mass weighted average specific heat
+C  BDATA: none
+C
+C  CDATA: none
 C ************************************************
 
       SUBROUTINE CMP94C(IPCOMP,COUT,ISTATS)
@@ -2465,6 +2478,10 @@ C ************************************************
      &             ICSV(MPNODE,MPVAR),CSVI(MPNODE,MPVAR)
 C Heat exchanger common block variables 
       COMMON/HEXCH/HINP(MPCOM),HOUTP(MPCOM)
+
+      COMMON/PCRES/QDATA(MPCOM),PCAOUT(MPCOM,MPCRES),napdat(mpcom) !GF
+      REAL QDATA,PCAOUT !GF
+      INTEGER napdat !GF
 
       PARAMETER (SMALL=1.0E-15)
       REAL      COUT(MPCOE),K1,K2,HIN,HOUT,HINP,HOUTP
@@ -2784,6 +2801,17 @@ C Store "environment" varaibles future values
        PCRF(ICON2)=C2
        PCQF(INOD1)=Q1
        PCQF(INOD2)=Q2
+
+C AG New Start
+C Establish "containment loss" data
+         QDATA(IPCOMP)=UA*(alpha*(csvf(inod1,1)-pcntmf(ipcomp))+
+     &                (1.-alpha)*(csvp(inod1,1)-pcntmp(ipcomp)))
+	 call store_plt_gain ( IPCOMP, 0.5*QDATA(IPCOMP), iConvective)
+	 call store_plt_gain ( IPCOMP, 0.5*QDATA(IPCOMP), iRadiant)
+
+C    For embedded HE
+	 call store_plt_gain ( IPCOMP, QDATA(IPCOMP), iConductive)
+C AG New End
 
 C 1st phase (i.e. water) mass balance coefficients
        ELSEIF(ISTATS.EQ.2) THEN

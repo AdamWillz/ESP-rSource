@@ -461,6 +461,7 @@ C Calculate heat flux in (W/m2).
 C **********************************************************************
       SUBROUTINE MSTCAP(ICOMP,I,IL,IN,CAPUv,CAPMl)
 #include "building.h"
+#include "moist.h"
 
       COMMON/PREC1/SNA(MCOM,MS)
       COMMON/VTHP14/THRMLI(MCOM,MS,ME,7)
@@ -502,7 +503,7 @@ C CPv in (J/kg K).
         RHp=Pp(ICOMP,I,IM)/Psp
 
 C U in (kg/m3).
-        U=U01(RHp,Uh,CFF,EXPT)
+        U=U01(iMoistModel(ICOMP),RHp,Uh,CFF,EXPT)
 
 C CAPUv in (J/m2 K).
         CAPUv=CAPUv+DX*CPv*U

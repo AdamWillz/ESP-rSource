@@ -236,8 +236,9 @@ C Path to model and command line file name.
       integer ICFAUX  ! helps to keep track of IFCFD()
       integer ICFVIEW ! toggle for preview via dfv during assessment
       integer ICFVIEWMINT,ICFVIEWMAXT  ! range of temperatures for dfv
+      logical DFVinvoked
       COMMON/CFSEUP/CFTIMS,CFTIMF,ICFDYS,ICFDYF,ICFAUX(MCOM),ICFVIEW,
-     &  ICFVIEWMINT,ICFVIEWMAXT
+     &  ICFVIEWMINT,ICFVIEWMAXT,DFVinvoked
 
       real SNA
       COMMON/PREC1/SNA(MCOM,MS)
@@ -508,6 +509,7 @@ C          ICFDYF=15
           ICFDYF=0
           CFTIMS=1.0
           CFTIMF=23.99  ! start and finish times for CFD assessment
+          DFVinvoked=.false.
         endif
       endif
 
@@ -1914,8 +1916,9 @@ C lafres  - fluid flow network results file
       integer ICFAUX  ! helps to keep track of IFCFD()
       integer ICFVIEW ! toggle for preview via dfv during assessment
       integer ICFVIEWMINT,ICFVIEWMAXT  ! range of temperatures for dfv
+      logical DFVinvoked
       COMMON/CFSEUP/CFTIMS,CFTIMF,ICFDYS,ICFDYF,ICFAUX(MCOM),ICFVIEW,
-     &  ICFVIEWMINT,ICFVIEWMAXT
+     &  ICFVIEWMINT,ICFVIEWMAXT,DFVinvoked
 
       logical dll,match
 
@@ -2030,6 +2033,7 @@ C The CFSEUP attributes will be used in askaboutcfd.
               ICFDYF=isicfdyf(i) ! julian day-of-year at start and end of CFD
               if(iscfdactivate(i).eq.0) CFDOK=.false.
               cfdperok=.true.
+              DFVinvoked=.false.
             endif
           endif
 

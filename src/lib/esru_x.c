@@ -3922,6 +3922,17 @@ void askdialog_(sstr,id,iq,f_len)
   XFlush(theDisp);
   XUndefineCursor(theDisp,win);  XDefineCursor(theDisp,win,cross_cursor);
 
+  /* Place cursor at the end of the existing string */
+  offsc = len;
+  x1 = (askbx.b_left+f_width) + (offsc * f_width);
+  if( lstrlen == 1 ) {
+    offsc = 1;
+    x1 = (askbx.b_left+f_width) + (offsc * f_width);
+  }
+  if ((len+2) > fitchars ) { lstrlen = fitchars; } else { lstrlen = len; } 
+  update_edit_str(askbx,sbuf,&x1,&lstrlen);   /* clear and re-draw askbx box and text */
+  initial_button_in = TRUE; 
+
   while ( no_valid_event) {
     XNextEvent(theDisp, &event);
     switch (event.type) {
@@ -4023,17 +4034,17 @@ void askdialog_(sstr,id,iq,f_len)
           break;
         } else {
           iaux = aux_menu((XEvent *) &event);	/* check and see if text scrolled etc. */
-          if ( iaux == 2 ) {	/* if resize then redraw the dialog */
+          /* redraw the dialog */ 
 /* debug  fprintf(stderr,"Inside askdialog display x %d y %d\n",x,y);  */
-            XDrawString(theDisp,win,theGC,asklprompt,msgbx.b_bottom - (f_height+8),askmsg1,asklm1);
-            XDrawString(theDisp,win,theGC,asklprompt,msgbx.b_bottom - 3,askmsg2,asklm2);
-            qbox_("?",1,2,&msgbx.b_bottom,&qbox_left,'-');
-            dbox("d",1,2,&msgbx.b_bottom,&dbox_left,'-');
-            okbox("ok",2,3,&msgbx.b_bottom,&okbox_left,'-');
-            xbox(askbx,fg,white,BMCLEAR |BMEDGES);   /* draw input box with edges  */
-            XDrawString(theDisp,win,theGC,askbx.b_left+f_width,askbx.b_bottom-3,sbuf,lstrlen);
-            XFlush(theDisp);
-          }
+          if (saved_font != current_font) winfnt_(&saved_font);
+          XDrawString(theDisp,win,theGC,asklprompt,msgbx.b_bottom - (f_height+8),askmsg1,asklm1);
+          XDrawString(theDisp,win,theGC,asklprompt,msgbx.b_bottom - 3,askmsg2,asklm2);
+          qbox_("?",1,2,&msgbx.b_bottom,&qbox_left,'-');
+          dbox("d",1,2,&msgbx.b_bottom,&dbox_left,'-');
+          okbox("ok",2,3,&msgbx.b_bottom,&okbox_left,'-');
+          xbox(askbx,fg,white,BMCLEAR |BMEDGES);   /* draw input box with edges  */
+          XDrawString(theDisp,win,theGC,askbx.b_left+f_width,askbx.b_bottom-3,sbuf,lstrlen);
+          XFlush(theDisp);
           no_valid_event = TRUE;
           break;
         }
@@ -4072,7 +4083,7 @@ void askaltdialog_(sstr,alt,id,iq,f_len,a_len)
   int fitchars,offsc,x1,fitpix;  /* chars able to fit within box, chars between left of string & cursor */
   int	no_valid_event = TRUE;
   int	initial_button_in = FALSE;
-  int x,y,len,lstrlen,lm3;
+  int x,y,len,lstrlen,lm3,iaux;
   long int impx,impy,ipflg,ishowmoreflg,uresp;
   long int saved_font;
   int okbox_left, qbox_left, dbox_left, altbox_left;	/* positions of small boxes */
@@ -4110,6 +4121,17 @@ void askaltdialog_(sstr,alt,id,iq,f_len,a_len)
   XDrawString(theDisp,win,theGC,askbx.b_left+f_width,askbx.b_bottom-3,sbuf,lstrlen);
   XFlush(theDisp);
   XUndefineCursor(theDisp,win);  XDefineCursor(theDisp,win,cross_cursor);
+
+/* Place cursor at the end of the existing string */
+  offsc = len;
+  x1 = (askbx.b_left+f_width) + (offsc * f_width);
+  if( lstrlen == 1 ) {
+    offsc = 1;
+    x1 = (askbx.b_left+f_width) + (offsc * f_width);
+  }
+  if ((len+2) > fitchars ) { lstrlen = fitchars; } else { lstrlen = len; } 
+  update_edit_str(askbx,sbuf,&x1,&lstrlen);   /* clear and re-draw askbx box and text */
+  initial_button_in = TRUE; 
 
   while ( no_valid_event) {
     XNextEvent(theDisp, &event);
@@ -4163,8 +4185,8 @@ void askaltdialog_(sstr,alt,id,iq,f_len,a_len)
           if (lprompt < msgbx.b_left) lprompt = msgbx.b_left+5;
           asklprompt = lprompt;   /* remember the position */
 
-          /* Redraw the prompt strings and then the boxes. One
-             remaining glitch - the font seems to be smaller? */
+          /* Redraw the prompt strings and then the boxes. */
+          if (saved_font != current_font) winfnt_(&saved_font);
           XDrawString(theDisp,win,theGC,asklprompt,msgbx.b_bottom - (initial_f_height+8),askmsg1,asklm1);
           XDrawString(theDisp,win,theGC,asklprompt,msgbx.b_bottom - 3,askmsg2,asklm2);
           altbox(alt,asklm3,asklm3+1,&msgbx.b_bottom,&altbox_left,'-');
@@ -4211,6 +4233,23 @@ void askaltdialog_(sstr,alt,id,iq,f_len,a_len)
           if (help_lines > 20) ipflg = 1;
           egphelp_(&impx,&impy,&ipflg,&ishowmoreflg,&uresp);
           break;
+          } else {
+          iaux = aux_menu((XEvent *) &event);   /* check and see if text scrolled etc. */
+          /* redraw the dialog */ 
+/* debug  fprintf(stderr,"Inside askdialog display x %d y %d\n",x,y);  */
+          if (saved_font != current_font) winfnt_(&saved_font);
+          xbox(msgbx,fg,white,BMCLEAR |BMEDGES);   /* draw dialogue box with edges  */
+          XDrawString(theDisp,win,theGC,asklprompt,msgbx.b_bottom - (f_height+8),askmsg1,asklm1);
+          XDrawString(theDisp,win,theGC,asklprompt,msgbx.b_bottom - 3,askmsg2,asklm2);
+          altbox(alt,asklm3,asklm3+1,&msgbx.b_bottom,&altbox_left,'-');
+          qbox_("?",1,2,&msgbx.b_bottom,&qbox_left,'-');
+          dbox("d",1,2,&msgbx.b_bottom,&dbox_left,'-');
+          okbox("ok",2,3,&msgbx.b_bottom,&okbox_left,'-');
+          xbox(askbx,fg,white,BMCLEAR |BMEDGES);   /* draw input box with edges  */
+          XDrawString(theDisp,win,theGC,askbx.b_left+f_width,askbx.b_bottom-3,sbuf,lstrlen);
+          XFlush(theDisp);
+          no_valid_event = TRUE;
+          break;
         }
       case KeyPress:	/* (XKeyEvent)&ev */
         if (initial_button_in) {
@@ -4248,7 +4287,7 @@ void askcncldialog_(sstr,cncl,id,iq,f_len,a_len)
   int fitchars,offsc,x1,fitpix;  /* chars able to fit within box, chars between left of string & cursor */
   int	no_valid_event = TRUE;
   int	initial_button_in = FALSE;
-  int x,y,len,lstrlen,lm3;
+  int x,y,len,lstrlen,lm3,iaux;
   long int impx,impy,ipflg,ishowmoreflg,uresp;
   long int saved_font;
   int okbox_left, qbox_left, dbox_left, cnclbox_left;	/* positions of small boxes */
@@ -4286,6 +4325,17 @@ void askcncldialog_(sstr,cncl,id,iq,f_len,a_len)
   XDrawString(theDisp,win,theGC,askbx.b_left+f_width,askbx.b_bottom-3,sbuf,lstrlen);
   XFlush(theDisp);
   XUndefineCursor(theDisp,win);  XDefineCursor(theDisp,win,cross_cursor);
+
+/* Place cursor at the end of the existing string */
+  offsc = len;
+  x1 = (askbx.b_left+f_width) + (offsc * f_width);
+  if( lstrlen == 1 ) {
+    offsc = 1;
+    x1 = (askbx.b_left+f_width) + (offsc * f_width);
+  }
+  if ((len+2) > fitchars ) { lstrlen = fitchars; } else { lstrlen = len; } 
+  update_edit_str(askbx,sbuf,&x1,&lstrlen);   /* clear and re-draw askbx box and text */
+  initial_button_in = TRUE; 
 
   while ( no_valid_event) {
     XNextEvent(theDisp, &event);
@@ -4341,8 +4391,8 @@ void askcncldialog_(sstr,cncl,id,iq,f_len,a_len)
           if (lprompt < msgbx.b_left) lprompt = msgbx.b_left+5;
           asklprompt = lprompt;   /* remember the position */
 
-          /* Redraw the prompt strings and then the boxes. One
-             remaining glitch - the font seems to be smaller? */
+          /* Redraw the prompt strings and then the boxes. */
+          if (saved_font != current_font) winfnt_(&saved_font);
           XDrawString(theDisp,win,theGC,asklprompt,msgbx.b_bottom - (initial_f_height+8),askmsg1,asklm1);
           XDrawString(theDisp,win,theGC,asklprompt,msgbx.b_bottom - 3,askmsg2,asklm2);
           altbox(cncl,asklm3,asklm3+1,&msgbx.b_bottom,&cnclbox_left,'-');
@@ -4389,6 +4439,23 @@ void askcncldialog_(sstr,cncl,id,iq,f_len,a_len)
           if (help_lines > 20) ipflg = 1;
           egphelp_(&impx,&impy,&ipflg,&ishowmoreflg,&uresp);
           break;
+          } else {
+          iaux = aux_menu((XEvent *) &event);   /* check and see if text scrolled etc. */
+          /* redraw the dialog */ 
+/* debug  fprintf(stderr,"Inside askdialog display x %d y %d\n",x,y);  */
+          if (saved_font != current_font) winfnt_(&saved_font);
+          xbox(msgbx,fg,white,BMCLEAR |BMEDGES);   /* draw dialogue box with edges  */
+          XDrawString(theDisp,win,theGC,asklprompt,msgbx.b_bottom - (f_height+8),askmsg1,asklm1);
+          XDrawString(theDisp,win,theGC,asklprompt,msgbx.b_bottom - 3,askmsg2,asklm2);
+          altbox(cncl,asklm3,asklm3+1,&msgbx.b_bottom,&cnclbox_left,'-');
+          qbox_("?",1,2,&msgbx.b_bottom,&qbox_left,'-');
+          dbox("d",1,2,&msgbx.b_bottom,&dbox_left,'-');
+          okbox("ok",2,3,&msgbx.b_bottom,&okbox_left,'-');
+          xbox(askbx,fg,white,BMCLEAR |BMEDGES);   /* draw input box with edges  */
+          XDrawString(theDisp,win,theGC,askbx.b_left+f_width,askbx.b_bottom-3,sbuf,lstrlen);
+          XFlush(theDisp);
+          no_valid_event = TRUE;
+          break;
         }
       case KeyPress:	/* (XKeyEvent)&ev */
         if (initial_button_in) {
@@ -4425,7 +4492,7 @@ void ask2altdialog_(sstr,alt,alt2,id,iq,f_len,a_len,b_len)
   int fitchars,offsc,x1,fitpix;  /* chars able to fit within box, chars between left of string & cursor */
   int	no_valid_event = TRUE;
   int	initial_button_in = FALSE;
-  int x,y,len,lstrlen,lm3,lm4;
+  int x,y,len,lstrlen,lm3,lm4,iaux;
   long int impx,impy,ipflg,ishowmoreflg,uresp;
   long int saved_font;
   int okbox_left, qbox_left, dbox_left, altbox_left, alt2box_left; /* positions of small boxes */
@@ -4463,6 +4530,17 @@ void ask2altdialog_(sstr,alt,alt2,id,iq,f_len,a_len,b_len)
   XDrawString(theDisp,win,theGC,askbx.b_left+f_width,askbx.b_bottom-3,sbuf,lstrlen);
   XFlush(theDisp);
   XUndefineCursor(theDisp,win);  XDefineCursor(theDisp,win,cross_cursor);
+
+/* Place cursor at the end of the existing string */
+  offsc = len;
+  x1 = (askbx.b_left+f_width) + (offsc * f_width);
+  if( lstrlen == 1 ) {
+    offsc = 1;
+    x1 = (askbx.b_left+f_width) + (offsc * f_width);
+  }
+  if ((len+2) > fitchars ) { lstrlen = fitchars; } else { lstrlen = len; } 
+  update_edit_str(askbx,sbuf,&x1,&lstrlen);   /* clear and re-draw askbx box and text */
+  initial_button_in = TRUE; 
 
   while ( no_valid_event) {
     XNextEvent(theDisp, &event);
@@ -4544,12 +4622,31 @@ void ask2altdialog_(sstr,alt,alt2,id,iq,f_len,a_len,b_len)
           if (help_lines > 20) ipflg = 1;
           egphelp_(&impx,&impy,&ipflg,&ishowmoreflg,&uresp);
           break;
+          } else {
+          iaux = aux_menu((XEvent *) &event);   /* check and see if text scrolled etc. */
+          /* redraw the dialog */ 
+/* debug  fprintf(stderr,"Inside askdialog display x %d y %d\n",x,y);  */
+          if (saved_font != current_font) winfnt_(&saved_font);
+          altbox(alt,asklm3,asklm3+1,&msgbx.b_bottom,&altbox_left,'-');
+          alt2box(alt2,asklm4,asklm4+1,&msgbx.b_bottom,&alt2box_left,'-');
+          xbox(msgbx,fg,white,BMCLEAR |BMEDGES);   /* draw dialogue box with edges  */
+          XDrawString(theDisp,win,theGC,asklprompt,msgbx.b_bottom - (f_height+8),askmsg1,asklm1);
+          XDrawString(theDisp,win,theGC,asklprompt,msgbx.b_bottom - 3,askmsg2,asklm2);
+          qbox_("?",1,2,&msgbx.b_bottom,&qbox_left,'-');
+          dbox("d",1,2,&msgbx.b_bottom,&dbox_left,'-');
+          okbox("ok",2,3,&msgbx.b_bottom,&okbox_left,'-');
+          xbox(askbx,fg,white,BMCLEAR |BMEDGES);   /* draw input box with edges  */
+          XDrawString(theDisp,win,theGC,askbx.b_left+f_width,askbx.b_bottom-3,sbuf,lstrlen);
+          XFlush(theDisp);
+          no_valid_event = TRUE;
+          break;
         }
       case KeyPress:	/* (XKeyEvent)&ev */
         if (initial_button_in) {
           track_edit_str(sbuf,&event,&x1,&f_len,&len,&fitchars,&offsc,&no_valid_event);
          }
         break;
+
     }
   }
   if(XPending(theDisp) > 0) {
@@ -4709,7 +4806,7 @@ void continuebox_(msg1,msg2,opta,len1,len2,len3)
         }
 
       case KeyPress:	/* (XKeyEvent)&ev */
-	XNextEvent (theDisp,&event);	/* flush event */
+	     XFlush(theDisp);	/* flush event */
         no_valid_event = FALSE;
         break;
     }

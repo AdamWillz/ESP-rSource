@@ -367,8 +367,9 @@ C To support writing ASCII file.
       integer ICFAUX  ! helps to keep track of IFCFD()
       integer ICFVIEW ! toggle for preview via dfv during assessment
       integer ICFVIEWMINT,ICFVIEWMAXT  ! range of temperatures for dfv
+      logical DFVinvoked
       COMMON/CFSEUP/CFTIMS,CFTIMF,ICFDYS,ICFDYF,ICFAUX(MCOM),ICFVIEW,
-     &  ICFVIEWMINT,ICFVIEWMAXT
+     &  ICFVIEWMINT,ICFVIEWMAXT,DFVinvoked
       common/CFDSV/IRECPC,ICFDSV,IEQSV(5+MCTM)
       common/EQTION3/CALLMA(MNZ),CALPOL(MCTM,MNZ),POLNAM(MCTM,MNZ),
      &               NCTM(MNZ),JHUMINDX(MNZ),URFC(MCTM)
@@ -484,7 +485,6 @@ C data as would have been written in cfdlib. Intended to be read by utility
 C dfv that displays a 3D rendering of the current solution.
           write(cfd3dascii,'(a,i1,a,i4.4)') 'cfd3dascii_',icfd,'_',
      &      NSINC
-          write(6,'(2a)') 'the file is ',cfd3dascii
           call efopseq(38,cfd3dascii,4,ier)
           write(38,'(a)') 'cfd3dascii'
           write(38,'(a,16i4)') 'head_1:',MCEL1D,ICFDSV,ICFD,NCOMP,
@@ -492,7 +492,6 @@ C dfv that displays a 3D rendering of the current solution.
           write(38,'(a,120i4)') 'head_2:',(abs(ICFAUX(I)),I=1,NCOMP)
           write(38,'(a,2i4,2f9.5)')'head_3:',ICFDYS,ICFDYF,CFTIMS,CFTIMF
           write(38,'(a,i4)') 'head_4:',NCTM(ICFD)
-          write(6,'(a,i3,a,F7.4)') 'head_5: day ',IDYP,' at ',BTIMEF
           write(38,'(a,i3,a,F7.4)') 'head_5: day ',IDYP,' at ',BTIMEF
           DO ICTM=1,NCTM(ICFD)
             write(38,'(2a)') 'POL: ',POLNAM(ICTM,ICFD)
@@ -516,10 +515,10 @@ C dfv that displays a 3D rendering of the current solution.
                 write(38,'(a,120f9.5)') 'Wf:',(Wf(I,J,K),I=2,NI)
               endif
               if (IEQSV(4).eq.1) then
-                write(38,'(a,120f9.5)') 'Tf:',(Tf(I,J,K),I=2,NI)
+                write(38,'(a,120f7.2)') 'Tf:',(Tf(I,J,K),I=2,NI)
               endif
               if (IEQSV(5).eq.1) then
-                write(38,'(a,120f9.5)') 'AGEf:',(AGEf(I,J,K),I=2,NI)
+                write(38,'(a,120f7.2)') 'AGEf:',(AGEf(I,J,K),I=2,NI)
               endif
               DO ICTM=1,NCTM(ICFD)
                 if (IEQSV(5+ICTM).eq.1) then
@@ -533,14 +532,20 @@ C dfv that displays a 3D rendering of the current solution.
           CLOSE ( UNIT=38 )
 
 C At this point invoke dfv and pass it -file zone_dfs_file -actf cfd3dasii_file
-C -range <min> <max>
+C -range <min> <max>. Only need to call this once and then just inform the
+C user to 'load the next timestep'.
           if(ICFVIEW.eq.1)then
-            write(doit,'(5a,2i4,a)')'dfv -file ',
-     &        LCFD(icp)(1:lnblnk(LCFD(icp))),' -actf ',
-     &        cfd3dascii(1:lnblnk(cfd3dascii)),' -range',ICFVIEWMINT,
-     &        ICFVIEWMAXT,' &'
-            call lusrmsg('visualize cfd via',doit,'-')
-            call runit(doit,'-')
+            if(DFVinvoked)then
+              call usrmsg('Select the next timestep in DFV.',' ','-')
+            else
+              write(doit,'(5a,2i4,a)')'dfv -file ',
+     &          LCFD(icp)(1:lnblnk(LCFD(icp))),' -actf ',
+     &          cfd3dascii(1:lnblnk(cfd3dascii)),' -range',ICFVIEWMINT,
+     &          ICFVIEWMAXT,' &'
+              call lusrmsg('visualize cfd via',doit,'-')
+              call runit(doit,'-')
+              DFVinvoked=.true.  ! so not invoked in subsequent timesteps.
+            endif
           endif
         endif
       ENDIF
@@ -582,8 +587,9 @@ C espriou.h provides currentfile.
       integer ICFAUX  ! helps to keep track of IFCFD()
       integer ICFVIEW ! toggle for preview via dfv during assessment
       integer ICFVIEWMINT,ICFVIEWMAXT  ! range of temperatures for dfv
+      logical DFVinvoked
       COMMON/CFSEUP/CFTIMS,CFTIMF,ICFDYS,ICFDYF,ICFAUX(MCOM),ICFVIEW,
-     &  ICFVIEWMINT,ICFVIEWMAXT
+     &  ICFVIEWMINT,ICFVIEWMAXT,DFVinvoked
       
 C NCDOM - number of CFD domains
 C ICDOM - CFD domain selected for output
@@ -796,8 +802,9 @@ C cfdlibhead - write header information to cfd results library.
       integer ICFAUX  ! helps to keep track of IFCFD()
       integer ICFVIEW ! toggle for preview via dfv during assessment
       integer ICFVIEWMINT,ICFVIEWMAXT  ! range of temperatures for dfv
+      logical DFVinvoked
       COMMON/CFSEUP/CFTIMS,CFTIMF,ICFDYS,ICFDYF,ICFAUX(MCOM),ICFVIEW,
-     &  ICFVIEWMINT,ICFVIEWMAXT
+     &  ICFVIEWMINT,ICFVIEWMAXT,DFVinvoked
       COMMON/ICFNOD/ICFD,ICP
 
       integer ncomp,ncon
@@ -1109,9 +1116,6 @@ C Write domain size.
       IREC=IREC+1
       WRITE(ICFLIB,REC=IREC,IOSTAT=ISTAT,ERR=1000) IDRSZE,NIM2,NJM2,NKM2
 
-C Debug.
-      WRITE(6,*) ICFLIB,IREC,':',IDRSZE,NIM2,NJM2,NKM2
-
 C Write grid sizing information.
       IREC=IREC+1
       WRITE(ICFLIB,REC=IREC,IOSTAT=ISTAT,ERR=1000) (XU(I),I=1,NI)
@@ -1187,10 +1191,6 @@ C use the saves record.
       if (IRECPC.lt.IST) IRECPC=IST
       IREC=IRECPC
 
-
-C Debug.
-c      write(6,*) 'IRECPCstart ',IRECPC
-
 C Loop through all control volumes.
       do 10 K=2,NK
         do 101 J=2,NJ
@@ -1200,50 +1200,30 @@ C Write data to library. Adjust trace to file unit 6 if ntcelz>48
             IREC=IREC+1
             WRITE(ICFLIB,REC=IREC,IOSTAT=ISTAT,ERR=1000)
      &                                             (Uf(I,J,K),I=2,NI)
-
-C Debug.
-C            write(6,'(i3,48f9.5)') IREC,(Uf(I,J,K),I=2,NI)
-
           endif
 
           if (CALLV(ICFD)) then
             IREC=IREC+1
             WRITE(ICFLIB,REC=IREC,IOSTAT=ISTAT,ERR=1000)
      &                                             (Vf(I,J,K),I=2,NI)
-
-C Debug.
-C          write(6,'(i3,48f9.5)') IREC,(Vf(I,J,K),I=2,NI)
-
           endif
 
           if (CALLW(ICFD)) then
             IREC=IREC+1
             WRITE(ICFLIB,REC=IREC,IOSTAT=ISTAT,ERR=1000)
      &                                             (Wf(I,J,K),I=2,NI)
-
-C Debug.
-C          write(6,'(i3,48f9.5)') IREC,(Wf(I,J,K),I=2,NI)
-
           endif
 
           if (CALLT(ICFD)) then
             IREC=IREC+1
             WRITE(ICFLIB,REC=IREC,IOSTAT=ISTAT,ERR=1000)
      &                                             (Tf(I,J,K),I=2,NI)
-
-C Debug.
-C          write(6,'(i3,48f9.5)') IREC,(Tf(I,J,K),I=2,NI)
-
           endif
                 
           if (CALLMA(ICFD)) then
             IREC=IREC+1
             WRITE(ICFLIB,REC=IREC,IOSTAT=ISTAT,ERR=1000)
      &                                             (AGEf(I,J,K),I=2,NI)
-
-C Debug
-C          write(6,'(i3,48f9.5)') IREC,(AGEf(I,J,K),I=2,NI)
-
           endif
                 
           DO 121 ICTM=1,NCTM(ICFD)
@@ -1251,10 +1231,6 @@ C          write(6,'(i3,48f9.5)') IREC,(AGEf(I,J,K),I=2,NI)
               IREC=IREC+1
               WRITE(ICFLIB,REC=IREC,IOSTAT=ISTAT,ERR=1000)
      &                                     (POLCONCf(ICTM,I,J,K),I=2,NI)
-
-C Debug
-C              write(6,'(i3,48f9.5)') IREC,(POLCONCf(ICTM,I,J,K),I=2,NI)
-
             endif
  121      CONTINUE      
  101    continue

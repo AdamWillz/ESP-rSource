@@ -518,7 +518,7 @@ C number of matrix locations filled with coefficients.
          read(iufil,10204,iostat=istat,err=1) nnode, nmatx
 10204    format(//,23x,i3,38x,i6)
          if(nnode.le.0.or.nnode.gt.maxnod) goto 1
-         if(nmatx.le.0.or.nmatx.gt.maxmtx) goto 1
+         if(nmatx.le.0.or.nmatx.gt.maxmtx) goto 2
 
 C Position of nonzero matrix locations.
          nlines=((nmatx-1)/10)+1
@@ -531,7 +531,7 @@ C Position of nonzero matrix locations.
 10301    format(21x,10(2x,i3))
          nnode2=nnode*nnode
          do 32 i=1,nmatx
-            if(ncpos(i).lt.0.or.ncpos(i).gt.nnode2) goto 1
+            if(ncpos(i).lt.0.or.ncpos(i).gt.nnode2) goto 3
    32    continue
 
 C External connectivity of each node.
@@ -587,7 +587,7 @@ C Number of miscellaneous data items associated with this component.
          read(iufil,1038,iostat=istat,err=1) nadata,nbdata,ncdata
  1038    format (//,3(20x,i3))
          nmisc=nadata+nbdata
-         if(nmisc.lt.0.or.nmisc.gt.maxmsc) goto 1
+         if(nmisc.lt.0.or.nmisc.gt.maxmsc) goto 4
 
 C Miscellaneous data.
 C First read ADATA.
@@ -665,7 +665,7 @@ C Case for TRNSYS type components.
             read(iufil,1038,iostat=istat,err=1) 
      &         ntadat(ityp),ntbdat(ityp),ntcdat(ityp)
             ntmisc(ityp)=ntadat(ityp)+ntbdat(ityp)
-            if(ntmisc(ityp).lt.0.or.ntmisc(ityp).gt.maxmsc) goto 1
+            if(ntmisc(ityp).lt.0.or.ntmisc(ityp).gt.maxmsc) goto 5
 
 C Miscellaneous data.
 C First read ADATA.
@@ -743,7 +743,15 @@ C EOF encountered.
       GOTO 100
 
 C Error handling.
-  1   CALL usrmsg(' Pdb:pcrdf error reading db',' ','W')
+  1   CALL usrmsg(' Pdb:pcrdf error 1 reading db',' ','W')
+      goto 100
+  2   CALL usrmsg(' Pdb:pcrdf error 2 reading db',' ','W')
+      goto 100
+  3   CALL usrmsg(' Pdb:pcrdf error 3 reading db',' ','W')
+      goto 100
+  4   CALL usrmsg(' Pdb:pcrdf error 4 reading db',' ','W')
+      goto 100
+  5   CALL usrmsg(' Pdb:pcrdf error 5 reading db',' ','W')
       goto 100
       END
 

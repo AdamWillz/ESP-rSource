@@ -139,8 +139,9 @@ C Commons from mocfd.F (RDCFDAT)
       integer ICFAUX  ! helps to keep track of IFCFD()
       integer ICFVIEW ! toggle for preview via dfv during assessment
       integer ICFVIEWMINT,ICFVIEWMAXT  ! range of temperatures for dfv
+      logical DFVinvoked
       COMMON/CFSEUP/CFTIMS,CFTIMF,ICFDYS,ICFDYF,ICFAUX(MCOM),ICFVIEW,
-     &  ICFVIEWMINT,ICFVIEWMAXT
+     &  ICFVIEWMINT,ICFVIEWMAXT,DFVinvoked
       common/EQTION3/CALLMA(MNZ),CALPOL(MCTM,MNZ),POLNAM(MCTM,MNZ),
      &               NCTM(MNZ),JHUMINDX(MNZ),URFC(MCTM)
       LOGICAL CALPOL,CALLMA
@@ -271,7 +272,6 @@ C inf is the zone DFD file the cfd3dasci takes the form of -actf ascii_dfs_resul
 
       call parsedfv(MODL,iappw,iappx,iappy,inf,cfd3dasci,
      &  itmin,itmax)
-      write(6,*) MODL,iappw,iappx,iappy,inf,cfd3dasci,itmin,itmax
        
       childterminal=MODL  ! remember so that child processes can run the same
       SCmin=real(itmin)
@@ -664,7 +664,7 @@ C        write(6,*) 'next ',cfd3dascinext(1:lncfd3d)
           call easkabc(' ','Domain performance file:',
      &      'previous timestep','N/A','other',IW,nbhelp)
           if(iw.eq.1)then
-            cfd3dasci=cfd3dascinext
+            cfd3dasci=cfd3dasciprev
             IER=0; XST=PXST
             goto 77  ! redraw it
           else
@@ -733,8 +733,9 @@ C ICFDZ - thermal zone associated with each CFD domain
       integer ICFAUX  ! helps to keep track of IFCFD()
       integer ICFVIEW ! toggle for preview via dfv during assessment
       integer ICFVIEWMINT,ICFVIEWMAXT  ! range of temperatures for dfv
+      logical DFVinvoked
       COMMON/CFSEUP/CFTIMS,CFTIMF,ICFDYS,ICFDYF,ICFAUX(MCOM),ICFVIEW,
-     &  ICFVIEWMINT,ICFVIEWMAXT
+     &  ICFVIEWMINT,ICFVIEWMAXT,DFVinvoked
       COMMON/CFDPOL/POLCONCp(MCTM,ntcelx,ntcely,ntcelz),
      1              POLCONCf(MCTM,ntcelx,ntcely,ntcelz)
 
@@ -813,9 +814,6 @@ C Read head_5: ISIMDAY SIMTIMEF
         CALL EGETWI(LOUTSTR,K,ISIMDAY,0,0,'-','IDYP',IER)
         CALL EGETW(LOUTSTR,K,WORD,'W',' at ',IER)
         CALL EGETWR(LOUTSTR,K,SIMTIMEF,0.,24.,'W','CFTIMF',IER)
-
-C Debug.
-        write(6,*) 'for simulation day ',ISIMDAY,' & time ',SIMTIMEF
 
       elseif(WORD(1:4).eq.'POL:')then
 

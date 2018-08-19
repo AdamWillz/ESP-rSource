@@ -1342,6 +1342,12 @@ C 1 node (ISV=20) WCH Air Source Heat Pump
 C 2 node (ISV=20) WCH advanced modulating boiler
          ELSE IF(ITYPE.EQ.46) THEN
             CALL CMP46C(IPCOMP,OUT,ISTATS)
+C 1 node (ISV=20) WCH Ground Source Heat Pump
+         ELSE IF(ITYPE.EQ.47) THEN
+            CALL CMP47C(IPCOMP,OUT,ISTATS)
+C 2 node (ISV=20) WCH 2-node Ground Source Heat Pump
+         ELSE IF(ITYPE.EQ.48) THEN
+            CALL CMP48C(IPCOMP,OUT,ISTATS)
 C 1 node (ISV=29) WCH thermostatic radiator valve
          ELSE IF(ITYPE.EQ.50) THEN
             CALL CMP50C(IPCOMP,OUT,ISTATS)
@@ -1399,6 +1405,9 @@ C 1 node (ISV=20) waterstorage tank layer.
 C 1 node (ISV=20) 3-port valve.
          ELSE IF(ITYPE.EQ.73) THEN
             CALL CMP73C(IPCOMP,OUT,ISTATS)
+C 1 node (ISV=20) WCH automatic flow control valve.
+         ELSE IF(ITYPE.EQ.74) THEN
+            CALL CMP74C(IPCOMP,OUT,ISTATS)
 C 1 node (ISV=20) Stochastic DHW Draw.
          ELSE IF(ITYPE.EQ.79) THEN
             CALL CMP79C(IPCOMP,OUT,ISTATS)

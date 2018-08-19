@@ -856,6 +856,12 @@ C Store "environment" variables future values
          PCRF(ICON1)=C1
          PCQF(INOD1)=Q
 
+C Establish "containment loss" data
+         QDATA(IPCOMP)=UA*(alpha*(csvf(inod1,1)-pcntmf(ipcomp))+
+     &                (1.-alpha)*(csvp(inod1,1)-pcntmp(ipcomp)))
+         call store_plt_gain (IPCOMP,0.5*QDATA(IPCOMP),iConvective)
+         call store_plt_gain (IPCOMP,0.5*QDATA(IPCOMP),iRadiant)
+
 C 1st phase mass (ie. dry air) balance coefficients
 C Note that if fluid mass flow solver active, source of mass zeroised
       ELSE IF(ISTATS.EQ.2) THEN
@@ -3665,6 +3671,12 @@ C Store "environment" variables future values
          PCTF(ICON1)=CONVAR(ICON1,1)
          PCRF(ICON1)=C1
          PCQF(INOD1)=Q
+
+C Establish "containment loss" data
+         QDATA(IPCOMP)=UA*(alpha*(csvf(inod1,1)-pcntmf(ipcomp))+
+     &                (1.-alpha)*(csvp(inod1,1)-pcntmp(ipcomp)))
+         call store_plt_gain (IPCOMP,0.5*QDATA(IPCOMP),iConvective)
+         call store_plt_gain (IPCOMP,0.5*QDATA(IPCOMP),iRadiant)
 
 C 1st phase mass (ie. dry air) balance coefficients
 C Note that if fluid mass flow solver active, source of mass zeroised

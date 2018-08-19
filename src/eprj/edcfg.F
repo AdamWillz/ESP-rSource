@@ -4065,10 +4065,6 @@ C        write(6,*) 'pp ',ppath(1:lnblnk(ppath))
 C        write(6,*) 'fi ',filen(1:lnblnk(filen))
 C        write(6,*) 'lc ',lcfgf(1:lnblnk(lcfgf))
         write(thecfgis,'(a)') lcfgf(1:lnblnk(lcfgf))
-        write(outs,'(2a)') 'thecfgis is ',thecfgis(1:lnblnk(thecfgis))
-        call edisp(iuout,outs)
-        write(outs,'(2a)') 'cfgpath is ',cfgpath(1:lnblnk(cfgpath))
-        call edisp(iuout,outs)
 
         CALL ERPFREE(IFCFG,ISTAT)
         call FINDFIL(LCFGF,XST)
@@ -4186,12 +4182,6 @@ C            write(6,*) 'thecfgis is ',thecfgis
             else
               write(cfgpath,'(a)') path(1:lnpth-1)
             endif
-            write(outs,'(2a)') 'thecfgis is ',
-     &        thecfgis(1:lnblnk(thecfgis))
-            call edisp(iuout,outs)
-            write(outs,'(2a)') 'cfgpath is ',
-     &        cfgpath(1:lnblnk(cfgpath))
-            call edisp(iuout,outs)
             call edisp(iuout,
      &        'Model configuration file is in folder:')
             call edisp(iuout,path)

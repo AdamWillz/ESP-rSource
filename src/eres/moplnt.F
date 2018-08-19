@@ -85,8 +85,8 @@ C block in this source file has been renamed pcresres to avoid
 C this clash.
       COMMON/MSYSPICK/NPGET,IPGETNO(MSYSRS,8)
       common/pcnam/pcname(mpcom)
-      common/adopdesc/adopdsc(mpcom,15)
-      common/pcresres/ napout(mpcom),apcout(20)
+      common/adopdesc/adopdsc(mpcom,MPCRES)
+      common/pcresres/ napout(mpcom),apcout(MPCRES)
       common/pcdat/ CSV1M(mnodec),CSV2M(mnodec),CSV3M(mnodec),
      &              NNODE(mpcom),nrecpc(mpcom)
       common/ntype/isv(mpcom,mnodec)
@@ -604,8 +604,8 @@ C Additional output.
         IPGETNO(NPGET,8)=5
         SUFFIX=' other'
         if(nsnd.le.9)then
-          write(GPLABEL(NPGET),'(2a,i1,a)') PREFIX(1:lname),' n',
-     &      nsnd,SUFFIX
+          write(GPLABEL(NPGET),'(2a)') PREFIX(1:lname),
+     &      adopdsc(indx,nsnd)(1:20)
         else
           write(GPLABEL(NPGET),'(2a,i2,a)') PREFIX(1:lname),'n',
      &      nsnd,SUFFIX
@@ -731,7 +731,7 @@ C the best-guess of file names (but with full path).
       COMMON/ABSRESLIB/RFILEABS,PFILEABS,MSTRFILEABS,LAFRESABS
       common/pcdat/ CSV1M(mnodec),CSV2M(mnodec),CSV3M(mnodec),
      &              NNODE(mpcom),nrecpc(mpcom)
-      common/pcresres/ napout(mpcom),apcout(20)
+      common/pcresres/ napout(mpcom),apcout(MPCRES)
       COMMON/LIBOK/IBLIB,IFLIB,ICLIB,IELIB,IPLIB
       common/rpath/path
       
@@ -1180,7 +1180,7 @@ C naout (number of additional output data) is returned.
       COMMON/OUTIN/IUOUT,IUIN
       COMMON/FILEP/IFIL
       common/ntype/isv(mpcom,mnodec)
-      common/adopdesc/adopdsc(mpcom,15)
+      common/adopdesc/adopdsc(mpcom,MPCRES)
       COMMON/C9plus/UCdbNam(MPCOM),CdbCat(MPCOM),CDBDesc(MPCOM)
       COMMON/PCRES/QDATA(MPCOM),PCAOUT(MPCOM,MPCRES),napdat(mpcom)
 
@@ -1308,7 +1308,7 @@ C ************************ fnddat *************************
 C Given the day, hour and current step, fnddat reads
 C the component 'ipc' results data from plant library
 C file.
-C State space variables data and additional outout
+C State space variables data and additional output.
 C data are stored in CSV?M and APCOUT arrays respectively.
       subroutine fnddat(ii,ipc,ier)
 #include "plant.h"
@@ -1317,7 +1317,7 @@ C data are stored in CSV?M and APCOUT arrays respectively.
       COMMON/LIBRCP/IRCPLP,nblock
       common/pcdat/ CSV1M(mnodec),CSV2M(mnodec),CSV3M(mnodec),
      &              NNODE(mpcom),nrecpc(mpcom)
-      common/pcresres/ napout(mpcom),apcout(20)
+      common/pcresres/ napout(mpcom),apcout(MPCRES)
       logical unixok
 
 C Find data location in result file.
@@ -1479,7 +1479,7 @@ C Simulator parameters.
       common/ntype/isv(mpcom,mnodec)
       common/pcdat/ CSV1M(mnodec),CSV2M(mnodec),CSV3M(mnodec),
      &              NNODE(mpcom),nrecpc(mpcom)
-      common/pcresres/ napout(mpcom),apcout(20)
+      common/pcresres/ napout(mpcom),apcout(MPCRES)
 
 C Flags identifying if results libries are available. =0 no lib, =1 lib exists.
       COMMON/LIBOK/IBLIB,IFLIB,ICLIB,IELIB,IPLIB
@@ -2160,6 +2160,7 @@ C write out labels for each column at the start.
         endif
         if (IHFLAG.eq.1) then
           outs='#Time'
+C          outs='Time'
         else
           outs='Time '
         endif

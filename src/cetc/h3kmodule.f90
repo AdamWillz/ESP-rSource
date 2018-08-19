@@ -87,9 +87,12 @@ MODULE h3kmodule
 
    !Used by h3k_report_data.F
    Type(ReportVariable) :: rvHeatFluxRadiationShortwave, rvHeatFluxRadiationShortwaveUnitArea, &
+         rvHeatFluxRadiationShortwaveIn, rvHeatFluxRadiationShortwaveInUnitArea, &
          rvHeatFluxAboveGradeNet, rvHeatFluxSpecifiedBCsNet, rvHeatFluxBelowGradeNet, &
-         rvHeatFluxCENPartitionNet, rvAirPointTemperature, rvWindowsPosition, rvAirFlowModel, &
-         rvAirPointRelativeHumidity, rvSuppliedEnergyNet, rvSuppliedEnergyHeating, &
+         rvHeatFluxCENPartitionNet, rvAirPointTemperature, rvMeanRadiantTemperature, rvOperativeTemperature, &
+         rvAirPointRadiantGains, rvAirPointConvectiveGains, &
+         rvAirPointLatentGains, rvWindowsPosition, rvAirFlowModel, &
+         rvAirPointRelativeHumidity, rvAirPointVapourPressure, rvSuppliedEnergyNet, rvSuppliedEnergyHeating, &
          rvSuppliedEnergyCooling, rvSuppliedEnergyNetPerm2, rvSuppliedEnergyHeatingPerm2, &
          rvSuppliedEnergyCoolingPerm2, rvThermalLoadsHeatingTotal, rvThermalLoadsCoolingTotal, &
          rvThermalLoadsNetLoad, rvThermalLoadsHeatingTotalPerm2, rvThermalLoadsCoolingTotalPerm2, &
@@ -127,7 +130,7 @@ MODULE h3kmodule
          rvClimateSolarDiffuseHorizontalRadiation, rvClimateSolarDirectNormalRadiation, &
          rvClimateDryBulbTemperature, rvClimateRelativeHumidity, rvClimateWindVelocity, &
          rvClimateWindDirection, rvClimateCloudCover, rvClimateSkyTemperature, &
-         rvClimateSkyTemperatureDepression, rvClimateAmbientAirTsat, &
+         rvClimateSkyTemperatureDepression, rvClimateAmbientAirTsat, rvClimateVapourPressure, &
          rvBuildingAllZonesFreeCooling
    Type(ReportVariable) :: rvBuildingTimePresent, rvBuildingTimeFuture,rvBuildingHourPresent, &
          rvBuildingHourFuture,rvBuildingDayNumberPresent, rvBuildingDayNumberFuture,&
@@ -136,7 +139,7 @@ MODULE h3kmodule
    Type(ReportVariable) :: rvPlantCompNodeTemperature, rvPlantCompNodeFirstPhaseFlow, &
          rvPlantCompNodeSecondPhaseFlow,rvPlantCompNodeHydrogenFlow,rvPlantCompNodeConnectTemperature, &
          rvPlantCompNodeConnectWaterFlow,rvPlantCompNodeConnectHydrogenFlow, &
-         rvPlantCompNodeConnectMoistureFlow, rvPlantCompNodeConnectAirFlow
+         rvPlantCompNodeConnectMoistureFlow, rvPlantCompNodeConnectAirFlow, rvPlantCompAddData
    Type(ReportVariable) :: rvElecNetLoadsTotalLoad,rvElecNetLoadsHvacLoad, &
          rvElecNetLoadsOccupantLoad, rvElecNetGenTotalGeneration, &
          rvElecNetLoadsExternalLoad, rvElecNetGenOnsiteGeneration, &
@@ -148,7 +151,7 @@ MODULE h3kmodule
          rvElecNetHybridComponentFlux, rvElecNetPowerOnlyComponents, &
          rvMfnTotalNodeFlowRate,rvMfnTotalNodeVolFlowRate,rvMfnTotalNodeTemp, &
          rvMfnConnectPressureDrop, rvMfnConnectFlowRate,rvMfnConnectVeloc, &
-         rvMfnContamCon, rvZoneLabel
+         rvMfnContamCon, rvMfnConnectCtlOnFrac, rvZoneLabel
 
    !Used by SiteUtilities.F
    Type(ReportVariable) :: rvTFuelAllEndEnergyContent, rvTFuelAllEndQty, &
@@ -167,11 +170,13 @@ MODULE h3kmodule
          rvTFuelCst, rvTFuelCstElec, rvTFuelCstNatGas, rvTFuelCstOil, rvTFuelCstProp, rvTEnergyQty
 
    !Used by Solar.F
-   Type(ReportVariable) :: rvBuildingGroundReflectivity,rvClimateSnownDepth
+   Type(ReportVariable) :: rvBuildingGroundReflectivity,rvClimateSnowDepth
 
    !Used by complex_fenestration.F
    Type(ReportVariable) :: rvCFCazimuth,rvCFCelevation,rvSolarIncidentDirect,rvSolarIncidentDiff, &
-         rvCFCtranDir, rvCFCtranDiff,rvCFCvertprofileangle
+         rvShadingFractionDirect,rvShadingFractionDiffuse, &
+         rvCFCtranDir,rvCFCtranDiff,rvCFCvertprofileangle,rvSolarIncidentDirectShaded, &
+         rvSolarIncidentDiffShaded,rvSolarShadeFrac
 
    !Used by water_tanks.F
    Type(ReportVariable) :: rvPltSDHWSumDHWTankFuel,rvPltSDHWSumDHWTankElec,rvPltWaterTemp, &
@@ -190,12 +195,19 @@ MODULE h3kmodule
    !Used by solar_collectors.F
    Type(ReportVariable) :: rvPltSDHWSumRecH,rvPltSDHWsumAvailSolEn
 
+   !Used by moistr.F
+   Type(ReportVariable) :: rvBldMstRHnode,rvBldMstVapPressNode,rvBldMstStoreCap,rvBldMstStorage, &
+        rvBldMstStorageMass,rvBldMstTNode
+
    !Used by pcomp2.F
    !Claude - potential error found rvPltDefrostStat
    Type(ReportVariable) :: rvPltQAddedH,rvPltWCHPumpEInput,rvPltHOut,rvPltCOP, &
          rvPltTambient,rvPltDeviceONOFF,rvPltReturnTSP,rvPltRealPow, &
          rvPltReacPow,rvPltApparPow,rvPltDefrostStat,rvPltDHWDrawStoch, &
-         rvPltDHWDrawStochTp
+         rvPltDHWDrawStochTp,rvPltAmbientHeat,rvPltCallForHeat
+
+   !Used by pcomp3.F
+   Type(ReportVariable) :: rvPltQExtractedH
 
    !Used by NCHE-steady_state.F
    Type(ReportVariable) :: rvPltHXchgEff,rvPltHXchgHTrans, &
@@ -296,7 +308,8 @@ MODULE h3kmodule
          rvEPowBattHPow,rvEPowBattPowBal,rvEPowBattSysLd,rvEPowBattSysChrgLd, &
          rvEPowBattSysDschrgLd,rvEPowBattTemp,rvEPowBattLfUsed,rvEPowBattLfUsedCum, &
          rvEPowBattLfUseFac,rvEPowBattChrgCyc,rvEPowBattManChrgPh,rvEPowBattManChrgPhInc, &
-         rvEPowBattTmeLstFulChrg,rvEPowBattBdTreatFlg,rvEPowBattCtrlScn,rvEPowBattLiOnCycUsed
+         rvEPowBattTmeLstFulChrg,rvEPowBattBdTreatFlg,rvEPowBattCtrlScn,rvEPowBattLiOnCycUsed, &
+         rvEPowBattLiOnSOH,rvEPowBattLiOnBatCap,rvEPowBattLiOnAgeCyc,rvEPowBattLiOnAgeTime
 
    !Used by RE-H2-ctl.F
    Type(ReportVariable) :: rvCtrlReH2NPwElAct,rvCtrlReH2NPwBattChrg,rvCtrlReH2NPwBattDschrg, &
@@ -401,14 +414,26 @@ CONTAINS
       rvHeatFluxRadiationShortwave%VariableName = 'building/*/*/heat_flux/radiation/shortwave'
       rvHeatFluxRadiationShortwave%MetaType = 'units'
       rvHeatFluxRadiationShortwave%VariableType = '(W)'
-      rvHeatFluxRadiationShortwave%Description = 'Short-wave solar radiation'
+      rvHeatFluxRadiationShortwave%Description = 'Short-wave solar radiation, external face'
       Call AddVariable(rvHeatFluxRadiationShortwave)
 
       rvHeatFluxRadiationShortwaveUnitArea%VariableName = 'building/*/*/heat_flux/radiation/shortwave/unit_area'
       rvHeatFluxRadiationShortwaveUnitArea%MetaType = 'units'
       rvHeatFluxRadiationShortwaveUnitArea%VariableType = '(W/m2)'
-      rvHeatFluxRadiationShortwaveUnitArea%Description = 'Short-wave solar radiation per unit area'
+      rvHeatFluxRadiationShortwaveUnitArea%Description = 'Short-wave solar radiation per unit area, external face'
       Call AddVariable(rvHeatFluxRadiationShortwaveUnitArea)
+
+      rvHeatFluxRadiationShortwaveIn%VariableName = 'building/*/*/heat_flux/radiation/shortwavein'
+      rvHeatFluxRadiationShortwaveIn%MetaType = 'units'
+      rvHeatFluxRadiationShortwaveIn%VariableType = '(W)'
+      rvHeatFluxRadiationShortwaveIn%Description = 'Short-wave solar radiation, internal face'
+      Call AddVariable(rvHeatFluxRadiationShortwaveIn)
+
+      rvHeatFluxRadiationShortwaveInUnitArea%VariableName = 'building/*/*/heat_flux/radiation/shortwavein/unit_area'
+      rvHeatFluxRadiationShortwaveInUnitArea%MetaType = 'units'
+      rvHeatFluxRadiationShortwaveInUnitArea%VariableType = '(W/m2)'
+      rvHeatFluxRadiationShortwaveInUnitArea%Description = 'Short-wave solar radiation per unit area, external face'
+      Call AddVariable(rvHeatFluxRadiationShortwaveInUnitArea)
 
       rvHeatFluxAboveGradeNet%VariableName = 'building/*/*/heat_flux/above_grade/net'
       rvHeatFluxAboveGradeNet%MetaType = 'units'
@@ -440,6 +465,36 @@ CONTAINS
       rvAirPointTemperature%Description = 'Zone air-point temperature'
       Call AddVariable(rvAirPointTemperature)
 
+      rvMeanRadiantTemperature%VariableName = 'building/*/air_point/mean_rad_temp'
+      rvMeanRadiantTemperature%MetaType = 'units'
+      rvMeanRadiantTemperature%VariableType = '(oC)'
+      rvMeanRadiantTemperature%Description = 'Zone mean radiant temperature'
+      Call AddVariable(rvMeanRadiantTemperature)
+
+      rvOperativeTemperature%VariableName = 'building/*/air_point/operative_temp'
+      rvOperativeTemperature%MetaType = 'units'
+      rvOperativeTemperature%VariableType = '(oC)'
+      rvOperativeTemperature%Description = 'Zone operative temperature'
+      Call AddVariable(rvOperativeTemperature)
+
+      rvAirPointRadiantGains%VariableName = 'building/*/air_point/radiant_gains'
+      rvAirPointRadiantGains%MetaType = 'units'
+      rvAirPointRadiantGains%VariableType = '(W)'
+      rvAirPointRadiantGains%Description = 'Zone air-point internal gains, radiant'
+      Call AddVariable(rvAirPointRadiantGains)
+
+      rvAirPointConvectiveGains%VariableName = 'building/*/air_point/convective_gains'
+      rvAirPointConvectiveGains%MetaType = 'units'
+      rvAirPointConvectiveGains%VariableType = '(W)'
+      rvAirPointConvectiveGains%Description = 'Zone air-point internal gains, convective'
+      Call AddVariable(rvAirPointConvectiveGains)
+
+      rvAirPointLatentGains%VariableName = 'building/*/air_point/latent_gains'
+      rvAirPointLatentGains%MetaType = 'units'
+      rvAirPointLatentGains%VariableType = '(W)'
+      rvAirPointLatentGains%Description = 'Zone air-point internal gains, latent'
+      Call AddVariable(rvAirPointLatentGains)
+
       rvWindowsPosition%VariableName = 'building/*/windows/position'
       rvWindowsPosition%MetaType = 'units'
       rvWindowsPosition%VariableType = '(-)'
@@ -457,6 +512,12 @@ CONTAINS
       rvAirPointRelativeHumidity%VariableType = '(%)'
       rvAirPointRelativeHumidity%Description = 'Zone relative humidity'
       Call AddVariable(rvAirPointRelativeHumidity)
+
+      rvAirPointVapourPressure%VariableName = 'building/*/air_point/vappress'
+      rvAirPointVapourPressure%MetaType = 'units'
+      rvAirPointVapourPressure%VariableType = '(Pa)'
+      rvAirPointVapourPressure%Description = 'Zone vapour pressure'
+      Call AddVariable(rvAirPointVapourPressure)
 
       rvSuppliedEnergyNet%VariableName = 'building/*/supplied_energy/net'
       rvSuppliedEnergyNet%MetaType = 'units'
@@ -1049,6 +1110,12 @@ CONTAINS
       rvClimateRelativeHumidity%Description = 'Climate relative humidity'
       Call AddVariable(rvClimateRelativeHumidity)
 
+      rvClimateVapourPressure%VariableName = 'climate/vappress'
+      rvClimateVapourPressure%MetaType = 'units'
+      rvClimateVapourPressure%VariableType = '(Pa)'
+      rvClimateVapourPressure%Description = 'Climate vapour pressure'
+      Call AddVariable(rvClimateVapourPressure)
+
       rvClimateWindVelocity%VariableName = 'climate/wind/velocity'
       rvClimateWindVelocity%MetaType = 'units'
       rvClimateWindVelocity%VariableType = '(m/s)'
@@ -1163,6 +1230,13 @@ CONTAINS
       rvBldSeason%Description = 'Current season in simulation (Quick-run mode)'
       Call AddVariable(rvBldSeason)
 
+
+! Additional data for plant components
+      rvPlantCompAddData%VariableName = 'plant/*/adat_*'
+      rvPlantCompAddData%MetaType = 'units'
+      rvPlantCompAddData%VariableType = '(var.)'
+      rvPlantCompAddData%Description = 'Plant component addtional data'
+      Call AddVariable(rvPlantCompAddData)
 
       rvPlantCompNodeTemperature%VariableName = 'plant/*/node_*/temperature'
       rvPlantCompNodeTemperature%MetaType = 'units'
@@ -1385,6 +1459,12 @@ CONTAINS
       rvMfnContamCon%VariableType = '(kg/kg)'
       rvMfnContamCon%Description = 'mfn contaminant concentration'
       Call AddVariable(rvMfnContamCon)
+
+      rvMfnConnectCtlOnFrac%VariableName = 'mfn/*/*/onfrac'
+      rvMfnConnectCtlOnFrac%MetaType = 'units'
+      rvMfnConnectCtlOnFrac%VariableType = '(-)'
+      rvMfnConnectCtlOnFrac%Description = 'mfn connection control ON fraction'
+      Call AddVariable(rvMfnConnectCtlOnFrac)
 
       !Used by SiteUtilities.F
       rvTFuelAllEndEnergyContent%VariableName = 'total_fuel_use/*/all_end_uses/energy_content'
@@ -1665,58 +1745,89 @@ CONTAINS
       Call AddVariable(rvTFuelCstPellets)
 
       !Used by Solar.F
-      rvBuildingGroundReflectivity%VariableName = 'Building/Ground_Reflectivity'
+      rvBuildingGroundReflectivity%VariableName = 'building/ground_reflectivity'
       rvBuildingGroundReflectivity%MetaType = 'units'
-      rvBuildingGroundReflectivity%VariableType = 'dimensionless'
+      rvBuildingGroundReflectivity%VariableType = '(-)'
       rvBuildingGroundReflectivity%Description = 'Reflectivity of the ground for solar radiation'
       Call AddVariable(rvBuildingGroundReflectivity)
 
-      rvClimateSnownDepth%VariableName = 'Climate/SnowDepth'
-      rvClimateSnownDepth%MetaType = 'units'
-      rvClimateSnownDepth%VariableType = 'cm'
-      rvClimateSnownDepth%Description = 'Depth of the snow on the ground'
-      Call AddVariable(rvClimateSnownDepth)
+      rvClimateSnowDepth%VariableName = 'climate/snow_depth'
+      rvClimateSnowDepth%MetaType = 'units'
+      rvClimateSnowDepth%VariableType = '(cm)'
+      rvClimateSnowDepth%Description = 'Depth of the snow on the ground'
+      Call AddVariable(rvClimateSnowDepth)
 
-      ! Used by complex_fenestration.F
+      rvSolarIncidentDirect%VariableName = 'building/*/*/SolIncDir'
+      rvSolarIncidentDirect%MetaType = 'units'
+      rvSolarIncidentDirect%VariableType = '(W/m2)'
+      rvSolarIncidentDirect%Description = 'Solar incident direct radiation '
+      Call AddVariable(rvSolarIncidentDirect)
+
+      rvSolarIncidentDiff%VariableName = 'building/*/*/SolIncDiff'
+      rvSolarIncidentDiff%MetaType = 'units'
+      rvSolarIncidentDiff%VariableType = '(W/m2)'
+      rvSolarIncidentDiff%Description = 'Solar incident diffuse radiation '
+      Call AddVariable(rvSolarIncidentDiff)
+
+! ExShad and ExShadF could be moved from solar.f to spmatl.f ...
+      rvShadingFractionDirect%VariableName = 'building/*/*/ExShad'
+      rvShadingFractionDirect%MetaType = 'units'
+      rvShadingFractionDirect%VariableType = '(-)'
+      rvShadingFractionDirect%Description = 'Direct shaded portion of surface expressed as factor '
+      Call AddVariable(rvShadingFractionDirect)
+
+      rvShadingFractionDiffuse%VariableName = 'building/*/*/ExShadF'
+      rvShadingFractionDiffuse%MetaType = 'units'
+      rvShadingFractionDiffuse%VariableType = '(-)'
+      rvShadingFractionDiffuse%Description = 'Diffuse shaded portion of surface expressed as factor '
+      Call AddVariable(rvShadingFractionDiffuse)
+
+      rvSolarIncidentDirectShaded%VariableName = 'building/*/*/SolIncDirShad'
+      rvSolarIncidentDirectShaded%MetaType = 'units'
+      rvSolarIncidentDirectShaded%VariableType = '(W/m2)'
+      rvSolarIncidentDirectShaded%Description = 'Solar incident direct radiation w/ shading '
+      Call AddVariable(rvSolarIncidentDirectShaded)
+
+      rvSolarIncidentDiffShaded%VariableName = 'building/*/*/SolIncDiffShad'
+      rvSolarIncidentDiffShaded%MetaType = 'units'
+      rvSolarIncidentDiffShaded%VariableType = '(W/m2)'
+      rvSolarIncidentDiffShaded%Description = 'Solar incident diffuse radiation w/ shading '
+      Call AddVariable(rvSolarIncidentDiffShaded)
+
+      rvSolarShadeFrac%VariableName = 'building/*/*/SolShadFrac'
+      rvSolarShadeFrac%MetaType = 'units'
+      rvSolarShadeFrac%VariableType = '(m2)'
+      rvSolarShadeFrac%Description = 'Fractional solar area = area*Inc_shaded/Inc_not-shaded '
+      Call AddVariable(rvSolarShadeFrac)
+
+      ! Used by complex fenestration (CFC)
       rvCFCazimuth%VariableName = 'CFC/*/*/azimuth'
       rvCFCazimuth%MetaType = 'units'
-      rvCFCazimuth%VariableType = 'degrees'
+      rvCFCazimuth%VariableType = '(deg)'
       rvCFCazimuth%Description = 'Solar wall azimuth'
       Call AddVariable(rvCFCazimuth)
 
       rvCFCelevation%VariableName = 'CFC/*/*/elevation'
       rvCFCelevation%MetaType = 'units'
-      rvCFCelevation%VariableType = 'degrees'
+      rvCFCelevation%VariableType = '(deg)'
       rvCFCelevation%Description = 'Solar elevation '
       Call AddVariable(rvCFCelevation)
 
-      rvSolarIncidentDirect%VariableName = 'CFC/*/*/SolIncDir'
-      rvSolarIncidentDirect%MetaType = 'units'
-      rvSolarIncidentDirect%VariableType = 'W/m2'
-      rvSolarIncidentDirect%Description = 'Solar incident direct radiation '
-      Call AddVariable(rvSolarIncidentDirect)
-
-      rvSolarIncidentDiff%VariableName = 'CFC/*/*/SolIncDiff'
-      rvSolarIncidentDiff%MetaType = 'units'
-      rvSolarIncidentDiff%VariableType = 'W/m2'
-      rvSolarIncidentDiff%Description = 'Solar incident diffuse radiation '
-      Call AddVariable(rvSolarIncidentDiff)
-
       rvCFCtranDir%VariableName = 'CFC/*/*/CFCtranDir'
       rvCFCtranDir%MetaType = 'units'
-      rvCFCtranDir%VariableType = 'W/m2'
+      rvCFCtranDir%VariableType = '(W/m2)'
       rvCFCtranDir%Description = 'CFC direct transmitted '
       Call AddVariable(rvCFCtranDir)
 
       rvCFCtranDiff%VariableName = 'CFC/*/*/CFCtranDiff'
       rvCFCtranDiff%MetaType = 'units'
-      rvCFCtranDiff%VariableType = 'W/m2'
+      rvCFCtranDiff%VariableType = '(W/m2)'
       rvCFCtranDiff%Description = 'CFC diffuse transmitted '
       Call AddVariable(rvCFCtranDiff)
 
       rvCFCvertprofileangle%VariableName = 'CFC/*/*/CFCvertprofileangle'
       rvCFCvertprofileangle%MetaType = 'units'
-      rvCFCvertprofileangle%VariableType = 'deg'
+      rvCFCvertprofileangle%VariableType = '(deg)'
       rvCFCvertprofileangle%Description = 'CFC vertical profile angle '
       Call AddVariable(rvCFCvertprofileangle)
 
@@ -1884,6 +1995,43 @@ CONTAINS
       rvPltSDHWsumAvailSolEn%Description = 'SDHW system: insolation on collector'
       Call AddVariable(rvPltSDHWsumAvailSolEn)
 
+      !Used by moistr.F
+      rvBldMstVapPressNode%VariableName = 'building/*/*/*/mn_vappress'
+      rvBldMstVapPressNode%MetaType = 'units'
+      rvBldMstVapPressNode%VariableType = '(Pa)'
+      rvBldMstVapPressNode%Description = 'Vapour pressure at mnode (for mould analysis)'
+      Call AddVariable(rvBldMstVapPressNode)
+
+      rvBldMstRHnode%VariableName = 'building/*/*/*/mn_relhum'
+      rvBldMstRHnode%MetaType = 'units'
+      rvBldMstRHnode%VariableType = '(%)'
+      rvBldMstRHnode%Description = 'Relative humidity at mnode (for mould analysis)'
+      Call AddVariable(rvBldMstRHnode)
+
+      rvBldMstStoreCap%VariableName = 'building/*/*/*/mn_mst_store_cap'
+      rvBldMstStoreCap%MetaType = 'units'
+      rvBldMstStoreCap%VariableType = '(kg/m2)'
+      rvBldMstStoreCap%Description = 'Moisture storage capacity at mnode (for mould analysis)'
+      Call AddVariable(rvBldMstStoreCap)
+
+      rvBldMstStorage%VariableName = 'building/*/*/*/mn_mst_cont_vol'
+      rvBldMstStorage%MetaType = 'units'
+      rvBldMstStorage%VariableType = '(kg/m3)'
+      rvBldMstStorage%Description = 'Moisture content at mnode (for mould analysis)'
+      Call AddVariable(rvBldMstStorage)
+
+      rvBldMstStorageMass%VariableName = 'building/*/*/*/mn_mst_cont_mass'
+      rvBldMstStorageMass%MetaType = 'units'
+      rvBldMstStorageMass%VariableType = '(kg/kg)'
+      rvBldMstStorageMass%Description = 'Moisture content at mnode per dry mass (for mould analysis)'
+      Call AddVariable(rvBldMstStorageMass)
+
+      rvBldMstTNode%VariableName = 'building/*/*/*/mn_temp'
+      rvBldMstTNode%MetaType = 'units'
+      rvBldMstTNode%VariableType = '(C)'
+      rvBldMstTNode%Description = 'Temperature at mnode (for mould analysis)'
+      Call AddVariable(rvBldMstTNode)
+
       !Used by pcomp2.F
       rvPltQAddedH%VariableName = 'plant/*/misc_data/Q_added_heat'
       rvPltQAddedH%MetaType = 'units'
@@ -1900,49 +2048,61 @@ CONTAINS
       rvPltHOut%VariableName = 'plant/*/misc_data/Heat_Out'
       rvPltHOut%MetaType = 'units'
       rvPltHOut%VariableType = '(W)'
-      rvPltHOut%Description = 'ASHP: Heat Output'
+      rvPltHOut%Description = 'xSHP: Heat Output'
       Call AddVariable(rvPltHOut)
 
       rvPltCOP%VariableName = 'plant/*/misc_data/COP'
       rvPltCOP%MetaType = 'units'
       rvPltCOP%VariableType = '(-)'
-      rvPltCOP%Description = 'ASHP: COP'
+      rvPltCOP%Description = 'xSHP: COP'
       Call AddVariable(rvPltCOP)
 
       rvPltTambient%VariableName = 'plant/*/misc_data/Tambient'
       rvPltTambient%MetaType = 'units'
       rvPltTambient%VariableType = '(degC)'
-      rvPltTambient%Description = 'ASHP: Ambient Temp'
+      rvPltTambient%Description = 'xSHP: Ambient Temp (air or ground)'
       Call AddVariable(rvPltTambient)
 
       rvPltDeviceONOFF%VariableName = 'plant/*/misc_data/DeviceONOFF'
       rvPltDeviceONOFF%MetaType = 'units'
       rvPltDeviceONOFF%VariableType = '(-)'
-      rvPltDeviceONOFF%Description = 'ASHP: ON-OFF status'
+      rvPltDeviceONOFF%Description = 'xSHP: ON-OFF status'
       Call AddVariable(rvPltDeviceONOFF)
+
+      rvPltCallForHeat%VariableName = 'plant/*/misc_data/CallForHeat'
+      rvPltCallForHeat%MetaType = 'units'
+      rvPltCallForHeat%VariableType = '(-)'
+      rvPltCallForHeat%Description = 'xSHP: CallForHeat status'
+      Call AddVariable(rvPltCallForHeat)
+
+      rvPltAmbientHeat%VariableName = 'plant/*/misc_data/AmbientHeatIn'
+      rvPltAmbientHeat%MetaType = 'units'
+      rvPltAmbientHeat%VariableType = '(W)'
+      rvPltAmbientHeat%Description = 'xSHP: ambient heat input (air or ground).'
+      Call AddVariable(rvPltAmbientHeat)
 
       rvPltReturnTSP%VariableName = 'plant/*/misc_data/Return T SP'
       rvPltReturnTSP%MetaType = 'units'
       rvPltReturnTSP%VariableType = '(degC)'
-      rvPltReturnTSP%Description = 'ASHP: Return Temp Set Pt.'
+      rvPltReturnTSP%Description = 'xSHP: Return Temp Set Pt.'
       Call AddVariable(rvPltReturnTSP)
 
       rvPltRealPow%VariableName = 'plant/*/misc_data/Real Power'
       rvPltRealPow%MetaType = 'units'
       rvPltRealPow%VariableType = '(W)'
-      rvPltRealPow%Description = 'ASHP: Real Power Demand'
+      rvPltRealPow%Description = 'xSHP: Real Power Demand'
       Call AddVariable(rvPltRealPow)
 
       rvPltReacPow%VariableName = 'plant/*/misc_data/Reac. Power'
       rvPltReacPow%MetaType = 'units'
       rvPltReacPow%VariableType = '(VAr)'
-      rvPltReacPow%Description = 'ASHP: Reactive Power Demand'
+      rvPltReacPow%Description = 'xSHP: Reactive Power Demand'
       Call AddVariable(rvPltReacPow)
 
       rvPltApparPow%VariableName = 'plant/*/misc_data/Appar. Power'
       rvPltApparPow%MetaType = 'units'
       rvPltApparPow%VariableType = '(VA)'
-      rvPltApparPow%Description = 'ASHP: Apparent Power Demand'
+      rvPltApparPow%Description = 'xSHP: Apparent Power Demand'
       Call AddVariable(rvPltApparPow)
 
       rvPltDefrostStat%VariableName = 'plant/*/misc_data/desfrost_status'
@@ -1963,6 +2123,12 @@ CONTAINS
       rvPltDHWDrawStochTp%Description = 'Draw for type'
       Call AddVariable(rvPltDHWDrawStochTp)
 
+      !Used by pcomp3.F
+      rvPltQExtractedH%VariableName = 'plant/*/misc_data/Q_extracted_heat'
+      rvPltQExtractedH%MetaType = 'units'
+      rvPltQExtractedH%VariableType = '(W)'
+      rvPltQExtractedH%Description = 'Heat extracted from water cooler'
+      Call AddVariable(rvPltQExtractedH)
 
       !Used by NCHE-steady_state.F
       rvPltHXchgEff%VariableName = 'plant/*/heat_exchanger/effectiveness'
@@ -3447,6 +3613,30 @@ CONTAINS
       rvEPowBattLiOnCycUsed%Description = 'Li-on cycles used'
       Call AddVariable(rvEPowBattLiOnCycUsed)
 
+      rvEPowBattLiOnSOH%VariableName = 'electrical_net/power_only_components/*/misc_data/Lion_state_of_health'
+      rvEPowBattLiOnSOH%MetaType = 'units'
+      rvEPowBattLiOnSOH%VariableType = '(-)'
+      rvEPowBattLiOnSOH%Description = 'Li-on state of health'
+      Call AddVariable(rvEPowBattLiOnSOH)
+
+      rvEPowBattLiOnBatCap%VariableName = 'electrical_net/power_only_components/*/misc_data/Lion_Battery_Capacity'
+      rvEPowBattLiOnBatCap%MetaType = 'units'
+      rvEPowBattLiOnBatCap%VariableType = '(Ah)'
+      rvEPowBattLiOnBatCap%Description = 'Li-on remaining Battery Capacity'
+      Call AddVariable(rvEPowBattLiOnBatCap)
+
+      rvEPowBattLiOnAgeCyc%VariableName = 'electrical_net/power_only_components/*/misc_data/Lion_cyclic_ageing'
+      rvEPowBattLiOnAgeCyc%MetaType = 'units'
+      rvEPowBattLiOnAgeCyc%VariableType = '(-)'
+      rvEPowBattLiOnAgeCyc%Description = 'Li-on cyclic ageing factor'
+      Call AddVariable(rvEPowBattLiOnAgeCyc)
+
+      rvEPowBattLiOnAgeTime%VariableName = 'electrical_net/power_only_components/*/misc_data/Lion_calendaric_ageing'
+      rvEPowBattLiOnAgeTime%MetaType = 'units'
+      rvEPowBattLiOnAgeTime%VariableType = '(-)'
+      rvEPowBattLiOnAgeTime%Description = 'Li-on calendaric ageing factor'
+      Call AddVariable(rvEPowBattLiOnAgeTime)
+
       !Used by RE-H2-ctl.F
       rvCtrlReH2NPwElAct%VariableName = 'control/re_h2_ctl/net_power_balance/electrolyzer_active'
       rvCtrlReH2NPwElAct%MetaType = 'units'
@@ -4083,7 +4273,7 @@ CONTAINS
       rvBldSPMatlPVPow%Description = 'Power produced by PV module'
       Call AddVariable(rvBldSPMatlPVPow)
 
-      rvBuiSpm%VariableName = 'bui/spm/*/*/*'
+      rvBuiSpm%VariableName = 'bui/spm/*/*'
       rvBuiSpm%MetaType = '*'
       rvBuiSpm%VariableType = '*'
       rvBuiSpm%Description = '*'

@@ -80,10 +80,7 @@ C Plant matrix solver convergence criteria.
 C Tolerance for iteration of hydrogen flow matrix
       common/PITER_H2/fH2_iteration_tolerance
       real fH2_iteration_tolerance
-      
-      
-      
-      
+
       COMMON/SAVE/ISAVE
       INTEGER :: isave
       COMMON/SAVE1/LSAVE

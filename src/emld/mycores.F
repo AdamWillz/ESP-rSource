@@ -37,14 +37,18 @@ C     MODEL  - determines the device type attached to the current job.
 C     iucfg  - unit number for plant configuration file.
 C     iupdb  - plant component database unit.
 
-C ********************** MYCORECV ************************           
-C Subroutine mycorecv recovers data from the mould database in the form
-C of 1-mould names
-C    2-equations 
-C    3-look up table data
-C    4-mould information
+C ********************** MYCORECV **************************
+C Subroutine mycorecv recovers data from the mould database.
+C irecov  1 - mould names
+C         2 - equations
+C         3 - look up table data
+C         4 - mould information
+C imld
+C
+C imode   0 - standard
+C         1 - silent
 
-      subroutine mycorecv(irecov,imld)
+      subroutine mycorecv(irecov,imld,imode)
 
 #include "mould.h"
 #include "esprdbfile.h"
@@ -165,6 +169,7 @@ C           call mycorecv(4,imno)
   66      continue
           goto 2
         endif
+C     Recover equation data from mould.db1
       elseif(irecov.eq.2) then
         icount=0
         call usrmsg('Getting data for plot ..',' ','-')
@@ -532,7 +537,7 @@ C subroutine curvedraw
 #endif
 
       iget=imld
-      call mycorecv(2,iget)
+      call mycorecv(2,iget,0)
 
       write(outs,*) 'Eqn is: RH=',a(4,imld),'T^3+',a(3,imld),'T^2+',
      &a(2,imld),'T+',a(1,imld),' '

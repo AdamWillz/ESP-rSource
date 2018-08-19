@@ -17,19 +17,9 @@ VALdir="${MODdir}/validation"	# Source validation models.
 SRCdir="${HOMEdir}/src"         # Source code directory.
 COSIMdir=" "		        # Harmonizer installation directory.
 
-echo " "
-echo " ESP-r installation script."
-echo " "
-echo " This script creates the ESP-r system based on the source"
-echo " files found in directory ${HOMEdir}"
-echo " and installs the result in directory ${DESTdir}."
-echo " "
-echo " If you are new to this procedure, you are advised to consult"
-echo " file ${SRCdir}/Readme before proceeding." 
-
 # Compilation settings.
 mode="interactive"         # Provide feedback during installation. 
-xml_support="no"           # Support for XML output.
+xml_support="yes"          # Support for XML output.
 SQLite_support="no"        # Support for SQLite output.
 FMI_support="no"           # Support for FMI connectivity.
 debugging="no"             # Support for debugging symbols.
@@ -42,7 +32,7 @@ complexity="2"             # Model complixity supported (medium is default).
 platform="auto-detect"     # Installation platform.
 install_dbs="yes"          # Install databases.
 install_training="yes"     # Install training models.
-install_exes="prompt"      # Install executables.
+install_exes="yes"         # Install executables.
 delete_temp_files="yes"    # Delete temporary files.
 preserve_espr_dir="yes"    # Preserve installation directory.
 gnu_version="gcc4"         # Required gcc version.
@@ -61,7 +51,7 @@ unversioned="no"           # Check for versioning info.
 # functionality is automatically encapsulated in bps).
 programs="aco b2e bps dfs dfv cdb c2e clm e2r ecnv eco enet grd ish mfs mld mrt pdb prj res vew"
 programs=" ${programs} "   # Leading/ trailing space added for regexp matching.
-targets=" "		   # Will be overwitten later.
+targets=" "		           # Will be overwitten later.
 
 # Determine computer architecture and availability of stat.
 architecture=`uname -s`	   # Kernel name.
@@ -229,7 +219,7 @@ if [ $help -eq 1 ]; then
   echo "           Overwrite a corrupted installation."
   echo " "
   echo "    --gcc4"
-  echo "           Use the gcc4 compilers (gcc, g++ and gFortran)."
+  echo "           Use the gcc4 or newer compilers (gcc, g++ and gFortran)."
   echo "           (the default)."
   echo " "
   echo "    --opt0: no compiler optimization"
@@ -329,22 +319,30 @@ if [ "$xml_support" = "yes" ] || [ "$xml_support" = "prompt" ]; then
     xml_libs_found="yes"
     LIBXML2_INCLUDE="-I/usr/include -I/usr/include/libxml2 -I/usr/local/include/libxml2 -I/usr/include/libxslt -I/local/include/libxslt"
     echo " "
-    echo " xml output support enabled."
+    echo " xml libraries found."
     # xml support may optionally include support for xslt & exslt
     # (following code tested only with GNU ld).
-    ld_output=`ld -lxslt`
+    ld_output=`ldconfig -p | grep libxslt`
     case $ld_output in
-      "") xsl_libs_available="yes";;
-      *)  xsl_libs_available="no";;
+      "") xsl_libs_available="no";;
+      *)  xsl_libs_available="yes";;
     esac
    fi
 fi
 
 # SQLite support.
 if [ "$SQLite_support" = "yes" ]; then
-   ld_output=`ld -lsqlite3`
+   ld_output=`ldconfig -p | grep libsqlite`
    case $ld_output in 
-     "" ) SQLite_libs_found="yes";
+     "" ) SQLite_libs_found="no"; 
+          SQLite_support="no"; 
+          if [ "$mode" = "silent" ]; then
+             echo " ";
+             echo " Warning: Library libsqlite3 not found in";
+             echo " /usr/lib. SQLite support disabled.";
+          fi
+          ;;
+     *  ) SQLite_libs_found="yes";
           if [ "$xml_support" = "no" ]; then
              SQLite_support="no"
              if [ "$mode" = "silent" ]; then
@@ -354,14 +352,6 @@ if [ "$SQLite_support" = "yes" ]; then
              fi
           else
             LIBSQLITE3_INCLUDE="-I/usr/lib -lsqlite3"
-          fi
-          ;;
-     *  ) SQLite_libs_found="no"; 
-          SQLite_support="no"; 
-          if [ "$mode" = "silent" ]; then
-             echo " ";
-             echo " Warning: Library libsqlite3 not found in";
-             echo " /usr/lib. SQLite support disabled.";
           fi
           ;;
    esac
@@ -430,6 +420,18 @@ if [ "$platform" = "auto-detect" ]; then
    fi
 fi
 
+echo " "
+echo " ESP-r installation script."
+echo " "
+echo " This script creates the ESP-r system based on the source"
+echo " files found in directory ${HOMEdir}"
+echo " and installs the result in directory ${DESTdir}."
+echo " "
+echo " If you are new to this procedure, you are advised to consult"
+echo " file ${SRCdir}/Readme before proceeding."
+echo " "
+echo " Use Install --help to get a list of the avaiable options."
+
 # Prompt user for basic options if script is running interactively.
 if [ "$mode" = "interactive" ]; then
    echo " "
@@ -467,15 +469,16 @@ if [ "$mode" = "interactive" ]; then
          fi
          echo " "
          echo " Computer type:"
-         echo "  (1) Solaris"
-         echo "  (2) Linux"
-         echo "  (3) Cygwin"
-         echo "  (4) MinGW"
-         echo "  (5) MacOS X (10.4 or later)"
+         echo "  (1) Solaris;"
+         echo "  (2) Linux;"
+         echo "  (3) Cygwin;"
+         echo "  (4) MinGW;"
+         echo "  (5) MacOS X (10.4 or later)."
          read A
          # Use the 'known_host' keyword to permit compilation
          # on frequently used, nonstandard hosts.
          if [ "$A" = "known_host" ]; then
+          echo " "
           echo " Host: "
           echo "  (1) nrn7 (SunOS)"
           read A
@@ -531,9 +534,9 @@ if [ "$compiler" = "prompt" ] && [ "$mode" = "interactive" ]; then
         echo " Please select a compiler set [2]."
      fi
      echo " Select a compiler set [2]:"
-     echo "  (1) Sun 90 (cc and f90)"
-     echo "  (2) GNU (gcc 4.X and gfortran)"
-     echo "  (3) Intel (icc, icpc and ifort)"
+     echo "  (1) Sun 90 (cc and f90);"
+     echo "  (2) GNU (gcc 4.X and gfortran);"
+     echo "  (3) Intel (icc, icpc and ifort)."
      read A
      if [ "$A" = "" ]; then
        A="2"
@@ -564,72 +567,22 @@ if [ "$mode" = "interactive" ]; then
          echo " disabled but the rest of the installation will"
          echo " proceed normally."
       else
-         B="none"
-         while [ "$B" != "y" ] && [ "$B" != "n" ] && [ "$B" != "Y" ] && [ "$B" != "N" ]
-         do
-            if [ "$B" != "none" ]; then
-               echo ""
-               echo "Please answer 'y' or 'n'."
-            fi
-            echo -n " Install with xml output support for bps"
-            case "${xml_support}" in
-              yes) echo " (y/n)? [y]";;
-              *)   echo " (y/n)? [n]";;
-            esac
-            read B
-            if [ "$B" = "" ]; then
-              case "${xml_support}" in
-                yes) B="y";;
-                *)   B="n";;
-              esac
-            fi
-         done
-         if [ "$B" = "y" ]; then
-            xml_support="yes"
-
-            # SQLite not available if xml reporting is not installed.
-            if [ "${SQLite_libs_found}" = "no" ]; then
-               echo " "
-               echo " The libsqlite3 library could not be found in"
-               echo " /usr/lib. Support for SQLite output will be"
-               echo " disabled but the rest of the ESP-r installation"
-               echo " will proceed normally. "
-            else
-               B="none"
-               while [ "$B" != "y" ] && [ "$B" != "n" ] && [ "$B" != "Y" ] && [ "$B" != "N" ]
-               do
-                  if [ "$B" != "none" ]; then
-                     echo " "
-                     echo "Please answer 'y' or 'n'."
-                  fi
-                  echo " "
-                  echo " Install with experimental SQLite output support (y/n)? [n]"
-                  read B
-                  if [ "$B" = "" ]; then
-                    B="n"
-                  fi
-               done
-               if [ "$B" = "y" ]; then
-                  # Enable xml
-                  SQLite_support="yes"
-                  echo " SQLite output enabled in bps."
-               else
-                  SQLite_support="no"
-                  echo " SQLite output disabled in bps."
-               fi
-            fi
-         else
-            xml_support="no"
-         fi
+        case "${xml_support}" in
+          yes) echo " Including xml support.";;
+          no)  echo " xml support not included.";;
+        esac
       fi
    else
-      echo " xml output support is not available on ${platform}"
-      echo " and is therefore disabled in bps."
-      xml_support="no"
+       echo " "
+       echo " xml output support is not available on ${platform}"
+       echo " and is therefore disabled in bps."
+       xml_support="no"
+       SQLite_support="no"
    fi
 else
   if [ "$xml_support" = "prompt" ]; then
     xml_support="no"
+    SQLite_support="no"
   fi
 fi
 
@@ -697,52 +650,20 @@ fi
 
 # Graphics libraries
 if [ "$mode" = "interactive" ]; then
-  GTK_prompt="1"
-  X11_prompt="2"
-  noX_prompt="3"
-  default="$X11_prompt"
-  if [ "$platform" = "mingw" ]; then
-    X11_prompt="-"   # MinGW excludes X11.
-    default="$noX_prompt"
-  fi
-  A=none;
-  while [ "$A" != "$GTK_prompt" ] &&
-        [ "$A" != "$X11_prompt" ] &&
-        [ "$A" != "$noX_prompt" ]
-  do
-     if [ "$A" != "none" ]; then
-        echo " "
-        echo " Please choose a graphics library."
-     fi
-     echo " Graphics library: [$default] "
-     if [ "$GTK_prompt" != "-" ]; then
-        echo "  (1) GTK";
-     fi
-     if [ "$X11_prompt" != "-" ]; then
-        echo "  (2) X11";
-     fi
-     if [ "$noX_prompt" != "-" ]; then
-        echo "  (3) None (text only)";
-     fi
-     read A
-     if [ "$A" = "-" ]; then
-        A=none;
-     fi
-     if [ "$A" = "" ]; then
-        A="$default"
-     fi
-  done
-  case "$A" in
-     "$GTK_prompt") xLibs=GTK;;
-     "$X11_prompt") xLibs=X11;;
-     "$noX_prompt") xLibs=noX;;
+  case "${xLibs}" in
+     X11) echo " "
+          echo " Building with X11 interface.";;
+     GTK) echo " "
+          echo " Building with GTK interface.";;
+     noX) echo " "
+          echo " Building with text only interface.";;
   esac
 else
   # Assume X11 is available on all systems except mingw.
   if [ "$platform" = "mingw" ]; then
     xLibs=noX
     echo " "
-    echo " A text only application will be compiled."
+    echo " Text only applications will be compiled."
   else
     echo " "
     echo " The $xLibs libraries will be used."
@@ -787,33 +708,12 @@ esac
 
 # Debugging symbols required?
 if [ "$mode" = "interactive" ]; then
-  B="none"
-  while [ "$B" != "y" ] && [ "$B" != "n" ] && [ "$B" != "Y" ] && [ "$B" != "N" ]
-  do
-    if [ "$B" != "none" ]; then
-        echo " "
-        echo " Please answer 'y' or 'n'"
-    else
-      echo " The installation can retain debugging symbols and object"
-      echo -n " files for use with a debugging program: retain"
-    fi
-    case "${debugging}" in
-      yes) echo " (y/n)? [y]";;
-      *)   echo " (y/n)? [n]";;
-    esac
-    read B
-    if [ "$B" = "" ]; then
-      case "${debugging}" in
-        yes) B="y";;
-        *)   B="n";;
-      esac
-    fi
-  done
-  if [ "$B" = "y" ] || [ "$B" = "Y" ]; then
-    debugging="yes"
-  else
-    debugging="no"
-  fi
+  case "${debugging}" in
+    yes) echo " "
+         echo " Building with debug symbols.";;
+    no)  echo " "
+         echo " Building without debug symbols.";;
+  esac
 
   # Installation of databases required?
   B="none"
@@ -823,9 +723,11 @@ if [ "$mode" = "interactive" ]; then
         echo " "
         echo "Please answer 'y' or 'n'."
     fi
-      case "${install_dbs}" in
-      yes) echo " Install databases (y/n)? [y]";;
-      *)   echo " Install databases (y/n)? [n]";;
+    case "${install_dbs}" in
+      yes) echo " "
+           echo " Install databases (y/n)? [y]";;
+      *)   echo " "
+           echo " Install databases (y/n)? [n]";;
     esac
     read B
     if [ "$B" = "" ]; then
@@ -849,7 +751,7 @@ if [ "$mode" = "interactive" ]; then
         echo ""
         echo "Please answer 'y' or 'n'."
     fi
-      case "${install_training}" in
+    case "${install_training}" in
       yes) echo " Install training models (y/n)? [y]";;
       *)   echo " Install training models (y/n)? [n]";;
     esac
@@ -2121,66 +2023,68 @@ echo " done."
 fi
 
 # Executables.
-echo -n "    - installing executables in ${ESPBinDir} ..." 
-cd ${SRCdir}
-if [ "$debugging" = "no" ]; then
-  make ESPdir=${ESPdir} EXE=${EXE} COSIMDir=${COSIMdir} strip  >/dev/null 2>&1
-fi
-make ESPBinDir=${ESPBinDir} EXE=${EXE} COSIMDir=${COSIMdir} InstBins ${targets}  >/dev/null 2>&1
-if [ "$clean" = "yes" ]; then
-  make EXE=${EXE} clean  >/dev/null 2>&1
-fi
-echo " done."
+if [ "$install_exes" = "yes" ]; then
+  echo -n "    - installing executables in ${ESPBinDir} ..." 
+  cd ${SRCdir}
+  if [ "$debugging" = "no" ]; then
+    make ESPdir=${ESPdir} EXE=${EXE} COSIMDir=${COSIMdir} strip  >/dev/null 2>&1
+  fi
+  make ESPBinDir=${ESPBinDir} EXE=${EXE} COSIMDir=${COSIMdir} InstBins ${targets}  >/dev/null 2>&1
+  if [ "$clean" = "yes" ]; then
+    make EXE=${EXE} clean  >/dev/null 2>&1
+  fi
+  echo " done."
 
 # Makeup an appropriate esp-r script.
-if [ ${MCTYPE} = sun ]; then
-  echo "#!/bin/sh" > ${ESPdir}/bin/esp-r
-  echo "if [ X$EFONT_0 = X ]; then" >> ${ESPdir}/bin/esp-r
-  echo "      EFONT_0=6x12" >> ${ESPdir}/bin/esp-r
-  echo "      EFONT_1=6x13" >> ${ESPdir}/bin/esp-r
-  echo "      EFONT_2=8x13" >> ${ESPdir}/bin/esp-r
-  echo "      EFONT_3=9x15" >> ${ESPdir}/bin/esp-r
-  echo "fi" >> ${ESPdir}/bin/esp-r
-  echo "prj \$@ &" >> ${ESPdir}/bin/esp-r
-  chmod a+x ${ESPdir}/bin/esp-r
-elif [ ${MCTYPE} = lin ]; then
-  echo "#!/bin/sh" > ${ESPdir}/bin/esp-r
-  echo "if [ X$EFONT_0 = X ]; then" >> ${ESPdir}/bin/esp-r
-  echo "      EFONT_0=6x12" >> ${ESPdir}/bin/esp-r
-  echo "      EFONT_1=6x13" >> ${ESPdir}/bin/esp-r
-  echo "      EFONT_2=8x13" >> ${ESPdir}/bin/esp-r
-  echo "      EFONT_3=9x15" >> ${ESPdir}/bin/esp-r
-  echo "fi" >> ${ESPdir}/bin/esp-r
-  echo "prj \$@ &" >> ${ESPdir}/bin/esp-r
-  chmod a+x ${ESPdir}/bin/esp-r
-elif [ ${MCTYPE} = cygw ]; then
-  echo "#!/bin/sh" > ${ESPdir}/bin/esp-r
-  echo "if [ X$EFONT_0 = X ]; then" >> ${ESPdir}/bin/esp-r
-  echo "      EFONT_0=6x12" >> ${ESPdir}/bin/esp-r
-  echo "      EFONT_1=6x13" >> ${ESPdir}/bin/esp-r
-  echo "      EFONT_2=8x13" >> ${ESPdir}/bin/esp-r
-  echo "      EFONT_3=9x15" >> ${ESPdir}/bin/esp-r
-  echo "fi" >> ${ESPdir}/bin/esp-r
-  echo "prj \$@ &" >> ${ESPdir}/bin/esp-r
-  chmod a+x ${ESPdir}/bin/esp-r
-elif [ ${MCTYPE} = osx ]; then
-  echo "#!/bin/sh" > ${ESPdir}/bin/esp-r
-  echo "if [ X$EFONT_0 = X ]; then" >> ${ESPdir}/bin/esp-r
-  echo "      EFONT_0=6x12" >> ${ESPdir}/bin/esp-r
-  echo "      EFONT_1=6x13" >> ${ESPdir}/bin/esp-r
-  echo "      EFONT_2=8x13" >> ${ESPdir}/bin/esp-r
-  echo "      EFONT_3=9x15" >> ${ESPdir}/bin/esp-r
-  echo "fi" >> ${ESPdir}/bin/esp-r
-  echo "prj \$@ &" >> ${ESPdir}/bin/esp-r
-  chmod a+x ${ESPdir}/bin/esp-r
-elif [ ${MCTYPE} = mingw ]; then
-  echo "@rem batch file to start project manager - associate with cfg files" > ${ESPdir}/bin/esp-r.cmd
-  echo "start prj -file %1" >> ${ESPdir}/bin/esp-r.cmd
-fi
+  if [ ${MCTYPE} = sun ]; then
+    echo "#!/bin/sh" > ${ESPdir}/bin/esp-r
+    echo "if [ X$EFONT_0 = X ]; then" >> ${ESPdir}/bin/esp-r
+    echo "      EFONT_0=6x12" >> ${ESPdir}/bin/esp-r
+    echo "      EFONT_1=6x13" >> ${ESPdir}/bin/esp-r
+    echo "      EFONT_2=8x13" >> ${ESPdir}/bin/esp-r
+    echo "      EFONT_3=9x15" >> ${ESPdir}/bin/esp-r
+    echo "fi" >> ${ESPdir}/bin/esp-r
+    echo "prj \$@ &" >> ${ESPdir}/bin/esp-r
+    chmod a+x ${ESPdir}/bin/esp-r
+  elif [ ${MCTYPE} = lin ]; then
+    echo "#!/bin/sh" > ${ESPdir}/bin/esp-r
+    echo "if [ X$EFONT_0 = X ]; then" >> ${ESPdir}/bin/esp-r
+    echo "      EFONT_0=6x12" >> ${ESPdir}/bin/esp-r
+    echo "      EFONT_1=6x13" >> ${ESPdir}/bin/esp-r
+    echo "      EFONT_2=8x13" >> ${ESPdir}/bin/esp-r
+    echo "      EFONT_3=9x15" >> ${ESPdir}/bin/esp-r
+    echo "fi" >> ${ESPdir}/bin/esp-r
+    echo "prj \$@ &" >> ${ESPdir}/bin/esp-r
+    chmod a+x ${ESPdir}/bin/esp-r
+  elif [ ${MCTYPE} = cygw ]; then
+    echo "#!/bin/sh" > ${ESPdir}/bin/esp-r
+    echo "if [ X$EFONT_0 = X ]; then" >> ${ESPdir}/bin/esp-r
+    echo "      EFONT_0=6x12" >> ${ESPdir}/bin/esp-r
+    echo "      EFONT_1=6x13" >> ${ESPdir}/bin/esp-r
+    echo "      EFONT_2=8x13" >> ${ESPdir}/bin/esp-r
+    echo "      EFONT_3=9x15" >> ${ESPdir}/bin/esp-r
+    echo "fi" >> ${ESPdir}/bin/esp-r
+    echo "prj \$@ &" >> ${ESPdir}/bin/esp-r
+    chmod a+x ${ESPdir}/bin/esp-r
+  elif [ ${MCTYPE} = osx ]; then
+    echo "#!/bin/sh" > ${ESPdir}/bin/esp-r
+    echo "if [ X$EFONT_0 = X ]; then" >> ${ESPdir}/bin/esp-r
+    echo "      EFONT_0=6x12" >> ${ESPdir}/bin/esp-r
+    echo "      EFONT_1=6x13" >> ${ESPdir}/bin/esp-r
+    echo "      EFONT_2=8x13" >> ${ESPdir}/bin/esp-r
+    echo "      EFONT_3=9x15" >> ${ESPdir}/bin/esp-r
+    echo "fi" >> ${ESPdir}/bin/esp-r
+    echo "prj \$@ &" >> ${ESPdir}/bin/esp-r
+    chmod a+x ${ESPdir}/bin/esp-r
+  elif [ ${MCTYPE} = mingw ]; then
+    echo "@rem batch file to start project manager - associate with cfg files" > ${ESPdir}/bin/esp-r.cmd
+    echo "start prj -file %1" >> ${ESPdir}/bin/esp-r.cmd
+  fi
 
 # Temporary.
-ln -sf ${ESPdir}/bin/mrt ${ESPdir}/bin/vwf
-cp -r ${HOMEdir}/modish ${DESTdir}/bin
+  ln -sf ${ESPdir}/bin/mrt ${ESPdir}/bin/vwf
+  cp -r ${HOMEdir}/modish ${DESTdir}/bin
+fi
 
 echo " "
 echo " Installation complete."

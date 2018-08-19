@@ -138,6 +138,23 @@ C ISPMXIST is the existance flag for special materials
 
       integer :: istoreIUOUT,ispm,iTMCidx
 
+C DSC data / spline function data
+      common/pcmspline/temp1d(mspmnod,MSPMSPLM),
+     &          heat1d(mspmnod,MSPMSPLM),
+     &          cool1d(mspmnod,MSPMSPLM),heat2d(mspmnod,MSPMSPLM),
+     &          cool2d(mspmnod,MSPMSPLM),nxy(mspmnod),
+     &          bUseSpline(mspmnod),fnamDSCdat(mspmnod)
+      real temp1d   ! DSC temperature data values, degC
+      real heat1d   ! DSC heating enthalpy values, J/(kg K)
+      real cool1d   ! DSC cooling enthalpy values, J/(kg K)
+      real heat2d   ! 2nd derivatives at spline x values
+      real cool2d
+      integer nxy             ! number of data sets
+      logical bUseSpline      ! .true. means DSC data file available, use
+                              ! cubic spline function for apparent specific
+                              ! heat function.
+      character fnamDSCdat*72 ! DSC data file name for current spm entry
+
 C Variables for weekdays, and weekends.
 C Assume: Mon=1, Tue=2, Wed=3, Thu=4, Fri=5, Sat=6, Sun=7
       common/wkdtyp/idwe1,idwe2,wkd1,wkd2
@@ -273,7 +290,8 @@ C in the current model. A -1 means not applicable
       integer loutln     ! length of string returned
       integer itrunc     ! to signal truncation
       integer ipos       ! position indicator when calling arlist
-      real ZD           ! depth for ground temp calc
+      dimension ZDA(20)  ! array of depths for ground temperature calculation
+      real ZD,ZDA       ! depth for ground temp calc
       real grper        ! % length of ground perimeter in a zone
       real xtranper,xskyper,xwallper,xslproofper,xflatroofper,xgrper ! % of project floor area for each
       real UVG          ! assumed U value at ground connection
@@ -290,10 +308,11 @@ C in the current model. A -1 means not applicable
       character louts*496,loutsd*496,louts600*600
       character lltmp*144,lguess*144,lldef*144  ! for working with EASKXORGTKF
       character lpath*72,fname*72 ! for use with fdroot
-      character llclmdb*144
+      character llclmdb*144,miscinf*72
       character boundmsg*72
       character outscal*248  ! for calendar day types report
       integer llt,lndbp,jj,lnsn
+      integer NRGRDT  ! actual number of ground temps calculated
 
       logical newgeo  ! to use for testing if new/old geometry file.
       logical nameok  ! to use for testing if duplicate names in zone
@@ -605,7 +624,7 @@ C << need to sort out changing to main project folder >>
      &    'The folder browsing tool has not be defined. See your',
      &    'administrator about updating the esprc definition.','W')
         else
-          write(doit,'(2a)') foldexe(1:lnblnk(foldexe)),' &'
+          write(doit,'(2a)') foldexe(1:lnblnk(foldexe)),' & '
           call usrmsg('Beginning folder view via',doit,'-')
           tmode='graph'
           call runit(doit,tmode)
@@ -714,7 +733,7 @@ C and change any / to \.
               tmode='text'
             endif
             write(doit,'(a,2x,a,a)') teditor(1:lnblnk(teditor)),
-     &        longtfile(1:lnblnk(longtfile)),' &'
+     &        longtfile(1:lnblnk(longtfile)),' & '
             call usrmsg('Begining edit via',doit,'-')
             call runit(doit,tmode)
           endif
@@ -728,7 +747,7 @@ C Execute graphing tool.
      &    'administrator about updating the esprc definition.','W')
         else
           call tstamp('>','PRJ: start graphing tool')
-          write(doit,'(2a)')grfexe(1:lnblnk(grfexe)),' &'
+          write(doit,'(2a)')grfexe(1:lnblnk(grfexe)),' & '
           call usrmsg('Beginning graphing tool via',doit,'-')
           call runit(doit,'graph')
         endif
@@ -741,7 +760,7 @@ C Execute figure tool.
      &    'administrator about updating the esprc definition.','W')
         else
           call tstamp('>','PRJ: start xfig')
-          write(doit,'(2a)')figexe(1:lnblnk(figexe)),' &'
+          write(doit,'(2a)')figexe(1:lnblnk(figexe)),' & '
           call usrmsg('Beginning figure tool via',doit,'-')
           call runit(doit,'graph')
         endif
@@ -754,7 +773,7 @@ C Execute image viewer (get tool via prior scan of default file).
      &    'administrator about updating the esprc definition.','W')
         else
           call tstamp('>','PRJ: start xv')
-          write(doit,'(2a)')fmtexe(1)(1:lnblnk(fmtexe(1))),' &'
+          write(doit,'(2a)')fmtexe(1)(1:lnblnk(fmtexe(1))),' & '
           call usrmsg('Beginning image tool via',doit,'-')
           call runit(doit,'graph')
         endif
@@ -1125,7 +1144,7 @@ C then check for spaces in name and change / to \.
         tmode='graph'
         if(teditor(1:2).eq.'vi')tmode='text'
         write(doit,'(a,2x,a,a)') teditor(1:lnblnk(teditor)),
-     &    longtfile(1:lnblnk(longtfile)),' &'
+     &    longtfile(1:lnblnk(longtfile)),' & '
         call runit(doit,tmode)
 
       else
@@ -1416,70 +1435,85 @@ C List out the estimated ground temperatures based on the
 C current weather data at 0.5m, 1m, 2m, 4m depth.
 C First get ground temperatures at depth ZD.
         if(siteinfo.ge.2)then
-          ZD=0.5
-          CALL GTCALC(ZD,'-',IER)
-          itrunc=1
-          ipos=1
-          do while (itrunc.ne.0)
-            call arlist(ipos,12,eGrdTp,12,'S',outs2,loutln,itrunc)
-            if(markdown)then
-              call edispxtr(itu,
-     &          'Calculated ground temp at 0.5m depth  ')
-              call edisp2tr(itu,outs2)
-            else
-              call edisp(itu,'Calculated ground temp at 0.5m depth')
-              call edisp(itu,outs2)
-            endif   
-            ipos=itrunc+1
-          end do
-          ZD=1.0
-          CALL GTCALC(ZD,'-',IER)
-          itrunc=1
-          ipos=1
-          do while (itrunc.ne.0)
-            call arlist(ipos,12,eGrdTp,12,'S',outs2,loutln,itrunc)
-            if(markdown)then
-              call edispxtr(itu,
-     &          'Calculated ground temp at 1.0m depth  ')
-              call edisp2tr(itu,outs2)
-            else
-              call edisp(itu,'Calculated ground temp at 1.0m depth')
-              call edisp(itu,outs2)
-            endif
-            ipos=itrunc+1
-          end do
-          ZD=2.0
-          CALL GTCALC(ZD,'-',IER)
-          itrunc=1
-          ipos=1
-          do while (itrunc.ne.0)
-            call arlist(ipos,12,eGrdTp,12,'S',outs2,loutln,itrunc)
-            if(markdown)then
-              call edispxtr(itu,
-     &          'Calculated ground temp at 2.0m depth  ')
-              call edisp2tr(itu,outs2)
-            else
-              call edisp(itu,'Calculated ground temp at 2.0m depth')
-              call edisp(itu,outs2)
-            endif
-            ipos=itrunc+1
-          end do
-          ZD=4.0
-          CALL GTCALC(ZD,'-',IER)
-          itrunc=1
-          ipos=1
-          do while (itrunc.ne.0)
-            call arlist(ipos,12,eGrdTp,12,'S',outs2,loutln,itrunc)
-            if(markdown)then
-              call edispxtr(itu,
-     &          'Calculated ground temp at 4.0m depth  ')
-              call edisp2tr(itu,outs2)
-            else
-              call edisp(itu,'Calculated ground temp at 4.0m depth')
-              call edisp(itu,outs2)
-            endif
-            ipos=itrunc+1
-          end do
+cx          ZDA = (/ 0.5, 1.0, 2.0, 4.0 /) ! default value set
+cx          NRGRDT = 4
+          ZDA = (/ 0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0,
+     &             5.5, 6.0, 6.5, 7.0, 7.5, 8.0, 8.5, 9.0, 9.5, 10.0 /)
+          NRGRDT = 20
+
+          WRITE(outs,'(A)')'Calculated ground temperature at depth '
+          call edispxtr(itu,outs)
+
+          do 19 II=1,NRGRDT
+            ZD=ZDA(II)
+            CALL GTCALC(ZD,'-',IER)
+            itrunc=1
+            ipos=1
+            do while (itrunc.ne.0)
+              call arlist(ipos,12,eGrdTp,12,'S',outs2,loutln,itrunc)
+              if(markdown)then
+                WRITE(outs248,'(A,f4.1,A,A)')' ',ZDA(II),' m: ',outs2
+                call edispxtr(itu,outs248)
+cx     &          'Calculated ground temp at 0.5m depth  ')
+cx                call edisp2tr(itu,outs2)
+              else
+                WRITE(outs248,'(A,f4.1,A,A)')' ',ZDA(II),' m: ',outs2
+                call edispxtr(itu,outs248)
+cx                call edisp(itu,'Calculated ground temp at 0.5m depth')
+cx                call edisp(itu,outs2)
+              endif
+              ipos=itrunc+1
+            end do
+  19      continue
+
+cx          ZD=1.0
+cx          CALL GTCALC(ZD,'-',IER)
+cx          itrunc=1
+cx          ipos=1
+cx          do while (itrunc.ne.0)
+cx            call arlist(ipos,12,eGrdTp,12,'S',outs2,loutln,itrunc)
+cx            if(markdown)then
+cx              call edispxtr(itu,
+cx     &          'Calculated ground temp at 1.0m depth  ')
+cx              call edisp2tr(itu,outs2)
+cx            else
+cx              call edisp(itu,'Calculated ground temp at 1.0m depth')
+cx              call edisp(itu,outs2)
+cx            endif
+cx            ipos=itrunc+1
+cx          end do
+cx          ZD=2.0
+cx          CALL GTCALC(ZD,'-',IER)
+cx          itrunc=1
+cx          ipos=1
+cx          do while (itrunc.ne.0)
+cx            call arlist(ipos,12,eGrdTp,12,'S',outs2,loutln,itrunc)
+cx            if(markdown)then
+cx              call edispxtr(itu,
+cx     &          'Calculated ground temp at 2.0m depth  ')
+cx              call edisp2tr(itu,outs2)
+cx            else
+cx              call edisp(itu,'Calculated ground temp at 2.0m depth')
+cx              call edisp(itu,outs2)
+cx            endif
+cx            ipos=itrunc+1
+cx          end do
+cx          ZD=4.0
+cx          CALL GTCALC(ZD,'-',IER)
+cx          itrunc=1
+cx          ipos=1
+cx          do while (itrunc.ne.0)
+cx            call arlist(ipos,12,eGrdTp,12,'S',outs2,loutln,itrunc)
+cx            if(markdown)then
+cx              call edispxtr(itu,
+cx     &          'Calculated ground temp at 4.0m depth  ')
+cx              call edisp2tr(itu,outs2)
+cx            else
+cx              call edisp(itu,'Calculated ground temp at 4.0m depth')
+cx              call edisp(itu,outs2)
+cx            endif
+cx            ipos=itrunc+1
+cx          end do
           call edisp(itu,' ')
         endif
 
@@ -2026,8 +2060,8 @@ C Report detailed
             if (ispm.eq.1) then ! write header only once
               WRITE(OUTS,'(3A)')
      &        ' No. Label            Zone         Surface     ',
-     &        ' Construction Node',
-     &        ' Type  Num Data    '
+     &        ' Construction         Node ',
+     &        ' Type  Num Data   Misc.'
               CALL EDISP(itu,OUTS)
             endif
 
@@ -2037,13 +2071,22 @@ C    power for PV and total latent heat capacity for PCM ... >>
 C Obtain transparent surface index (>0) related to PV module location.
             iTMCidx=ITMCFL(ispmloc(ispm,1),ispmloc(ispm,2))
 
-            WRITE(OUTS,1111)ispm,spmlabel(ispm),zname(ispmloc(ispm,1)),
+            if (bUseSpline(ispm)) then
+              write(miscinf,'(a)')fnamDSCdat(ispm)
+            else
+              write(miscinf,'(a)')'n.a. '
+            endif
+
+            WRITE(LOUTS,1111)ispm,spmlabel(ispm),zname(ispmloc(ispm,1)),
      &        sname(ispmloc(ispm,1),ispmloc(ispm,2)),
-     &        SSMLCN(izstocn(ivals(ispmloc(ispm,1)),ispmloc(ispm,2))),
+     &        SSMLCN(izstocn(ivals(ispmloc(ispm,1)),
+     &               ispmloc(ispm,2)))(1:20),
      &        ispmloc(ispm,3),
-     &        (merge('Trn','Opq',iTMCidx.gt.0)),nnodat(ispm)
- 1111       FORMAT(1X,I3,1X,A,1X,A,1X,A,1X,A,1X,I3,3X,A,3X,I3)
-            CALL EDISP(itu,OUTS)
+     &        (merge('Trn','Opq',iTMCidx.gt.0)),nnodat(ispm),
+     &        miscinf(1:lnblnk(miscinf))
+ 1111       FORMAT(1X,I3,1X,A,1X,A,1X,A,1X,A,1X,I3,3X,A,3X,I3,8X,A,1X)
+
+            call edisp248(itu,LOUTS,120)
 
   33      continue ! loop through all spm entries
 

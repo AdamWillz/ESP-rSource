@@ -46,6 +46,7 @@ C        several moisture control volumes in whole or partion.
 C HTRANF calculate the heat of transformation for a complete moisture
 C        control volume.
 C LYRPRP gets the thermophysical properties for a layer.
+C WRITRH writes the relative humidity results.
 
 C *********************************************************************
 
@@ -119,12 +120,12 @@ C Set the future pressures equal to the new pressures.
           ENDIF
           RETURN
 
-C Re-stablish and solve the energy matrix.
+C Re-establish and solve the energy matrix.
         ELSE
 
 C Set the present values of thermal properties equal to the saved values 
 C from the first iteration (since it is based on one time step lagging).
-          IF(ITRM.EQ.1)CALL MTHPES(ICOMP)
+          IF(ITRM.EQ.1) CALL MTHPES(ICOMP)
 
 C Estimate the future values for thermophysical properties.
           CALL MTHFEI(ICOMP)
@@ -165,14 +166,20 @@ C *********************************************************************
       COMMON/MOIST16/PATMpa
       COMMON/MOIST17/RHmax
 
-      GAMm=0.5
-      RLXln=0.1
-      RLXlnF=0.01
-      RLXlnT=0.1
+      common/pers/isd1,ism1,isd2,ism2,isds,isdf,ntstep
+
       DTfalse=3600.0
+
+      GAMm=0.5
+      RLXln=0.4    !0.1  RLX p_new + (1-RLX) p_old ; FACTOR=1/RLX
+      RLXlnF=0.2   !0.01 RLX F_new + (1-RLX) F_old ; FACTOR=1/RLX
+      RLXlnT=0.4   !0.1  RLX T_new + (1-RLX) T_old
+
       MITRM=500
-      RITRMP=1.0
-      RITRMF=0.001
+
+      RITRMP=0.075 ! (Pf-Pn) FACTOR < RITRMP ? => O.K. (both for zone air and layers!)
+      RITRMF=0.001 ! (Ff-Fn) FACTOR < RITRMF ? => O.K. (both for zone air and layers!)
+
       RHmax=0.99
       PATMpa=101325.0
       RETURN
@@ -183,6 +190,7 @@ C INITMZ initiates the zone moisture variables.
 C *********************************************************************
       SUBROUTINE INITMZ(ICOMP)
 #include "building.h"
+#include "moist.h"
 
       COMMON/OUTIN/IUOUT,IUIN
       COMMON/PREC9/NCONST(MCOM),NELTS(MCOM,MS),NGAPS(MCOM,MS),
@@ -201,6 +209,7 @@ C *********************************************************************
       COMMON/MOIST53/Ppair(MCOM),Fpair(MCOM),Spair(MCOM)
       COMMON/MOIST54/Pfair(MCOM),Ffair(MCOM),Sfair(MCOM)
       character outs*124
+      integer iMM
 
       TC=15.0
       RH=0.5
@@ -238,9 +247,10 @@ C *********************************************************************
             UM0=PERM(ICOMP,I,IL,1)
             UM100=PERM(ICOMP,I,IL,2)
             B=PERM(ICOMP,I,IL,3)
+            iMM=iMoistModel(ICOMP)
+            DX=DELT01(iMM,RH,UM0,UM100,B)
 C If small value then report which part of model was the problem.
-            DX=DELT01(RH,UM0,UM100,B)
-            if(DX.lt.1.0E-12)then
+            if(DX.lt.0.99E-15)then
               write(outs,'(a,3i3)') 
      &          'INITMZ: DELT01 small at zone surf layer: ',icomp,i,IL
               call edisp(iuout,outs)
@@ -305,6 +315,9 @@ C **********************************************************************
       COMMON/GR1D03/BCNV,ILUMP(MCOM,MS)
       COMMON/MOIST03/MNDS,MNDZ(MCOM),MNDC(MCOM,MS),MNDL(MCOM,MS,ME)
       COMMON/MOIST23/TMPp(MS,MNM),TMPf(MS,MNM)
+      COMMON/MOIST50/TMNp(MCOM,MS,MNM) ! ag@20160504
+      real TMNp
+
       character outs*124
 
       NC=NCONST(ICOMP)
@@ -354,6 +367,7 @@ C Trap for division by zero.
             ENDIF
             RATIO=XINTP/DELXh
             TMPp(I,INMT)=RATIO*(T2P-T1P)+T1P
+            TMNp(ICOMP,I,INMT)=TMPp(I,INMT) ! save with zone info
             XSUMM=XSUMM+DELXm
    30     CONTINUE
         ELSE
@@ -361,6 +375,7 @@ C Trap for division by zero.
           DO 40 IL=1,NE
             INMT=INMT+1
             TMPp(I,INMT)=TPC(ICOMP,I,IRN)
+            TMNp(ICOMP,I,INMT)=TMPp(I,INMT) ! save with zone info
             THICK=THRMLI(ICOMP,I,IL,4)
             NNT=NNDL(ICOMP,I,IL)
 
@@ -402,12 +417,14 @@ C Trap zero division.
               ENDIF
               RATIO=XINTP/DELXh
               TMPp(I,INMT)=RATIO*(T2P-T1P)+T1P
+              TMNp(ICOMP,I,INMT)=TMPp(I,INMT) ! save with zone info
    50       CONTINUE
             IRN=IRN+NNDL(ICOMP,I,IL)
    40     CONTINUE
         ENDIF
         INMT=INMT+1
         TMPp(I,INMT)=TPS(ICOMP,I)
+        TMNp(ICOMP,I,INMT)=TMPp(I,INMT) ! save with zone info
    10 CONTINUE
       RETURN
       END
@@ -734,6 +751,7 @@ C MZMCFF calculates the future moisture parameters.
 C *********************************************************************
       SUBROUTINE MZMCFF(ICOMP)
 #include "building.h"
+#include "moist.h"
 
       COMMON/OUTIN/IUOUT,IUIN
       COMMON/CONCOE/HCIP(MCOM,MS),HCIF(MCOM,MS),HCOP(MCOM,MS),
@@ -753,6 +771,7 @@ C *********************************************************************
       COMMON/MOIST16/PATMpa
       COMMON/MOIST17/RHmax
       COMMON/MOIST21/CPpair,CPfair,RHOpair,RHOfair,Upair,Ufair
+      COMMON/MOIST22/APp(MCOM,MS),APf(MCOM,MS)
       COMMON/MOIST23/TMPp(MS,MNM),TMPf(MS,MNM)
       COMMON/MOIST25/BETAif(MCOM,MS),BETAof(MCOM,MS)
       COMMON/MOIST26/XIpfair,RXIVpf(MS,MNM)
@@ -767,10 +786,14 @@ C *********************************************************************
       COMMON/MOIST62/Pn(MS,MNM),Fn(MS,MNM),Sn
       COMMON/MOIST64/Pnair,Fnair,Snair
 
+      integer iMM
       DOUBLE PRECISION XI03
       character outs*124
 
-C Calculate the future time vapour ratio for air.
+C Set moisture model for this zone
+      iMM=iMoistModel(ICOMP)
+
+C Calculate the future time vapour ratio for zone air.
       TCfair=TFA(ICOMP)
       if(Psat01(TCfair).ne.0.0)then
         RH=Pnair/Psat01(TCfair)
@@ -781,15 +804,15 @@ C Calculate the future time vapour ratio for air.
       Ufair=X03(TCfair,RH,PATMpa)
       Usair(ICOMP)=Ufair
 
-C Calculate the future time density for dry air.
+C Calculate the future time density for dry zone air.
       RHOfair=RHOdry01(TCfair)
       RHOsair(ICOMP)=RHOfair
 
-C Calculate the future time heat capacity for air.
+C Calculate the future time heat capacity for zone air.
       CPfair=CPmst01(TCfair,Ufair)
       CPsair(ICOMP)=CPfair
 
-C Calculate the moisture capacity for air.
+C Calculate the moisture capacity for the zone air.
       Pvp=Ppair(ICOMP)
       Pvf=Pfair(ICOMP)
       TCp=TPA(ICOMP)
@@ -799,11 +822,24 @@ C Calculate the moisture capacity for air.
 C Estimate the future time convective mass transfer coefficients.
       NC=NCONST(ICOMP)
       DO 20 I=1,NC
+C       Internal construction surface, TCfair is future zone air temp.
         ALPHA=HCIF(ICOMP,I)
         BETAif(ICOMP,I)=BETA01(ALPHA,CPfair,TCfair)
+
+C       External construction surface
         ALPHA=HCOF(ICOMP,I)
-        TCf=ATF(ICOMP,I)
-        BETAof(ICOMP,I)=BETA01(ALPHA,CPfair,TCf)
+        TCf=ATF(ICOMP,I) ! future adjacent temperature
+        if(Psat01(TCf).ne.0.0)then
+          RH=APf(ICOMP,I)/Psat01(TCf)
+        else
+          write(outs,*)
+     &      'Psat01(TCf) for zone ',ICOMP,
+     &      ', surface ',I,' returning zero ',TCf
+          call edisp(iuout,outs)
+        endif
+        AUfair=X03(TCf,RH,PATMpa)
+        ACPfair=CPmst01(TCf,AUfair)
+        BETAof(ICOMP,I)=BETA01(ALPHA,ACPfair,TCf)
    20 CONTINUE
 
 C For construction moisture nodes.
@@ -855,8 +891,8 @@ C values are small then probably glass so just set dELTf1.
               if((UM0.lt.1.0e-12).or.UM100.lt.1.0e-12)then
                 DELTf1=1.0e-12
               else
-                DELTf1=DELT01(RH1,UM0,UM100,B)
-                if(DELTf1.lt.1.0E-12)then
+                DELTf1=DELT01(iMM,RH1,UM0,UM100,B)
+                if(DELTf1.lt.1.0E-14)then
                   write(outs,'(a,3i3)') 
      &            'MZMCFF DELTf1 small at zone surf layer: ',icomp,i,IL
                   call edisp(iuout,outs)
@@ -878,8 +914,8 @@ C Check for small return values and identify source.
               if((UM0.lt.1.0e-12).or.UM100.lt.1.0e-12)then
                 DELTf2=1.0e-12
               else
-                DELTf2=DELT01(RH2,UM0,UM100,B)
-                if(DELTf2.lt.1.0E-12)then
+                DELTf2=DELT01(iMM,RH2,UM0,UM100,B)
+                if(DELTf2.lt.1.0E-14)then
                   write(outs,'(a,3i3)') 
      &            'MZMCFF DELTf2 small at zone surf layer: ',icomp,i,IL
                   call edisp(iuout,outs)
@@ -909,28 +945,28 @@ C Estimate the future time thermal vapor diffusion coefficient.
               endif
             ENDIF
 
-C Estimate the future time moisture storage term.
+C Estimate the future time moisture storage capacity term.
             Uh=SORP(ICOMP,I,IL,1)
             CFF=SORP(ICOMP,I,IL,2)
             EXPT=SORP(ICOMP,I,IL,3)
-            RXI=SNGL(XI03(RH1p,RH1,Uh,CFF,EXPT))
-            IF(IM.EQ.1)THEN
-              DELX2=DELXm/2.0
+            RXI=SNGL(XI03(iMM,RH1p,RH1,Uh,CFF,EXPT)) ! kg/m3 in current moisture node
+            IF(IM.EQ.1)THEN ! outermost moisture node of material layer IL
+              DELX2=DELXm/2.0 ! m (thickness of moisture node "layer")
               RXI2=RXI
               RXIVpf(I,ITM1)=Asrf*(DELX1*RXI1+DELX2*RXI2)
-            ELSEIF(IM.EQ.NMP1)THEN
+            ELSEIF(IM.EQ.NMP1)THEN ! innermost moisture node of material layer IL
               DELX1=DELXm/2.0
               RXI1=RXI
-            ELSE
-              RXIVpf(I,ITM1)=Asrf*DELXm*RXI
+            ELSE ! all intermittent nodes in material layer IL
+              RXIVpf(I,ITM1)=Asrf*DELXm*RXI ! kg in surf I and moisture node ITM1
             ENDIF
-   50     CONTINUE
-   40   CONTINUE
+   50     CONTINUE  ! loop IM (moisture nodes)
+   40   CONTINUE    ! loop IL (material layer nodes)
 
 C Estimate the future time moisture capacity for surface node.
         ITM1=ITM1+1
         RXIVpf(I,ITM1)=Asrf*DELX1*RXI1
-   30 CONTINUE
+   30 CONTINUE ! loop I (surface in zone)
       RETURN
       END
 
@@ -1003,7 +1039,7 @@ C *********************************************************************
       common/trcm01/ep(MS),ef(MS),TERMcpl
       character outs*124
 
-C Consider each multilayered construction within current  zone.
+C Consider each multilayered construction within current zone.
       SUMA1=0.
       SUMA2=0.
       SUMA3=0.
@@ -1230,7 +1266,7 @@ C Modify the boundary vector to count for;
       END
 
 C *********************************************************************
-C MZMITR solves the zone moisture matrix by Gauss Siedal method.
+C MZMITR solves the zone moisture matrix by Gauss Seidel method.
 C *********************************************************************
       SUBROUTINE MZMITR(ICOMP)
 #include "building.h"
@@ -1298,10 +1334,11 @@ c        Pnew=(SUM-Fn(I,IM))/DOMAIN
         IF(RH.GT.RHmax)THEN
           RH=RHmax
           Pn(I,IM)=RH*Ps
-          Fnew=SNGL(SUM)-Pn(I,IM)*DOMAIN
-          Fn(I,IM)=RLXlnF*Fnew+RRLXlnF*Fnsave
-          IF(Fn(I,IM).LT.0.0)Fn(I,IM)=0.0
         ENDIF
+        Fnew=SNGL(SUM)-Pn(I,IM)*DOMAIN
+        Fn(I,IM)=RLXlnF*Fnew+RRLXlnF*Fnsave
+        IF(Fn(I,IM).LT.0.0)Fn(I,IM)=0.0
+cx        ENDIF
    20 CONTINUE
 
 C Air node.
@@ -1333,10 +1370,11 @@ c      Pnew=(SUM-Fnair)/DOMAIN
       IF(RH.GT.RHmax)THEN
         RH=RHmax
         Pnair=RH*Ps
-        Fnew=SNGL(SUM)-Pnair*DOMAIN
-        Fnair=RLXlnF*Fnew+RRLXlnF*Fnsave
-        IF(Fnair.LT.0.0)Fnair=0.0
       ENDIF
+      Fnew=SNGL(SUM)-Pnair*DOMAIN
+      Fnair=RLXlnF*Fnew+RRLXlnF*Fnsave
+      IF(Fnair.LT.0.0)Fnair=0.0
+cx      ENDIF
       RETURN
       END
 
@@ -1451,9 +1489,9 @@ C *********************************************************************
       NC=NCONST(ICOMP)
       DO 10 I=1,NC
         NM=MNDC(ICOMP,I)
-      DO 10 IM=1,NM
-        Pf(ICOMP,I,IM)=Pn(I,IM)
-        Ff(ICOMP,I,IM)=Fn(I,IM)
+        DO 10 IM=1,NM
+          Pf(ICOMP,I,IM)=Pn(I,IM)
+          Ff(ICOMP,I,IM)=Fn(I,IM)
    10 CONTINUE
       RETURN
       END
@@ -1605,6 +1643,7 @@ C *********************************************************************
       COMMON/MOIST03/MNDS,MNDZ(MCOM),MNDC(MCOM,MS),MNDL(MCOM,MS,ME)
       COMMON/MOIST09/IMSTR
       COMMON/MOIST23/TMPp(MS,MNM),TMPf(MS,MNM)
+      COMMON/MOIST26/XIpfair,RXIVpf(MS,MNM)
       COMMON/GR3D150/INDX3,DTIME
       COMMON/MOIST62/Pn(MS,MNM),Fn(MS,MNM),Sn
       COMMON/MOIST64/Pnair,Fnair,Snair
@@ -1635,5 +1674,199 @@ C Note: adjust format if MS>48.
         WRITE(IMSTR,'(F10.5,48F5.1)')TIMES,RHair,(RHsrf(I),I=1,NC)
         WRITE(IMSTR,'(10X,48F5.1)')TCair,(TCsrf(I),I=1,NC)
       ENDIF
+      RETURN
+      END
+
+C *********************************************************************
+C H3K_transport_mould_data writes the detailed moisture results to h3k
+C output. This subroutine is called in bmatsv.F, approx. line 1490.
+C
+C May 2016, Achim Geissler
+C
+C *********************************************************************
+      SUBROUTINE H3K_transport_mould_data(ICOMP)
+      use h3kmodule
+      implicit none
+#include "building.h"
+C geometry.h for zname.
+#include "geometry.h"
+#include "moist.h"
+
+      COMMON/SIMTIM/IHRP,IHRF,IDYP,IDYF,IDWP,IDWF,NSINC,ITS
+      integer       IHRP,IHRF,IDYP,IDYF,IDWP,IDWF,NSINC,ITS
+
+C.....Surface area data
+      common/prec1/sna(mcom,ms)
+      real sna                 ! Area of a surface
+
+      COMMON/PREC9/NCONST(MCOM),NELTS(MCOM,MS),NGAPS(MCOM,MS),
+     &             NPGAP(MCOM,MS,MGP)
+      integer NCONST,NELTS,NGAPS,NPGAP
+
+      COMMON/VTHP14/THRMLI(MCOM,MS,ME,7)
+      real THRMLI
+
+      COMMON/MOIST03/MNDS,MNDZ(MCOM),MNDC(MCOM,MS),MNDL(MCOM,MS,ME)
+      integer MNDS,MNDZ,MNDC,MNDL
+
+      COMMON/MOIST06/ISORP(MCOM,MS,ME),SORP(MCOM,MS,ME,3)
+      integer ISORP
+      real SORP
+
+      COMMON/MOIST09/IMSTR
+      integer IMSTR
+
+      COMMON/MOIST26/XIpfair,RXIVpf(MS,MNM)
+      real XIpfair,RXIVpf
+
+      COMMON/MOIST50/TMNp(MCOM,MS,MNM) ! ag@20160504
+      real TMNp
+
+      COMMON/MOIST52/Pf(MCOM,MS,MNM),Ff(MCOM,MS,MNM),Sf(MCOM)
+      real Pf,Ff,Sf
+
+C.....Subroutine signature
+      integer ICOMP
+
+C     Local variables
+      integer NC,iSurf,NM,iMNode,NE,iLay,IL
+
+      real Ps,RH,Uh,CFF,EXPT,DNSTY
+
+C     DECLARATIONS for H3Kreporting object
+      CHARACTER*12 cZone_Chars   ! zname(MCOM)
+      Character*12 cSurf_Chars   ! sname(MCOM,MS)
+      CHARACTER*8  cNode_Chars   !
+
+C     FUNCTIONS
+      real Psat01,U01,U02
+
+C.....Switch for zone name output here
+      if (ReportBoolConfig("use_zonenames")) then
+        write (cZone_Chars,'(A)') zname(icomp)(1:lnzname(icomp))
+      else
+C.......Pad zone index to 'XX'
+        if ( ICOMP .gt. 9 ) then
+           write (cZone_Chars,'(A,I2)') 'zone_',ICOMP
+        else
+           write (cZone_Chars,'(A,I1)') 'zone_0',ICOMP
+        endif
+      endif ! use_zonenames
+
+        NC=NCONST(ICOMP)
+        DO 10 iSurf=1,NC
+
+C.........Switch for surface name output here
+          if (ReportBoolConfig ("use_surfacenames")) then
+            write (cSurf_Chars,'(A)')
+     &          sname(ICOMP,isurf)(1:lnsname(ICOMP,iSurf))
+          else
+C...........Pad surface index to 'XX'
+            if ( iSurf .gt. 9 ) then
+              write (cSurf_Chars,'(A,I2)') 'surface_',iSurf
+            else
+              write (cSurf_Chars,'(A,I1)') 'surface_0',iSurf
+            endif
+          endif ! use_surfacenames
+
+          NE=NELTS(ICOMP,iSurf)   ! number of layers in surface
+          IL=1                    ! set layer to first (outermost)
+          NM=MNDL(ICOMP,iSurf,IL) ! number of moisture nodes in layer
+
+C         XML output for each moisture node of surface iSurf.
+          do iMNode = 1,mndc(ICOMP,iSurf)
+            if ( iMNode .gt. 9 ) then
+              write(cNode_Chars, '(A,I2)') 'mnode_', iMNode
+            else
+              write(cNode_Chars, '(A,I1)') 'mnode_0', iMNode
+            endif
+
+C           Find iLay for each iMNode ... (neccessary due to layer
+C           material properties SORP() for construction layers, not
+C           moisture nodes!)
+            if (iMNode.le.NM) then
+              iLay=IL
+            else
+              if (IL+1 .le. NE) then
+                IL=IL+1
+                NM=NM+MNDL(ICOMP,iSurf,IL)
+                iLay=IL
+              endif
+            endif
+
+cx            if (NSINC .lt. 3) then
+cx
+cx            write(*,'(3(A,I3))')" iSurf=",iSurf,
+cx     &                        "; iMNode=",iMNode,
+cx     &                        "; iLay=",iLay
+cx
+cx            endif
+
+C           Vapour pressure at "moisture node"
+C           (Nodes *not* necessarily identical to construction nodes!)
+            Call AddToReport(
+     &             rvBldMstVapPressNode%Identifier,
+cx     &             Pn(iSurf,iMNode),
+     &             Pf(ICOMP,iSurf,iMNode),
+     &             cZone_Chars,
+     &             cSurf_Chars,
+     &             cNode_Chars)
+
+C           Relative humidity at "moisture node"
+            Ps=Psat01(TMNp(ICOMP,iSurf,iMNode))
+            RH=Pf(ICOMP,iSurf,iMNode)/Ps
+
+            Call AddToReport(
+     &             rvBldMstRHnode%Identifier,
+cx     &             Pn(iSurf,iMNode)/Ps*100.0,
+     &             100.*RH,
+     &             cZone_Chars,
+     &             cSurf_Chars,
+     &             cNode_Chars)
+
+C           Moisture storage capacity at "moisture node"
+            Call AddToReport(
+     &             rvBldMstStoreCap%Identifier,
+     &             RXIVpf(iSurf,iMNode)/SNA(ICOMP,iSurf),
+     &             cZone_Chars,
+     &             cSurf_Chars,
+     &             cNode_Chars)
+
+C           Moisture content at "moisture node", kg/m3
+            Uh=SORP(ICOMP,iSurf,iLay,1)
+            CFF=SORP(ICOMP,iSurf,iLay,2)
+            EXPT=SORP(ICOMP,iSurf,iLay,3)
+
+            Call AddToReport(
+     &             rvBldMstStorage%Identifier,
+cx     &             Ff(ICOMP,iSurf,iMNode),
+     &             U01(iMoistModel(ICOMP),RH,Uh,CFF,EXPT),
+     &             cZone_Chars,
+     &             cSurf_Chars,
+     &             cNode_Chars)
+
+C           Moisture content at "moisture node", kg/kg
+            DNSTY=THRMLI(ICOMP,iSurf,iLay,2)
+
+            Call AddToReport(
+     &             rvBldMstStorageMass%Identifier,
+cx     &             Ff(ICOMP,iSurf,iMNode),
+     &             U02(iMoistModel(ICOMP),RH,Uh,CFF,EXPT,DNSTY),
+     &             cZone_Chars,
+     &             cSurf_Chars,
+     &             cNode_Chars)
+
+C           Temperature at "moisture node"
+            Call AddToReport(
+     &             rvBldMstTNode%Identifier,
+     &             TMNp(ICOMP,iSurf,iMNode),
+     &             cZone_Chars,
+     &             cSurf_Chars,
+     &             cNode_Chars)
+
+          enddo  ! <- end iSurf 1,MN of ICOMP
+
+   10   CONTINUE
+
       RETURN
       END

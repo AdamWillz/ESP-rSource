@@ -3892,20 +3892,20 @@ C        write(6,*) 'face h',ISB,ICFD,IFACE
         JVCELLS(ISB,ICFD,1)=Ji+1; JVCELLS(ISB,ICFD,2)=Jf+1
         KVCELLS(ISB,ICFD,1)=Ki+1; KVCELLS(ISB,ICFD,2)=Kf+1
 
-C Check for illegal volume (vol must be 2 cells thick in all directions).
+C Check for illegal volume (vol must be 1 cells thick in all directions).
         ERROR=.false.
-        if (IVCELLS(ISB,ICFD,1).eq.IVCELLS(ISB,ICFD,2)) then
-          call usrmsg('Blockage must be at least 2 cells thick',
+        if (IVCELLS(ISB,ICFD,1).gt.IVCELLS(ISB,ICFD,2)) then
+          call usrmsg('Blockage cell order reversed',
      &                'in the x direction.','W')
           ERROR=.true.
         endif
-        if (JVCELLS(ISB,ICFD,1).eq.JVCELLS(ISB,ICFD,2)) then
-          call usrmsg('Blockage must be at least 2 cells thick',
+        if (JVCELLS(ISB,ICFD,1).gt.JVCELLS(ISB,ICFD,2)) then
+          call usrmsg('Blockage cell order reversed',
      &                'in the y direction.','W')
           ERROR=.true.
         endif
-        if (KVCELLS(ISB,ICFD,1).eq.KVCELLS(ISB,ICFD,2)) then
-          call usrmsg('Blockage must be at least 2 cells thick',
+        if (KVCELLS(ISB,ICFD,1).gt.KVCELLS(ISB,ICFD,2)) then
+          call usrmsg('Blockage cell order reversed',
      &                'in the z direction.','W')
           ERROR=.true.
         endif
@@ -4173,8 +4173,8 @@ C Unknown face.
 C Ask for cells.
         write(s30,'(6i4)') Ii,If,Ji,Jf,Ki,Kf
       endif
- 10   call EASKS(s30,'Boundary cells?',t30,30,dflt,'bndry cells',
-     &  IER,nbhelp)
+ 10   call EASKS(s30,'Boundary cells (Ii If Ji Jf Ki Kf)?',
+     &  t30,30,dflt,'bndry cells',IER,nbhelp)
       NITMS = iCountWords(s30)
       if (NITMS.ne.6) goto 10
 

@@ -115,7 +115,6 @@ C GFA(MCOM)            ! zone futue  relative humidity values
       common/FVALG/GFA(MCOM)
       real gfa
 
-
 C TPC(MCOM,MS,MN),     ! - present construction temperature (oC)
 C QPC(MCOM)            ! - construction heat injection (W)
       COMMON/PVALC/TPC(MCOM,MS,MN),QPC(MCOM)
@@ -323,7 +322,7 @@ C.....Sky temperature and cloud cover; ground temperature,
       COMMON/OUTIN/IUOUT,IUIN
       INTEGER :: IUOUT,IUIN
 
-C.....Surface aszimuth (deg from north) and elevation angles (walls: 0 deg, ceilings: 90 deg, floors: -90 deg)      
+C.....Surface azimuth (deg from north) and elevation angles (walls: 0 deg, ceilings: 90 deg, floors: -90 deg)
       COMMON/PREC3/PAZI(MCOM,MS),PELV(MCOM,MS)
       real PAZI, PELV     
 
@@ -347,6 +346,7 @@ C.....Local variables
       real trsum
       REAL Q_zone,Q_heat,Q_cool ! Total heat injection / extraction
       REAL Qm2_zone,Qm2_heat,Qm2_cool ! Total heat injection / extraction per m2 of floor area
+      REAL negiZone,TMRT,TMIX,SUM,AREA,J,TO   ! negative zone number, mean radiant and operative temperatures
       INTEGER i_ZnCtl           ! Zone control flag
 
 
@@ -562,7 +562,7 @@ C----------------------------------------------------------------------
       real PCRH2                   ! Function returning relative
                                    ! humidity given zone temperature,
                                    ! moisture content and atm. pressure.
-
+      real Psat01                  ! Saturation vapour pressure (Pa)
 
 
 C----------------------------------------------------------------------
@@ -678,7 +678,7 @@ C Determine where heat is injected/extracted
 c PIN is at surface.
           Q_zone = QFS(iZone)
 
-        elseif ( iban(i_ZnCtl,3) .gt. 0 ) then
+        elseif(iban(i_ZnCtl,3).gt.0 .and. iban(i_ZnCtl,1).ne.-2) then
 
 C PIN is within construction
           Q_zone = QFC(iZone)
@@ -690,7 +690,7 @@ C PIN is in a plant component node - not implemented yet.
         elseif ( iban(i_ZnCtl,1) .eq. -2 ) then
 
 C PIN is mix of radiative/convective flux (ie - plant component)
-         Q_zone = QPLTF(iZone)
+         Q_zone = (QPLTF(iZone)+QPLTP(iZone))*0.5
 
         else
 
@@ -842,6 +842,18 @@ C-----------------------------------------------------------------------
         call AddToReport(
      &       rvHeatFluxRadiationShortwaveUnitArea%identifier,
      &       qswrde(iZone,iSurface,2)/sna(iZone,iSurface),
+     &       cZone_Chars,
+     &       cSurf_Chars)
+
+         call AddToReport(
+     &       rvHeatFluxRadiationShortwaveIn%identifier,
+     &       qswrdi(iZone,iSurface,2),
+     &       cZone_Chars,
+     &       cSurf_Chars)
+
+        call AddToReport(
+     &       rvHeatFluxRadiationShortwaveInUnitArea%identifier,
+     &       qswrdi(iZone,iSurface,2)/sna(iZone,iSurface),
      &       cZone_Chars,
      &       cSurf_Chars)
 
@@ -1493,11 +1505,57 @@ C.......ZONE LABEL (use dummy value of -1)
      &      cZone_Chars,
      &      ZONE_LABEL(1:LEN_TRIM(ZONE_LABEL)))
       end if
-      
+
 C.....AIR POINT TEMPERATURE
       call AddToReport (
      &         rvAirPointTemperature%Identifier,
      &         TFA(iZone),
+     &         cZone_Chars)
+
+C.....Mean Radiant & Operative TEMPERATURES
+C     See ebld/bcfunc.F line 334 ff. for calculation loop logic.
+C
+C Opaque internal surfaces.
+      SUM=0.
+      AREA=0.
+      DO 20 J=1,nzsur(iZone)
+        TO=TFS(iZone,J)
+        SUM=SUM+TO*SNA(iZone,J)
+        AREA=AREA+SNA(iZone,J)
+   20 CONTINUE
+
+C Compute weighted temperature.
+      TMRT=TFA(iZone)
+      IF(AREA.GT.0.) TMRT=SUM/AREA
+
+      call AddToReport (
+     &         rvMeanRadiantTemperature%Identifier,
+     &         TMRT,
+cx     &         10.,
+     &         cZone_Chars)
+
+      call AddToReport (
+     &         rvOperativeTemperature%Identifier,
+     &         0.5*TMRT+0.5*TFA(iZone),
+cx     &         11.,
+     &         cZone_Chars)
+
+C.....Zone internal gains
+      call AddToReport (
+     &         rvAirPointRadiantGains%Identifier,
+     &         Cas_Rad_dat(iZone), !  - Radiant (W)
+     &         cZone_Chars)
+      call AddToReport (
+     &         rvAirPointConvectiveGains%Identifier,
+     &         Cas_Con_dat(iZone), !  - Convective (W)
+     &         cZone_Chars)
+      call AddToReport (
+     &         rvAirPointLatentGains%Identifier,
+cx     &         Cas_Lat_dat(iZone), !  - Latent (W)
+C     Saturated steam injection, esrubld/subsys.F, mzvapc, line 2227
+     &         Cas_Lat_dat(iZone)/(
+     &            2501000.+1860.*0.5*(TFA(iZone) +
+     &                     TPA(iZone))), !  - Latent (kg)
      &         cZone_Chars)
 
 C.....Window position from BCL25 controller
@@ -1522,6 +1580,12 @@ C.....Zone relative humidity
       call AddToReport (
      &         rvAirPointRelativeHumidity%Identifier,
      &         fZoneRH,
+     &         cZone_Chars)
+
+C.....Zone vapour pressure
+      call AddToReport (
+     &         rvAirPointVapourPressure%Identifier,
+     &         fZoneRH/100.*Psat01(TFA(iZone)),
      &         cZone_Chars)
 
 C.....ZONE HEAT INJECTION / EXTRACTION
@@ -1667,9 +1731,10 @@ C.....Zone air change rate (AIM2)
 
       call AddToReport (
      &         rvEnvInfBalanceAir%Identifier,
-     &         ZMBI(iZone,1),
+     &         ZMBI(iZone,1), ! kg/s ?!
      &         cZone_Chars)
 
+C ... use air density at time step level?
       call AddToReport (
      &         rvEnvInfBalanceAirExchange%Identifier,
      &         ZMBI(iZone,1) / 1.275  * 3600. / vol(iZone),
@@ -2258,21 +2323,21 @@ C......Include only if h3k reports on building/zone_*/surf_*/node_* variables
 !       the way this is design, unless the <dump_all_data> is set to true
 !       or you request one of these node values then the loop will be bypassed.
 !
-!          do iNode = 1, (nndc (iZone, iSurface )-1)
-!             if ( iNode .gt. 9 ) then
-!               write(cNode_Chars, '(I2)')  iNode
-!             else
-!               write(cNode_Chars, '(A,I1)') '0', iNode
-!             endif
-!
-!C...........MLC layer temperature
-!C...........->Report data
-!            Call AddToReport(rvNodeTemp%Identifier,
-!     &         tfc(iZone,iSurface,iNode),
-!     &         cZone_Chars,
-!     &         cSurf_Chars,
-!     &         cNode_Chars)
-!          enddo  ! <- end iNode = 1,N of iSurface 1,N of iZone
+           do iNode = 1, (nndc (iZone, iSurface )-1)
+             if ( iNode .gt. 9 ) then
+               write(cNode_Chars, '(I2)')  iNode
+             else
+               write(cNode_Chars, '(A,I1)') '0', iNode
+             endif
+
+C............MLC layer temperature
+C............->Report data
+             Call AddToReport(rvNodeTemp%Identifier,
+     &         tfc(iZone,iSurface,iNode),
+     &         cZone_Chars,
+     &         cSurf_Chars,
+     &         cNode_Chars)
+           enddo  ! <- end iNode = 1,N of iSurface 1,N of iZone
          endif ! <- end lIncl_Node
       enddo ! <- end iSurface 1,N of iZone
 
@@ -2333,8 +2398,9 @@ C.....DECLARATIONS for H3Kreporting object
 C----------------------------------------------------------------------
 C     References
 C----------------------------------------------------------------------
-      REAL HUMR      ! Function returning the humidity ratio
+      REAL HUMR     ! Function returning the humidity ratio
       REAL DEWPT    ! Function returning the saturation temperature
+      REAL Psat01   ! Function returning saturation vapour pressure
 
 C.....The following code is used to transport data to
 C.....the H3K reporting object.
@@ -2360,6 +2426,10 @@ C.....Relative humidity
      &    rvClimateRelativeHumidity%Identifier,
      &    HF)
 
+C.....Vapour pressure
+      call AddToReport(
+     &    rvClimateVapourPressure%Identifier,
+     &    HF/100.*Psat01(TF))
 
 C.....WIND VELOCITY
       call AddToReport(
@@ -2596,13 +2666,21 @@ C.....ESP-r commons
       integer icondx, icontp
       real convar
 
+C.....Additional component output
+      COMMON/PCRES/QDATA(MPCOM),PCAOUT(MPCOM,MPCRES),NAPDAT(MPCOM)
+      REAL QDATA,PCAOUT
+      INTEGER napdat
+
+
 C.....Local variables
-      integer ii,jj,kk          ! counters
+      integer ii,jj,kk,ll       ! counters
       integer iNode             ! pointer to current node
       character*128 char_temp   ! holding variable
       integer char_len          ! holding variable's lenght
+      character*2 Add_Dat_Num   ! additional data number char format
       character*2 Node_Num      ! node number char format
       character*3 Connect_Num   ! connection number char format
+      integer iAddDatNumLen     ! the length of the additional data number
       integer iNodeLength       ! the nodes's string length
       integer iNodeNumLen       ! the length of the Node_Num
       integer iConnNumLen       ! the length of the Connect_Num
@@ -2635,6 +2713,34 @@ C.....Named constants
 C.....Loop through all components in plant network
       do ii = 1, npcomp
 
+C.......Get the pcName(ii)'s length
+        iNodeLength = lnblnk(pcname(ii))
+
+C........Output of additional component data
+cx ag@170913
+
+C........Loop through additional data (NAPDAT(icomp))
+         if (NAPDAT(ii).gt.0) then
+           do ll = 1, NAPDAT(ii)
+
+C............Build additional data name
+             if (ll<10) then  ! First nine additional data items.
+               iAddDatNumLen = 1
+cx               write(Node_Num, '(A,I1)') '0', ll
+               write(Add_Dat_Num, '(I1)') ll
+             else           ! The maximum number of additional items is 15 (plant.h, 170913)
+               iAddDatNumLen = 2
+               write(Add_Dat_Num, '(I2)') ll
+             endif
+
+             call AddToReport(
+     &          rvPlantCompAddData%Identifier,
+     &          PCAOUT(ii,ll),
+     &          pcname(ii)(1:iNodeLength),
+     &          Add_Dat_Num(1:iAddDatNumLen))
+
+           enddo  ! additional data
+         endif ! Additional data available
 
 C........Loop through nodes (NPCDAT(i,8)
          do jj = 1, NPCDAT(ii,8)
@@ -2678,9 +2784,6 @@ C...........istate = 0/1/9
                char_temp = 'unknown'
                char_len = 7
             endif
-
-C...........Get the pcName(ii)'s length
-            iNodeLength = lnblnk(pcname(ii))
 
 C...........Transport State variables
 
@@ -3738,7 +3841,7 @@ C ****************** H3K Transport Massflow Network Data ***********************
 C
 C Created by: Achim Geissler
 C Created on: June 17, 2008
-C Copyright: GaCH
+C Copyright:
 C ________
 C ABSTRACT:
 C This is the routine used to transport mass flow domain state-variable data 
@@ -3750,11 +3853,24 @@ C*******************************************************************************
       implicit none
 #include "building.h"
 #include "net_flow.h"
+#include "control.h"
 #include "net_flow_data.h"
 C.....ESP-r commons
 C      COMMON/AFN/IAIRN,LAPROB,ICAAS(MCOM)
 C      CHARACTER LAPROB*72
 
+      COMMON/mfctl/ctlpos(MCNN)
+      REAL ctlpos
+
+C      COMMON/MFLOW1/NNOD,NCMP,NCNN
+C Network size
+C      integer     NNOD  !  - number of nodes (building zones and/or plant components)
+C      Integer     NCMP  ! - number of fluid flow components (flow restrictions)
+C      integer     NCNN  ! - number of interconnections (branches)
+C
+C      COMMON/MFLOW2/NDNAM(0:MNOD)
+C      character*12  NDNAM  ! - identifier/name
+C
 C (in net_flow_data.h)     COMMON/MFLOW3/NDFLD(MNOD),NDTYP(MNOD),HNOD(MNOD,3),
 C     & SUPNOD(MNOD,MNDS)
 C      integer  NDFLD  ! - fluid type (1=air, 2=water)
@@ -3816,12 +3932,12 @@ C     SAFLW  - node coupled sum of absolute mass flow rates (kg/s)
       DOUBLE PRECISION FLWINV(MNOD),FLWUTV(MNOD)
 
 C.....Local variables
-      integer ii,jj,ICONTM                    ! counters
-      CHARACTER*12 fluid                ! fluid type ('air' or 'water')
-      integer fluid_len          ! lenght of the fluid char
-      integer NDNAM_len          ! lenght of the NDNAM char
-      character*128 Connect_Name ! connection name
-      integer connect_len        ! connection name lenght
+      integer ii,jj,ICONTM,ICC     ! counters
+      CHARACTER*12 fluid           ! fluid type ('air' or 'water')
+      integer fluid_len            ! lenght of the fluid char
+      integer NDNAM_len            ! lenght of the NDNAM char
+      character*128 Connect_Name   ! connection name
+      integer connect_len          ! connection name lenght
 
       integer i_neg, i_CompType,i_CompIndex
 
@@ -3902,7 +4018,6 @@ C.........output node data
      &      fluid(1:fluid_len),
      &      NDNAM(ii)(1:NDNAM_len))
 
-
 C........Build connection name
 C........Only use positive side of connections
 
@@ -3919,14 +4034,54 @@ C.........Loop through all interconnections in a flow network
      &             CMNAM(ITPCON(jj))(1:LNBLNK(CMNAM(ITPCON(jj))))
 
                connect_len = LNBLNK(Connect_name)
-       ! pressure drop between nodes of connection ***********************
+
+C...........Connection control data output ******************************
+C           Check if mass flow control function active
+            IF (NCC.GT.0) then
+
+C             Loop through all mass flow control functions
+              DO 100 ICC=1,NCC
+
+C               Control setpoint at connection
+                if (ifan(ICC,1).eq.-3) then
+C                 Is the current connection involved?
+                  if (ifan(ICC,2).eq.jj) then
+
+                    call AddToReport(
+     &                rvMfnConnectCtlOnFrac%Identifier,
+     &                ctlpos(ifan(ICC,2)),
+     &                fluid(1:fluid_len),
+     &                Connect_Name(1:connect_len))
+
+                  endif
+                endif
+
+                if (ifan(ICC,1).eq.-4) then
+C                 Is the current component involved?
+                  if (ifan(ICC,2).eq.ITPCON(jj)) then
+
+                    call AddToReport(
+     &                rvMfnConnectCtlOnFrac%Identifier,
+     &                ctlpos(jj),
+     &                fluid(1:fluid_len),
+     &                Connect_Name(1:connect_len))
+
+                  endif
+                endif
+
+
+  100         CONTINUE ! Control function loop
+
+            ENDIF ! Check flow control active
+
+       ! pressure drop between nodes of connection **********************
                call AddToReport(
      &            rvMfnConnectPressureDrop%Identifier,
      &            real(PRES(ii)-PRES(i_neg)),
      &            fluid(1:fluid_len),
      &            Connect_Name(1:connect_len))
 
-        ! flow through connection ****************************************
+        ! flow through connection ***************************************
                call AddToReport(
      &            rvMfnConnectFlowRate%Identifier,
      &            real(FLW1(jj)),
@@ -4015,7 +4170,7 @@ C.........output contaminant concentration
 
         ! whatever *****************************************************
 
-      enddo                     !<- node loop end
+      enddo                    !<- node loop end
 
       return
       end

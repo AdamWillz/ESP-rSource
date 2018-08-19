@@ -598,7 +598,9 @@ cx              CALL EDISP(IUOUT,' ')
             endif
 
 C Check indices are non-zero.
-            if(IHYB.gt.0.and.(HYCONEN(IHYB,1).gt.0))then
+            if (IHYB.gt.0.and.((HYCONEN(IHYB,1).gt.0).or.
+     &                         (HYCONEN(IHYB,2).gt.0).or.
+     &                         (HYCONEN(IHYB,3).gt.0))) then
               WRITE(OUTS,1212) HYBCOMNO(IHYB),HYCOMTYPSTR(IHYB),
      &        HYCOMNAM(IHYB),PHTYPSTR(HYCOMPHTYP(IHYB)),
      &        (merge(ENODNAM(HYCONEN(IHYB,I)),'     0      ',
@@ -609,7 +611,7 @@ C Check indices are non-zero.
             endif
           ENDIF
 
- 40     CONTINUE 
+ 40     CONTINUE ! loop IHYB .eq. 1 ... NHYBCOM
 
 C ====================================================================
 C Read the power only component data

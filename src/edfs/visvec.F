@@ -320,8 +320,6 @@ C      write(6,*) 'within MAKS3D SCmin,SCmax',SCmin,SCmax
 C Need to reset scale factors - do this by redrawing the domain.
       iz=0
       call VGRID3D('---','xyz',iz)
-      write(6,*) 'imgqua,NOX,NOZ,tscal,hLscal,hWscal,vLscal'
-      write(6,*) imgqua,NOX,NOZ,tscal,hLscal,hWscal,vLscal
 C Loop through all vectors.
       do 10 I=2,NIM1
         do 101 J=2,NJM1
@@ -375,7 +373,6 @@ C called within DFV so use alternative variables.
       if(IFRAME.eq.0)then
         CALL EDAYR(ISIMDAY,IDs,IMs)
         NOW=SIMTIMEF
-        write(6,*) 'IFRAME,IDs,IMs,NOW',IFRAME,IDs,IMs,NOW
         write(PDESCR,'(a,i3,2a,f5.2)')
      &    ' On',IDs,MTHNAM(IMs),' @',NOW
       else
@@ -384,7 +381,6 @@ C called within DFV so use alternative variables.
         FRACH=1.0/float(NTS)  ! what part of hour
         NOW=CFTOS+((IFRAME-1)*FRACH)
         if(NOW.gt.24.1) NOW=0.0
-        write(6,*) 'IFRAME,FRACH,CFTOS,NOW',IFRAME,FRACH,CFTOS,NOW
         write(PDESCR,'(a,i3,2a,f5.2,a,i3,2a,f5.2,a,f5.2,a,f5.2)')
      &    ' During',IDs,MTHNAM(IMs),', hr ',CFTOS,' to',IDf,MTHNAM(IMf),
      &    ', hr ',CFTOF,' @',NOW

@@ -157,7 +157,7 @@ C      threshold value ?? >>
         elseif (RES_elec_ctl_mode .eq. 3) then
           call thermal_follow      ! call up thermal following control
         else                       
-          ! <<shouldn't be possible, i.e. should be cought during read of input file >>
+          ! <<shouldn't be possible, i.e. should be caught during read of input file >>
 C         Give warning and exit this subroutine
           write(outstr,'(2A)') 'Renewable energy system (elec)',
      &       ' undefined control mode was entered -- no control!'
@@ -558,7 +558,7 @@ C       PV can not cover full load
           P_residual = P_total_load - PV_power_to_DCbus ! (W)
 
 C         Does battery have available capacity for discharge?
-          if ( .not. bBatteryEmpty) then
+          if ( .not. bBatteryEmpty ) then
 C           Is electricity from grid cheap?
             if (bGridRateLow) then
               RES_elec_ctl_scenario = 5
@@ -588,6 +588,7 @@ C               then import remaining energy required from grid
           else
             RES_elec_ctl_scenario = 8
 C           Battery is empty, import residual load from grid
+            batDemandP = 0.0
             import_from_grid = P_residual
           endif ! .not.BatteryEmpty
         endif ! PV .ge. E_ges
@@ -595,7 +596,7 @@ C           Battery is empty, import residual load from grid
       else
 C     No PV output available (night time)
 
-        if ( .not. bBatteryEmpty) then
+        if ( .not. bBatteryEmpty ) then
 C         Is import of electricity from grid cheap?
           if (bGridRateLow) then
             RES_elec_ctl_scenario = 9
@@ -626,7 +627,7 @@ C         Battery is empty, import from grid
           batDemandP = 0.0
           import_from_grid = P_total_load
 
-        endif ! .not.BatteryEmpty
+        endif ! .not.bBatteryEmpty
       endif ! PV .gt. 0
 
 C*** DEBUG ===
@@ -657,7 +658,8 @@ C       Plt controls have not changed, and additional interdomain iteration is u
         bRESElec_ctl_unconverged = .false.
       else
 C       Plt controls have changed, and additional iteration is required.
-        bRESElec_ctl_unconverged = .true.
+Cx        bRESElec_ctl_unconverged = .true.
+        bRESElec_ctl_unconverged = .false.
       endif
 
       END ! low cost control mode
@@ -783,11 +785,12 @@ C-------------------------------------------------------------------------------
 
       logical   bFileError            !- boolean signalling file error
       logical   xst                   !- boolean to signal that input file exists
-      logical   bBatteryNew
+      logical   bBatteryNew,bLegacyModel
 
       real      SOC_MAX               !- maximum state of charge of battery
       real      SOC_MIN               !- minimum state of charge of battery
-      real      cycles_used_Li        !- local variable for cycles_used_Lion()
+      real      cycles_used           !- cycles LiIon battery has already used, for reading from
+                                      !- file, used only with legacy ageing model
 
       parameter( SOC_MAX = 100.,
      &           SOC_MIN = 10. )
@@ -829,7 +832,7 @@ C 100              # (8)  battery SOC at which PV use for charging is ended
 C 25               # (9)  battery SOC at which grid is used for charging
 C 100              # (10) battery SOC at which grid use for charging is ended
 C 400.             # (11) controller deadband for PV battery charge (W)
-C 3000.            # (12) battery cycles already used at simulation start
+C 3000.            # (12) battery cycles already used at simulation start (legacy ageing model, only)
 C 0                # (13)  grid rate toggle, 0/1 grid rate low false/true, 2 read file
 C 0.16             # (13a) grid rate "low" threshold if (13) is set to "2"
 C ./gridrate.fcl   # (13b) grid rate file if (13) is set to "2"
@@ -1064,22 +1067,24 @@ C     mainly for 2nd life usage ...
         bFileError = .true.
       endif
       k = 0
-
-C In BATTERY.h cycles_used_Lion is defined as array.
-C      call egetwr(outstr,k,cycles_used_Lion,0.,50000.,
-C     &            'W','cycles used',ier)
-      call egetwr(outstr,k,cycles_used_Li,0.,50000.,
+      call egetwr(outstr,k,cycles_used,0.,50000.,
      &            'W','cycles used',ier)
       if ( ier .ne. 0 ) then
         write(iuout,*) 'Error reading bat. cycles used'
         bFileError = .true.
         write(cErrLoc,'(A)')'cycles used'
       endif
+C     Set cycles used only if legacy ageing model is active
+      call eclose(POWCDAT(IPWC_battery,82),0,0.01,bLegacyModel)
+      if (bLegacyModel) then
+        cycles_used_Lion(IPWC_battery) = cycles_used
+      else
+        ! do nothing, here
+      endif
     ! Check if cycles used equal zero and set abuseFlag accordingly
     ! (avoid resetting of cycles_used_Lion in InitSimulation()
-    ! of Battery.F (line 595 ff.))
-C      call eclose(cycles_used_Lion,0.0,0.1,bBatteryNew)
-      call eclose(cycles_used_Li,0.0,0.1,bBatteryNew)
+    ! of CETC_BATTERY.F (line 595 ff.))
+      call eclose(cycles_used_Lion(IPWC_battery),0,0.1,bBatteryNew)
       if (bBatteryNew) then
         abuseFlag=0
       else

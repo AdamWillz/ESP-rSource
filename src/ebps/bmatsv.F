@@ -129,8 +129,9 @@ C CFD
       integer ICFAUX  ! helps to keep track of IFCFD()
       integer ICFVIEW ! toggle for preview via dfv during assessment
       integer ICFVIEWMINT,ICFVIEWMAXT  ! range of temperatures for dfv
+      logical DFVinvoked
       COMMON/CFSEUP/CFTIMS,CFTIMF,ICFDYS,ICFDYF,ICFAUX(MCOM),ICFVIEW,
-     &  ICFVIEWMINT,ICFVIEWMAXT
+     &  ICFVIEWMINT,ICFVIEWMAXT,DFVinvoked
       COMMON/calcdCFD/mICORcfd(MCOM),mHCcfd(MCOM)
 
 C Simulation start day required by cmp70c.
@@ -176,7 +177,7 @@ C so configuration can be passed to h3kreports
       common/avrage/idaver
 
 C Uncertainty common.
-      COMMON/UATD/UACLIM(6,4),UACTL(7,5),UAMCSA(MNACT)
+      COMMON/UATD/UACLIM(6,4),UACTL(7,6),UAMCSA(MNACT)
 
 C Common holding flag indicating presence of hvac data input file:
 C ihvacflag=1 there is hvac file; ihvacflag=0 no hvac file.
@@ -282,6 +283,10 @@ C BASESIMP.
       common/bsmtdef/iBSIMP(MCOM),LBSIMP(MCOM)
       character LBSIMP*72
 
+C Toggle for extreme silent running (endless) mode.
+      logical endless,issilient
+      common/endlessmode/endless,issilient
+
 C Quick-run info
       integer iOldSeasonIndex     !- Flags for tracking changes between seasons.
       save iOldSeasonIndex
@@ -306,7 +311,7 @@ C water
 C Path to model 
       common/rpath/path
       character path*72
-      
+
 C SUN F90 has spotty support for cpu_time intrinsic
 #ifdef F90
 #else
@@ -1551,6 +1556,11 @@ C transport miscellaneous simulation data to reporting object
                  if (IAIRN .ne. 0) THEn
                     call H3K_transport_mfn_data()
                  endif
+                 if ( MSTROK ) then
+                    call H3K_transport_mould_data(icomp)
+                 endif
+C << insert (conditional) call to explicit CFC h3k output function here ? >>
+
               endif
 C If TSC type 2 is active then find sum of averages for zone air
 C temperature and zone air energy injection.
@@ -1958,7 +1968,11 @@ C Unix variant.
      &      ectime(ietim)
 C NT variant.
 C         write(outs,'(I4,A)') iperc,' %   complete; '
-          call edisp(iuout,outs)
+          if(endless.or.issilient)then
+            continue
+          else
+            call edisp(iuout,outs)
+          endif
         end if
 
 C The GCEP simulation routine is called only once per hour, if a
@@ -2076,8 +2090,12 @@ C the impact of modifications on simulation times.
          CALL cpu_time(sec_c)
          write(outs,'(A,F7.2,A)')
      &        'XML postprocessor cpu runtime: ',sec_c-sec_b,' seconds'
-         CALL EDISP(IUOUT,outs)
-         CALL EDISP(IOUTS,' ')
+         if(endless.or.issilient)then
+           continue
+         else
+           CALL EDISP(IUOUT,outs)
+           CALL EDISP(IOUTS,' ')
+         endif
       endif
 #endif
 

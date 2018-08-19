@@ -3217,6 +3217,8 @@ C                             OUTHI
 C IMODE = -1        SPTON  ----------
 C                   SPTOFF ----------
 C                             OUTLO
+C
+C Important Note: the constraint SPTON < SPTOFF must be satisfied!
 
 C Establish the sensed condition and the `actuated' component.
       CALL CLVAR(SVCTL,IPCMP,IPCVR)
@@ -3698,8 +3700,9 @@ C Set ACTFRAC to map between flow and plant control loops
       IF(ITC.GT.0.AND.NSINC.GE.ITC.AND.NSINC.LE.ITCF.AND.
      &   ITRACE(40).NE.0)THEN
          CALL DAYCLK(IDYP,PTIMEF,ITU)
-         WRITE(ITU,*) ' NSINC = ',nsinc,         
-     &                ' CDATA = ',cdata(ipcmp,ipcvr)
+         WRITE(ITU,*) ' NSINC  = ',nsinc,
+     &                ' CDATA  = ',cdata(ipcmp,ipcvr),
+     &                ' CDATA  = ',cdata(ipcmp,IDATNO)
          write(itu,*) ' Leaving subroutine PCL14'
       ENDIF
 
