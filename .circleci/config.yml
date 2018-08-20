@@ -2,7 +2,7 @@ version: 2
 jobs:
   build:
     docker:
-      - image: willsa/espr-ubuntu:latest
+      - image: willsa/espr-ubuntu:circleci
     steps:
       - checkout
       - run:
