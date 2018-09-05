@@ -322,7 +322,13 @@ if [ "$xml_support" = "yes" ] || [ "$xml_support" = "prompt" ]; then
     echo " xml libraries found."
     # xml support may optionally include support for xslt & exslt
     # (following code tested only with GNU ld).
-    ld_output=`ldconfig -p | grep libxslt`
+    if [ "${architecture:0:6}" = "CYGWIN" ]; then
+        ld_output=`cygcheck -c libxslt | grep libxslt`
+    elif [ "${architecture:0:5}" = "MINGW" ] || [ "${architecture:0:4}" = "MSYS" ]; then
+        ld_output=`ld -l libxslt`
+    else
+        ld_output=`ldconfig -p | grep libxslt`
+    fi
     case $ld_output in
       "") xsl_libs_available="no";;
       *)  xsl_libs_available="yes";;
@@ -332,7 +338,13 @@ fi
 
 # SQLite support.
 if [ "$SQLite_support" = "yes" ]; then
-   ld_output=`ldconfig -p | grep libsqlite`
+   if [ "${architecture:0:6}" = "CYGWIN" ]; then
+       ld_output=`cygcheck -c libsqlite | grep libsqlite`
+   elif [ "${architecture:0:5}" = "MINGW" ] || [ "${architecture:0:4}" = "MSYS" ]; then
+       ld_output=`ld -l libsqlite`
+   else
+       ld_output=`ldconfig -p | grep libsqlite`
+   fi
    case $ld_output in 
      "" ) SQLite_libs_found="no"; 
           SQLite_support="no"; 
@@ -1654,7 +1666,7 @@ do
         echo " "
         echo " Executable ${target} could not be built!"
         echo " Installation aborted."
-        exit
+        exit 2
       fi
    else
      echo " done."

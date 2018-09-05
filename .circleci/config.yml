@@ -17,8 +17,4 @@ jobs:
       - run:
           name: Compile ESP-r
           command: |
-            ls
-            cd src
-            make clean
-            cd ..
             ./Install -d /usr/esru/test/ --xml --no-training --noX --gcc4 --complex --silent
