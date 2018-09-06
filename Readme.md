@@ -1,9 +1,8 @@
-## ===========================================================
+
 **_Note_: Code is maintained here for legacy support**
 **_Please see item 12 below regarding code changes and development_**
 Official ESP-r releases are published at: 
 http://www.esru.strath.ac.uk/Downloads/downloads.htm#ESP-r
-## ===========================================================
 
 #                         ESP-r
 
