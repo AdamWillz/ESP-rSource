@@ -139,7 +139,7 @@ if [ $# -ne 0 ]; then
                  echo " Error: argument $i is not supported."
                  echo " Run ./Install --help."
                  echo " "
-                 exit
+                 exit 2
               fi
            ;;
         esac
@@ -427,7 +427,7 @@ if [ "$platform" = "auto-detect" ]; then
          echo " Error: could not determine computer architecture"
          echo " ${architecture}. Specify using the --platform switch"
          echo " or run script in interactive mode."
-         exit
+         exit 2
        fi
    fi
 fi
@@ -909,7 +909,7 @@ case $xLibs in
          echo " "
          echo " Error: could not find the X11 libraries - exiting."
          echo " "
-         exit
+         exit 2
        fi
        # Check if the required include files are installed.
        if [ -r $XINSTALLDIR/include/X11/X.h ]; then
@@ -924,7 +924,7 @@ case $xLibs in
            echo " located at $XINSTALLDIR/include/X11. Please check if"
            echo " the X11 development package is installed (usually called"
            echo " xfree86-devel, xorg-X11-devel or libX11-devel.)"
-           exit
+           exit 2
          fi
        fi
      ;;
@@ -1234,14 +1234,14 @@ if [ ! -d $DESTdir ]; then
       echo " "
       echo " Destination directory ${DESTdir} could not be created"
       echo " Installation aborted."
-      exit
+      exit 2
     fi
   else
     # User does not want to create directory and it does not exist.
     echo " "
     echo " Destination directory ${DESTdir} does not exist."
     echo " Installation aborted"
-    exit
+    exit 2
   fi
 fi
 
@@ -1250,7 +1250,7 @@ if [ ! -w $DESTdir ] || [ ! -d $DESTdir ]; then
   echo " "
   echo " Cannot write to installation directory $DESTdir."
   echo " Installation aborted."
-  exit
+  exit 2
 fi
 
 # Co-simulation directory.
@@ -1297,21 +1297,21 @@ if [ "$enable_cosim" == "yes" ]; then
 	      echo " "
 	      echo " Destination directory, ${COSIMdir}, could not"
 	      echo " be created. Installation aborted."
-	      exit
+	      exit 2
 	    fi
 	  else
 	    # User does not want to create directory and it does not exist.
 	    echo " "
 	    echo " Destination directory, ${COSIMdir}, does not"
 	    echo " exist. Installation aborted."
-	    exit
+	    exit 2
 	  fi
 	fi
 	if [ ! -w $COSIMdir ] || [ ! -d $COSIMdir ]; then
 	  echo " "
 	  echo " Cannot write to co-simulation installation directory,"
 	  echo " ${COSIMdir}. Installation aborted."
-	  exit
+	  exit 2
 	fi
 fi
 
@@ -1379,7 +1379,7 @@ if [ "$corrupted_tree" = "yes" ] || [ "$create_espr_dir" = "yes" ]; then
       echo " "
       echo " Use the '--force' option to overwrite the directory"
       echo " structure. Run 'Install --help' for more information."
-      exit
+      exit 2
     fi
   fi
   rm -rf $ESPdir/*

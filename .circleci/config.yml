@@ -2,14 +2,14 @@ version: 2
 jobs:
   build:
     docker:
-      - image: willsa/espr-ubuntu:circleci
+      - image: willsa/espr-ubuntu:latest
     steps:
       - checkout
       - run:
           name: Clone databases
           command: |
             cd ..
-            git clone https://github.com/ESP-rCommunity/ESP-rDatabases
+            git clone https://github.com/AdamWillz/ESP-rDatabases
             mkdir project/data/climate
             mkdir project/data/databases
             mv ESP-rDatabases/climate/ project/data
@@ -18,3 +18,8 @@ jobs:
           name: Compile ESP-r
           command: |
             ./Install -d /usr/esru/test/ --xml --no-training --noX --gcc4 --complex --silent
+      - run:
+          name: Run Tester
+          command: |
+            cd tester/scripts/
+            perl RunTester.pl
