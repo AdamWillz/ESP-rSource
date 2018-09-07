@@ -697,6 +697,7 @@ $TableSpacer"."------------------------------------
    $gSys_params{'sys_type'} = `uname -m`;
    $gSys_params{'os_type'}  = `uname -s`.":".`uname -r`;
    $gSys_params{'username'} = $ENV{'USER'};
+   if(not defined $gSys_params{'username'}) {$gSys_params{'username'}='';}
    $gSys_params{'hostname'} = `uname -n`;
 
    #-------------------------------------------------------------------
@@ -2442,8 +2443,7 @@ sub process_historical_archive($){
   chdir $gTest_paths{"$version\_archive_folder"};
   
   # Decompress and explode tarball.
-  # my $decompression_failure = `$gSys_params{"unzip_command"} $gTest_paths{"$version\_archive_file"} --no-same-owner | $gSys_params{"untar_command"} -`;
-  my $decompression_failure = `$gSys_params{"untar_command"} $gTest_paths{"$version\_archive_file"} --no-same-owner`;
+  my $decompression_failure = `$gSys_params{"unzip_command"} $gTest_paths{"$version\_archive_file"} | $gSys_params{"untar_command"} -  --no-same-owner`;
   if ( $decompression_failure ){
     print "\n>>>>>> $decompression_failure ";
     fatalerror("\nCould not decompress $archive_file");

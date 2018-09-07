@@ -22,4 +22,4 @@ jobs:
           name: Run Tester
           command: |
             cd tester/scripts/
-            perl RunTester.pl
+            sudo perl RunTester.pl
