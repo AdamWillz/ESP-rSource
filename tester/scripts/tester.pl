@@ -2443,7 +2443,7 @@ sub process_historical_archive($){
   chdir $gTest_paths{"$version\_archive_folder"};
   
   # Decompress and explode tarball.
-  my $decompression_failure = `$gSys_params{"unzip_command"} $gTest_paths{"$version\_archive_file"} | $gSys_params{"untar_command"} -  --no-same-owner`;
+  my $decompression_failure = `$gSys_params{"unzip_command"} $gTest_paths{"$version\_archive_file"} | $gSys_params{"untar_command"} -`;
   if ( $decompression_failure ){
     print "\n>>>>>> $decompression_failure ";
     fatalerror("\nCould not decompress $archive_file");
