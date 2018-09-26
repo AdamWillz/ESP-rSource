@@ -96,7 +96,7 @@ C Name of current application
       character journcmd*20,jfile*72,uname*24,cjfile*72
       character blank*2   ! string for edisp of blank line
 
-      character cVnum*36      ! returned from ESPrVersionNum
+      character cVnum*38      ! returned from ESPrVersionNum
       character pagestitle*62 ! for banner title via epages call
 
       LOGICAL OK,DOK,unixok,there,silent
@@ -109,10 +109,12 @@ C Name of current application
       integer iigl,iigr,iigt,iigb,iigw,iigwh
       integer iiw1,iiw2,iiw3,iiw4,iimenu
       integer iicapture   ! to pass to updcapt
+      integer ilf,igfw,igfh,ild,igdw,igdh
 #else
       integer*8 iigl,iigr,iigt,iigb,iigw,iigwh
       integer*8 iiw1,iiw2,iiw3,iiw4,iimenu
       integer*8 iicapture   ! to pass to updcapt
+      integer*8 ilf,igfw,igfh,ild,igdw,igdh
 #endif
 
 C For help messages
@@ -598,13 +600,14 @@ C Graphic analysis. Enlarge graphics area if small.
                 LIMTTY=6
                 LIMIT =6
               endif
-              call winclr
-              CALL feedbox(menuchw,2,igfw,igfh)
-              CALL opengdisp(menuchw,LIMTTY,2,igdw,igdh)
 
 C Setup and pass in parameters to win3d.
               iiw1=10; iiw2=22; iiw3=7; iiw4=3; iimenu=menuchw
               iigl=igl; iigr=igr;iigt=igt;iigb=igb;iigw=igw;iigwh=igwh
+              ilf=2; ild=LIMTTY
+              call winclr
+              CALL feedbox(iimenu,ilf,igfw,igfh)
+              CALL opengdisp(iimenu,ild,ilf,igdw,igdh)
               CALL win3d(iimenu,iiw1,iiw2,iiw3,iiw4,
      &          iigl,iigr,iigt,iigb,iigw,iigwh)
               igl=int(iigl); igr=int(iigr);igt=int(iigt);igb=int(iigb)
@@ -637,13 +640,14 @@ C Psychrometric analysis. Enlarge graphics area if small.
                 LIMTTY=6
                 LIMIT =6
               endif
-              call winclr
-              CALL feedbox(menuchw,2,igfw,igfh)
-              CALL opengdisp(menuchw,LIMTTY,2,igdw,igdh)
 
 C Setup and pass in parameters to win3d.
               iiw1=10; iiw2=22; iiw3=7; iiw4=3; iimenu=menuchw
               iigl=igl;iigr=igr;iigt=igt;iigb=igb;iigw=igw;iigwh=igwh
+              ilf=2; ild=LIMTTY
+              call winclr
+              CALL feedbox(iimenu,ilf,igfw,igfh)
+              CALL opengdisp(iimenu,ild,ilf,igdw,igdh)
               CALL win3d(iimenu,iiw1,iiw2,iiw3,iiw4,
      &          iigl,iigr,iigt,iigb,iigw,iigwh)
               igl=int(iigl);igr=int(iigr);igt=int(iigt);igb=int(iigb)
@@ -1158,9 +1162,11 @@ C hour in any specified day.
 #ifdef OSI
       integer iigl,iigr,iigt,iigb,iigw,iigwh
       integer iiw1,iiw2,iiw3,iiw4,iimenu
+      integer ilf,igfw,igfh,ild,igdw,igdh
 #else
       integer*8 iigl,iigr,iigt,iigb,iigw,iigwh
       integer*8 iiw1,iiw2,iiw3,iiw4,iimenu
+      integer*8 ilf,igfw,igfh,ild,igdw,igdh
 #endif
 
 C For help messages
@@ -1185,13 +1191,14 @@ C displaying the following data.
             LIMTTY=30
             LIMIT =30
           endif
-          call winclr
-          CALL feedbox(menuchw,2,igfw,igfh)
-          CALL opengdisp(menuchw,LIMTTY,2,igdw,igdh)
 
 C Setup and pass in parameters to win3d.
           iiw1=10; iiw2=22; iiw3=5; iiw4=3; iimenu=menuchw
           iigl=igl; iigr=igr; iigt=igt; iigb=igb; iigw=igw; iigwh=igwh
+          ilf=2; ild=LIMTTY
+          call winclr
+          CALL feedbox(iimenu,ilf,igfw,igfh)
+          CALL opengdisp(iimenu,ild,ilf,igdw,igdh)
           CALL win3d(iimenu,iiw1,iiw2,iiw3,iiw4,
      &      iigl,iigr,iigt,iigb,iigw,iigwh)
           igl=int(iigl); igr=int(iigr); igt=int(iigt); igb=int(iigb)
@@ -1475,11 +1482,16 @@ C calls in esru_lib.F
       return
       end
 
-      subroutine chgazi(icazi)
+      subroutine redraw(ier)
+      ier=0
       return
       end
 
-      subroutine chgelev(icelev)
+      subroutine chgazi(icazi,ifrlk)
+      return
+      end
+
+      subroutine chgelev(icelev,ifrlk)
       return
       end
 

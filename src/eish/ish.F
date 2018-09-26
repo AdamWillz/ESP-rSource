@@ -145,6 +145,9 @@ C Project journal on/off, unit number, cmd, file name.
 C Defaults.
       character*96 DFCFG,DFCTL,DEFRLB,DAPROB,DAFRES,DPNF
       common/deflt2/dfcfg,dfctl,defrlb,dafres,daprob,dpnf
+
+C 3D visualisation mode.
+      COMMON/MODVIS/IVISMOD
       
 C Significant figure reporting limit.
       common/sfig/nsigfig
@@ -165,8 +168,8 @@ C Name of current application.
       character xfile*144,tg*1,delim*1,mode*4
       character exportfile*96 ! for ascii shading file
 
-      character cVnum*36      ! returned from ESPrVersionNum
-      character pagestitle*62 ! for banner title via epages call
+      character cVnum*38      ! returned from ESPrVersionNum
+      character pagestitle*68 ! for banner title via epages call
 
       logical silent,unixok,there,context,existing
       logical xst,freshshading
@@ -274,6 +277,7 @@ C Initial coordinates for eye point, viewing point and angle of view.
       viewm(2)=10.
       viewm(3)=10.
       ang=40.
+      IVISMOD=1
 
 C Image option flags.
       itdsp=0; itbnd=1; itept=0
@@ -1097,7 +1101,7 @@ C the day and time, compute the positon and update the view.
                nzg=1
                nznog(1)=icomp
                izgfoc=icomp
-               call adjview(ier)
+               call redraw(ier)
 
 C Generate a heading for the view.
                call edtime(stime,descrh,descrd,timer)
@@ -1797,7 +1801,7 @@ C Determine it's bounds for future comparison. Force it to be drawn.
          nzg=1
          nznog(1)=icomp
          izgfoc=icomp
-         call adjview(ier)
+         call redraw(ier)
       endif
       return
       end
@@ -2045,6 +2049,11 @@ C Dummy routines.
 
       SUBROUTINE BASESIMP_INPUTS(ICOMP,IER)
       integer icomp,ier
+      return
+      end
+
+      SUBROUTINE CFDVIEW(IER)
+      IER=0
       return
       end
 

@@ -1457,6 +1457,7 @@ C     if blank then no file name change implied.
 C Unused variables commented out.
 
       SUBROUTINE EDDBCFC(moddb,modcon,APP)
+      use CFC_Module, Only: cfcver
 #include "building.h"
 #include "model.h"
 #include "esprdbfile.h"

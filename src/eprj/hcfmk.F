@@ -268,7 +268,7 @@ C names, turn off grid and origin.
       nzg=1
       nznog(1)=ICOMP
       izgfoc=ICOMP
-      CALL ADJVIEW(IER)
+      CALL redraw(IER)
       call cfgtogg(icfg_type,icfgz,icfgn,icfgc,icfgdfn,
      &                             iicfgz,iicfgn,iicfgc,iicfgdfn)
       if(MMOD.EQ.8)call opencfg(icfg_type,icfgz,icfgn,icfgc,icfgdfn,
@@ -318,7 +318,7 @@ C Redraw wireframe on each return.
       nzg=1
       nznog(1)=ICOMP
       izgfoc=ICOMP
-      CALL ADJVIEW(IER)
+      CALL redraw(IER)
 
 C Help text for this menu.
       helptopic='zone_htc_menu'

@@ -201,7 +201,7 @@ C Read geometry file for chosen zone.
       nzg=1
       nznog(1)=ICOMP
       izgfoc=ICOMP
-      CALL ADJVIEW(IER)
+      CALL redraw(IER)
 
 C Recover zone data (read only, no display).
       CALL ZINFO(SNA,ZOA,PAZI,PELV,ZVOL,'q')

@@ -1873,7 +1873,7 @@ C attributes.
         do 2 i = 1,ncon
           if(NSTMCFL(i).ne.0)LINSTY(i)=2
   2     continue
-        CALL ADJVIEW(IER)
+        CALL redraw(IER)
       endif
 
 C Initial menu entry setup.

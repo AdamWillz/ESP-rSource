@@ -3586,7 +3586,7 @@ C If surface is exterior then check if use is specified if not then ask
               MODIFYVIEW=.TRUE.
               CALL INLNST(1)
               LINSTY(ICN)=2
-              CALL ADJVIEW(IER)
+              CALL redraw(IER)
               WRITE(OUTS,'(4A)')'Enter usage for surface ',SSNAME(ICN),
      &          ' in zone ',zname(icomp)(1:lnzname(icomp))
               CALL EDISP(IUOUT,' ')
@@ -5468,7 +5468,7 @@ C Update the image if working in graphics mode.
             nzg=1
             nznog(1)=ICOMP
             izgfoc=ICOMP
-            CALL ADJVIEW(IER)
+            CALL redraw(IER)
             call pausems(900)
           endif
  6001   CONTINUE
@@ -5942,7 +5942,7 @@ C View the zone after adding surfaces
           nzg=1
           nznog(1)=ICOMP
           izgfoc=ICOMP
-          CALL ADJVIEW(IER)
+          CALL redraw(IER)
           call pausems(500)
         endif
  551  CONTINUE
@@ -7059,7 +7059,7 @@ C Update the image if working in graphics mode.
         nzg=1
         nznog(1)=ICOMP
         izgfoc=ICOMP
-        CALL ADJVIEW(IER)
+        CALL redraw(IER)
         call pausems(900)
       endif
 
@@ -7536,7 +7536,7 @@ C Update the image if running in graphic mode.
         nzg=1
         nznog(1)=ICOMP
         izgfoc=ICOMP
-        CALL ADJVIEW(IER)
+        CALL redraw(IER)
         call pausems(500)
       endif
  551  CONTINUE

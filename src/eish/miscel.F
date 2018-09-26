@@ -293,7 +293,7 @@ C Redraw the wireframe.
         itsnm=1
         CALL INLNST(1)
         nzg=1; nznog(1)=izone; izgfoc=izone
-        CALL ADJVIEW(IER)
+        CALL redraw(IER)
       endif
 
 C For current solar azimuth and altitude get unit vector and then
@@ -565,7 +565,7 @@ C Redraw the wireframe and the grid.
           itsnm=1
           CALL INLNST(1)
           nzg=1; nznog(1)=izone; izgfoc=izone
-          CALL ADJVIEW(IER)
+          CALL redraw(IER)
         endif
 
 C Draw an arrow from the centre grid point along the patch ray.

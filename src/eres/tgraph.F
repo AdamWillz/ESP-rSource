@@ -847,10 +847,12 @@ C To extend logic to maximize plotting area.
       integer iside,isize,ifont     ! passed to viewtext
       integer iigl,iigr,iigt,iigb,iigw,iigwh
       integer iiw1,iiw2,iiw3,iiw4,iimenu
+      integer ilf,igfw,igfh,ild,igdw,igdh
 #else
       integer*8 iside,isize,ifont     ! passed to viewtext
       integer*8 iigl,iigr,iigt,iigb,iigw,iigwh
       integer*8 iiw1,iiw2,iiw3,iiw4,iimenu
+      integer*8 ilf,igfw,igfh,ild,igdw,igdh
 #endif
 
 C If GTK library then there are additional options << work in progress >>.
@@ -867,9 +869,10 @@ C pixel references for calls to viewtext.
       IF(MMOD.EQ.8)THEN
         iglib = igraphiclib()  ! find out if X11 or GTK or text support only.
         if(iglib.eq.1)then
+          iimenu=menuchw; ilf=2; ild=LIMTTY
           call startbuffer
-          call feedbox(menuchw,2,igfw,igfh)
-          call opengdisp(menuchw,LIMTTY,2,igdw,igdh)
+          call feedbox(iimenu,ilf,igfw,igfh)
+          call opengdisp(iimenu,ild,ilf,igdw,igdh)
         endif
 
 C Logic to alter the '30' for two different cases:

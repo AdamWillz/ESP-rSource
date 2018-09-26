@@ -175,7 +175,7 @@ C If ground needs drawing or updating do it here.
           nzg=0
         endif
         izgfoc=0
-        CALL ADJVIEW(IER)
+        CALL redraw(IER)
         call cfgtogg(icfg_type,icfgz,icfgn,icfgc,icfgdfn,
      &                             iicfgz,iicfgn,iicfgc,iicfgdfn)
         call opencfg(icfg_type,icfgz,icfgn,icfgc,icfgdfn,
@@ -482,7 +482,7 @@ C Update display.
         CALL INLNST(1)
         ITVNO=0
         izgfoc=0
-        CALL ADJVIEW(IER)
+        CALL redraw(IER)
         CALL INLNSTG(3)
         call EGRNDR(IER)
         MODIFYVIEW=.false.
@@ -616,7 +616,7 @@ C Show the new point on the current wireframe.
               if(MMOD.ge.8)then
                 CALL INLNST(1)
                 izgfoc=0
-                CALL ADJVIEW(IER)
+                CALL redraw(IER)
                 call EGRNDR(IER)
               endif
 
@@ -790,7 +790,7 @@ C Show the new point on the current wireframe.
               MODBND=.TRUE.
               call usrmsg(' ',' ','-')
               if(MMOD.ge.8)then
-                CALL ADJVIEW(IER)
+                CALL redraw(IER)
                 CALL INLNSTG(3)
                 call EGRNDR(IER)
               endif
@@ -802,7 +802,7 @@ C Show the new point on the current wireframe.
           endif
           MODIFYVIEW=.true.
           if(MMOD.ge.8)then
-            CALL ADJVIEW(IER)
+            CALL redraw(IER)
             CALL INLNSTG(3)
             call EGRNDR(IER)
           endif
@@ -1088,7 +1088,7 @@ C Show the new point on the current wireframe.
             MODIFYVIEW=.TRUE.
             MODBND=.TRUE.
             if(MMOD.ge.8)then
-              CALL ADJVIEW(IER)
+              CALL redraw(IER)
               CALL INLNSTG(3)
               call EGRNDR(IER)
             endif
@@ -1134,7 +1134,7 @@ C be a new vertex and update the wireframe.
 C            if(MMOD.ge.8)then
 C              CALL INLNST(1)
 C              izgfoc=0
-C              CALL ADJVIEW(IER)
+C              CALL redraw(IER)
 C              call EGRNDR(IER)
 C            endif
             goto 92
@@ -2480,7 +2480,7 @@ C Update display.
         CALL INLNST(1)
         ITVNO=0
         izgfoc=0
-        CALL ADJVIEW(IER)
+        CALL redraw(IER)
         CALL INLNSTG(3)
         call EGRNDR(IER)
         MODIFYVIEW=.false.
@@ -2609,7 +2609,7 @@ C Reverse the ordering, redraw image and return.
           MODIFYVIEW=.TRUE.
           CALL INLNST(1)
           izgfoc=0
-          CALL ADJVIEW(IER)
+          CALL redraw(IER)
           call EGRNDR(IER)
           goto 92
         endif
@@ -2634,7 +2634,7 @@ C Update the image.
         if(MMOD.ge.8)then
           CALL INLNST(1)
           izgfoc=0
-          CALL ADJVIEW(IER)
+          CALL redraw(IER)
           call EGRNDR(IER)
 
 C Show these points as small circles...
@@ -2692,7 +2692,7 @@ C Update the image.
         if(MMOD.ge.8)then
           CALL INLNST(1)
           izgfoc=0
-          CALL ADJVIEW(IER)
+          CALL redraw(IER)
           CALL INLNSTG(3)
           call EGRNDR(IER)
         endif
@@ -2965,7 +2965,7 @@ C Update the image.
         if(MMOD.ge.8)then
           CALL INLNST(1)
           izgfoc=0
-          CALL ADJVIEW(IER)
+          CALL redraw(IER)
           CALL INLNSTG(3)
           call EGRNDR(IER)
         endif
@@ -3128,7 +3128,7 @@ C ****** Routine to update-draw ground during triangulation.
 
       CALL startbuffer()
       izgfoc=0
-      CALL ADJVIEW(IER)
+      CALL redraw(IER)
       WRITE(outs,'(A,i3,A,i3)')' Verts: ',IVV,' surfs ',NGTG
       iside=1
       isize=0

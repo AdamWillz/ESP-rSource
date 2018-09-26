@@ -63,7 +63,7 @@ C Name of current application
       character path*72,outs248*248
       character fs*1
 
-      character cVnum*36      ! returned from ESPrVersionNum
+      character cVnum*38      ! returned from ESPrVersionNum
       character pagestitle*62 ! for banner title via epages call
       LOGICAL unixok
 
@@ -281,11 +281,16 @@ C Dummy routines from common3dv.F
       return
       end
 
-      subroutine chgazi(icazi)
+      SUBROUTINE redraw(IER)
+      IER=0
       return
       end
 
-      subroutine chgelev(icelev)
+      subroutine chgazi(icazi,ifrlk)
+      return
+      end
+
+      subroutine chgelev(icelev,ifrlk)
       return
       end
 

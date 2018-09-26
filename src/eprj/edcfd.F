@@ -72,18 +72,23 @@ C #include "esprdbfile.h"
       common/param2/TITLE(MNZ),CFTRFL(MNZ),LPHI(MNZ)
       common/GRIDEFN/origin,xgrid,ygrid,zgrid,zegrid,ortho
       common/ndcfd/ncfdnd,icfdnd(MNZ),NCONF
-      COMMON/CFDVIS/ISHSB,ISHAO,IFACES,ISHBLK
       integer ncfdnd,icfdnd,NCONF
+      COMMON/CFDVIS/HAS_GEOM,ISHSB,ISHAO,IFACES,ISHBLK,ISHGEO,INITD
+      logical HAS_GEOM
+      character INITD*6
+
+C 3D visualisation mode.
+      COMMON/MODVIS/IVISMOD
 
       logical origin,xgrid,ygrid,zgrid,zegrid,ortho
       logical OK,dok,XST,CFDsave
 
-      character OUTSTR*124,WORD*124,ETEXT*82,ZNGEO*3
+      character OUTSTR*124,WORD*124,ETEXT*82
       CHARACTER ITEM(12)*34
       character ltmp*72,dtmp*72,LCFD*72
       CHARACTER*72 TITLE,CFTRFL,LPHI
       character*72 DFCFD,DECMPDBFL,DICONDBFL
-      integer found
+      integer found,zngeo
       integer IWO  ! for radio button
       integer NITMS,INO ! max items and current menu item
 
@@ -99,6 +104,8 @@ C For help messages
       integer nbhelp     ! number of help lines found
 
       helpinsub='CFDCOMP'  ! set for subroutine
+
+      IVISMOD=-1
 
 C ICFD=1 for the first CFD domain in the building, 2 for the second CFD
 C domain, etc. ICFD is set independantly in VERMAN in prj.F, any updates
@@ -135,13 +142,7 @@ C Draw the zone and display the vertex numbers.
 C << changed to use CFD visualisation subroutines instead >>
       call tstamp('>','PRJ: edit CFD domain') 
       nzg=1; nznog(1)=izone; izgfoc=izone
-      CALL ESCZONE(izone)
-      CALL BNDOBJ(0,IER)
-      CALL ERCZONE(izone)
       itvno=0; itsnm=0
-
-C Default values for visualisation.
-      ISHSB=1; ISHAO=1; IFACES=-1; ISHBLK=1
 
 C Setup help text for main menu.
       helptopic='cfd_opening_menu'
@@ -210,8 +211,19 @@ C Set flags to indicate that CFD origin and gridding has been defined.
           CALL ERPFREE(IUF,ISTAT)
           return
         endif
+
+C Default values for visualisation.
+        if (origin.and.xgrid.and.ygrid.and.zgrid) then
+          IVISMOD=2
+          HAS_GEOM=.TRUE.
+          ISHSB=-1; ISHAO=-1; IFACES=1; ISHBLK=-1; ISHGEO=1
+        endif
       endif
       CALL ERPFREE(IUF,ISTAT)
+
+      MODIFYVIEW=.TRUE.
+      MODLEN=.TRUE.
+      MODBND=.TRUE.
 
 C Present menu of options for editing CFD input file.
    10 INO=-4
@@ -238,53 +250,18 @@ C Present menu of options for editing CFD input file.
 C Only display if domain geometry has been defined.
         if (origin.and.xgrid.and.ygrid.and.zgrid) then
 
-C Recalculate gridding in case this has changed
-          CALL INICNT
-          CALL GRID(ier)
-          call NEW2OLD
 
-C Initialise building - CFD domain transformations.
-          CALL INIT_CFDTRANS(IER)
-          if (IER.ne.0) then
-            call usrmsg(' Cannot draw this CFD domain in 3D',' ','W')
-            IER=0
-            goto 10
-          endif
+          call redraw(IER)
 
-C Display domain
-          CALL ESCZONE(izone)
-          CALL BNDOBJ(0,IER)
-          CALL ERCZONE(izone)
-          if (IFACES.lt.0) then
-            write(zngeo,'(a)')'zn '
-          else
-            write(zngeo,'(a)')'---'
-          endif
-          if(abs(IFACES).eq.1)then
-            call VGRID3D(zngeo,'xyz',izone)
-          elseif(abs(IFACES).eq.2)then
-            call VGRID3D(zngeo,'xzg',izone)
-          elseif(abs(IFACES).eq.3)then
-            call VGRID3D(zngeo,'yzg',izone)
-          elseif(abs(IFACES).eq.4)then
-            call VGRID3D(zngeo,'xyg',izone)
-          endif
-          if (ISHSB.eq.1) then
-            call VSB3D(0)
-          endif
-          if (ISHAO.eq.1) then
-            call VAO3D(0)        
-          endif
-          if (ISHBLK.eq.1) then
-            call VSBL3D(0)  ! for testing of blockages
-          endif
+        else
 
+C Just display title.
+          WRITE(ETEXT,'(2A)')'Domain: ',
+     &      TITLE(izone)(1:lnblnk(TITLE(izone)))
+          iside=1; isize=1; ifont=1
+          call viewtext(ETEXT,iside,isize,ifont)
         endif
       
-        WRITE(ETEXT,'(2A)')'Domain: ',
-     &    TITLE(izone)(1:lnblnk(TITLE(izone)))
-        iside=1; isize=1; ifont=1
-        call viewtext(ETEXT,iside,isize,ifont)
       ENDIF
 
 C Help text for this menu.
@@ -325,6 +302,10 @@ C Conflation options.
 
 C Geometry and Gridding
         call CFDGGRD(izone,IER)
+
+C Recalculate gridding in case it has changed.
+        CALL GRID(ier)
+        CALL NEW2OLD
       ELSEIF(INO.EQ.6)THEN 
 
 C Solution Variables and Initial Conditions
@@ -406,7 +387,12 @@ C (the east (4,*) is for curvilinear gridding).
      &             CALLC(MNZ),KEMDL(MNZ),BUOY(MNZ),BOUSSI(MNZ),
      &             ZEROT(MNZ),ZandKE(MNZ),MITzero(MNZ)
 
-      COMMON/CFDVIS/ISHSB,ISHAO,IFACES,ISHBLK
+      COMMON/CFDVIS/HAS_GEOM,ISHSB,ISHAO,IFACES,ISHBLK,ISHGEO,INITD
+      logical HAS_GEOM
+      character INITD*6
+
+C 3D visualisation mode.
+      COMMON/MODVIS/IVISMOD
       common/param2/TITLE(MNZ),CFTRFL(MNZ),LPHI(MNZ)
 
 C Arrays for sorting domains from (see code for comments).
@@ -419,8 +405,9 @@ C Arrays for sorting domains from (see code for comments).
       LOGICAL ZEROT,ZandKE,MITzero,vclose
 
       character ITEM(14)*36
-      character outs*124,outs248*248,ETEXT*82,zngeo*3
+      character outs*124,outs248*248,ETEXT*82
       CHARACTER*72 TITLE,CFTRFL,LPHI
+      integer zngeo
 
       integer iglib   ! if 1 then X11, if 2 then GTK, if 3 then text only.
       integer iorgt,ixendt,iyendt,izendt,izendet  ! for local editing
@@ -430,10 +417,12 @@ C Arrays for sorting domains from (see code for comments).
       integer iigl,iigr,iigt,iigb,iigw,iigwh
       integer iiw1,iiw2,iiw3,iiw4,iimenu
       integer iside,isize,ifont
+      integer ilf,igfw,igfh,ild,igdw,igdh
 #else
       integer*8 iigl,iigr,iigt,iigb,iigw,iigwh
       integer*8 iiw1,iiw2,iiw3,iiw4,iimenu
       integer*8 iside,isize,ifont
+      integer*8 ilf,igfw,igfh,ild,igdw,igdh
 #endif
 
 C For help messages
@@ -472,15 +461,16 @@ C Check if we have vertex at ends of axis data.
 C Display zone geometry with vertex numbers to aid in selection
 C Restore standard graphics window variables.
         if(MMOD.EQ.8)then
-          iglib = igraphiclib()  ! find out if X11 or GTK or text support only.
-          if(iglib.eq.1)then
-            CALL feedbox(menuchw,2,igfw,igfh)
-            CALL opengdisp(menuchw,LIMTTY,2,igdw,igdh)
-          endif
 
 C Setup and pass in parameters to win3d.
           iiw1=4; iiw2=1; iiw3=1; iiw4=3; iimenu=menuchw
           iigl=igl; iigr=igr; iigt=igt; iigb=igb; iigw=igw; iigwh=igwh
+          ilf=2; ild=LIMTTY
+          iglib = igraphiclib()  ! find out if X11 or GTK or text support only.
+          if(iglib.eq.1)then
+            CALL feedbox(iimenu,ilf,igfw,igfh)
+            CALL opengdisp(iimenu,ild,ilf,igdw,igdh)
+          endif
           CALL win3d(iimenu,iiw1,iiw2,iiw3,iiw4,
      &      iigl,iigr,iigt,iigb,iigw,iigwh)
           igl=int(iigl); igr=int(iigr); igt=int(iigt); igb=int(iigb)
@@ -550,6 +540,9 @@ C Y axis end point).
 C No cancels so instanciate variables.
         IORG(ICFD)=iorgt
         ixend(ICFD)=ixendt; iyend(ICFD)=iyendt; izend(ICFD)=izendt
+        IVISMOD=2
+        HAS_GEOM=.TRUE.
+        ISHSB=-1; ISHAO=-1; IFACES=1; ISHBLK=-1
       endif
 
 C Make sure axes are orthogonal, as dfs only supports Cartesian coordinates.
@@ -620,7 +613,7 @@ C Set-up data for menu.
    14 INO=-4
 
 C Check for gridding errors.
-      if (xgrid.AND.ygrid.AND.zgrid) then
+      if (origin.AND.xgrid.AND.ygrid.AND.zgrid) then
         griderr=.FALSE.
       else
         griderr=.TRUE.
@@ -674,35 +667,7 @@ C Recalculate gridding in case this has changed.
         CALL GRID(ier)
         call NEW2OLD
 
-C Display domain
-        if (IFACES.lt.0) then
-          write(zngeo,'(a)')'zn '
-        else
-          write(zngeo,'(a)')'---'
-        endif
-        if(abs(IFACES).eq.1)then
-          call VGRID3D(zngeo,'xyz',izone)
-        elseif(abs(IFACES).eq.2)then
-          call VGRID3D(zngeo,'xzg',izone)
-        elseif(abs(IFACES).eq.3)then
-          call VGRID3D(zngeo,'yzg',izone)
-        elseif(abs(IFACES).eq.4)then
-          call VGRID3D(zngeo,'xyg',izone)
-        endif
-        if (ISHSB.eq.1) then
-          call VSB3D(0)
-        endif
-        if (ISHAO.eq.1) then
-          call VAO3D(0)        
-        endif
-        if (ISHBLK.eq.1) then
-          call VSBL3D(0)  ! for testing of blockages
-        endif
-      
-        WRITE(ETEXT,'(2A)')'Domain: ',
-     &    TITLE(izone)(1:lnblnk(TITLE(izone)))
-        iside=1; isize=1; ifont=1
-        call viewtext(ETEXT,iside,isize,ifont)
+        call redraw(IER)
       ENDIF
 
 C Help text for this menu.
@@ -716,15 +681,16 @@ C Display menu.
 C Display zone geometry with vertex numbers to aid in selection
 C Restore standard graphics window variables.
         if(MMOD.EQ.8)then
-          iglib = igraphiclib()  ! find out if X11 or GTK or text support only.
-          if(iglib.eq.1)then
-            CALL feedbox(menuchw,2,igfw,igfh)
-            CALL opengdisp(menuchw,LIMTTY,2,igdw,igdh)
-          endif
 
 C Setup and pass in parameters to win3d.
           iiw1=4; iiw2=1; iiw3=1; iiw4=3; iimenu=menuchw
           iigl=igl; iigr=igr; iigt=igt; iigb=igb; iigw=igw; iigwh=igwh
+          ilf=2; ild=LIMTTY
+          iglib = igraphiclib()  ! find out if X11 or GTK or text support only.
+          if(iglib.eq.1)then
+            CALL feedbox(iimenu,ilf,igfw,igfh)
+            CALL opengdisp(iimenu,ild,ilf,igdw,igdh)
+          endif
           CALL win3d(iimenu,iiw1,iiw2,iiw3,iiw4,
      &      iigl,iigr,iigt,iigb,iigw,iigwh)
           igl=int(iigl); igr=int(iigr); igt=int(iigt); igb=int(iigb)
@@ -1969,7 +1935,9 @@ C      common/gzonpik/izgfoc,nzg,nznog(mcom)
      &          VOLArea(MNVLS,MNZ),VOLPres(MNVLS,MNZ),
      &          VOLPol(MCTM,MNVLS,MNZ)
       common/GRIDEFN/origin,xgrid,ygrid,zgrid,zegrid,ortho
-      COMMON/CFDVIS/ISHSB,ISHAO,IFACES,ISHBLK
+      COMMON/CFDVIS/HAS_GEOM,ISHSB,ISHAO,IFACES,ISHBLK,ISHGEO,INITD
+      logical HAS_GEOM
+      character INITD*6
       common/param2/TITLE(MNZ),CFTRFL(MNZ),LPHI(MNZ)
       COMMON/NDMAP/NOPEN(MNZ),MFNODE(MCFND,MNZ),IOPENi(MCFND,MNZ),
      &             IOPENf(MCFND,MNZ),JOPENi(MCFND,MNZ),
@@ -2097,34 +2065,7 @@ C Recalculate gridding in case this has changed.
         CALL GRID(ier)
         call NEW2OLD
 
-C Display domain.
-        if (IFACES.lt.0) then
-          write(zngeo,'(a)')'zn '
-        else
-          write(zngeo,'(a)')'---'
-        endif
-        if(abs(IFACES).eq.1)then
-          call VGRID3D(zngeo,'xyz',izone)
-        elseif(abs(IFACES).eq.2)then
-          call VGRID3D(zngeo,'xzg',izone)
-        elseif(abs(IFACES).eq.3)then
-          call VGRID3D(zngeo,'yzg',izone)
-        elseif(abs(IFACES).eq.4)then
-          call VGRID3D(zngeo,'xyg',izone)
-        endif
-        if (ISHSB.eq.1) then
-          call VSB3D(0)
-        endif
-        if (ISHAO.eq.1) then
-          call VAO3D(0)        
-        endif
-        if (ISHBLK.eq.1) then
-          call VSBL3D(0)  ! for testing of blockages
-        endif    
-        WRITE(ETEXT,'(2A)')'Domain: ',
-     &    TITLE(izone)(1:lnblnk(TITLE(izone)))
-        iside=1; isize=1; ifont=1
-        call viewtext(ETEXT,iside,isize,ifont)
+        call redraw(ier)
       ENDIF
 
 C Help text for this menu.
@@ -2385,7 +2326,9 @@ C#include "building.h"
      &             FIXK(MCFND,MNZ),FIXE(MCFND,MNZ),
      &             IWOPEN(MCFND,MNZ),ICFDCN(MCFND,MNZ),
      &             ICNACT(MCFND,MNZ),IVOLN(MCFND,MNZ)
-      COMMON/CFDVIS/ISHSB,ISHAO,IFACES,ISHBLK
+      COMMON/CFDVIS/HAS_GEOM,ISHSB,ISHAO,IFACES,ISHBLK,ISHGEO,INITD
+      logical HAS_GEOM
+      character INITD*6
 
       character ITMSS(13)*50
       character face*6,ltmp*17,t12*12,d12*12
@@ -2499,32 +2442,18 @@ C Create a menu showing definitions for different conflation schemes.
       NITMS=13
 
       IF(MMOD.EQ.8)THEN
-C Display domain, but override values in CFDVIS; always
-C display solid and air flow boundary conditions, highlighting
-C the chosen one, and never display zone geometry
-        write(zngeo,'(a)')'---'
-        if(abs(IFACES).eq.1)then
-          call VGRID3D(zngeo,'xyz',ICP)
-        elseif(abs(IFACES).eq.2)then
-          call VGRID3D(zngeo,'xzg',ICP)
-        elseif(abs(IFACES).eq.3)then
-          call VGRID3D(zngeo,'yzg',ICP)
-        elseif(abs(IFACES).eq.4)then
-          call VGRID3D(zngeo,'xyg',ICP)
-        endif
-        call VSB3D(0)
 C Find index in old commons of opening specified by index IAO in new commons
         do 638 I=1,NOPEN(ICFD)
           if (IAO.eq.IVOLN(I,ICFD)) then
-            call VAO3D(I)
+            ISHAO_TMP=ISHAO
+            ISHGEO_TMP=ISHGEO
+            ISHAO=I
+            ISHGEO=0
+            CALL redraw(IER)
+            ISHAO=ISHAO_TMP
+            ISHGEO=ISHGEO_TMP
           endif
-638       continue   
-        WRITE(ETEXT,'(2A)')'Domain: ',
-     &    TITLE(ICP)(1:lnblnk(TITLE(ICP)))
-        iside=1
-        isize=1
-        ifont=1
-        call viewtext(ETEXT,iside,isize,ifont)
+638     continue
       ENDIF
 
 C Help text for this menu.
@@ -2712,7 +2641,9 @@ C #include "prj3dv.h"
      &          VOLCO2(MNVLS,MNZ),VOLVel(MNVLS,MNZ),VOLDir(MNVLS,MNZ,2),
      &          VOLArea(MNVLS,MNZ),VOLPres(MNVLS,MNZ),
      &          VOLPol(MCTM,MNVLS,MNZ)
-      COMMON/CFDVIS/ISHSB,ISHAO,IFACES,ISHBLK
+      COMMON/CFDVIS/HAS_GEOM,ISHSB,ISHAO,IFACES,ISHBLK,ISHGEO,INITD
+      logical HAS_GEOM
+      character INITD*6
       common/param2/TITLE(MNZ),CFTRFL(MNZ),LPHI(MNZ)
 
       COMMON/Sbdary/NSB(MNZ),ISBi(MNSBZ,MNZ),ISBf(MNSBZ,MNZ),
@@ -2884,30 +2815,18 @@ C        write(ITMSS(9),'(a,i4)')'f Handshaking: ',IVConfl(ISB,ICFD)
       NITMS=13
 
       IF(MMOD.EQ.8)THEN
-C Display domain, but override values in CFDVIS; always
-C display solid and air flow boundary conditions, highlighting
-C the chosen one, and never display zone geometry.
-        write(zngeo,'(a)')'---'
-        if(abs(IFACES).eq.1)then
-          call VGRID3D(zngeo,'xyz',ICP)
-        elseif(abs(IFACES).eq.2)then
-          call VGRID3D(zngeo,'xzg',ICP)
-        elseif(abs(IFACES).eq.3)then
-          call VGRID3D(zngeo,'yzg',ICP)
-        elseif(abs(IFACES).eq.4)then
-          call VGRID3D(zngeo,'xyg',ICP)
-        endif
 C Find index in old commons of boundary specified by index ISB in new commons
         do 195 I=1,NSB(ICFD)
           if (ISB.eq.IVOLNSB(I,ICFD)) then
-            call VSB3D(I)
+            ISHSB_TMP=ISHSB
+            ISHGEO_TMP=ISHGEO
+            ISHSB=I
+            ISHGEO=0
+            CALL redraw(IER)
+            ISHSB=ISHSB_TMP
+            ISHGEO=ISHGEO_TMP
           endif
-195       continue
-        call VAO3D(0)
-        WRITE(ETEXT,'(2A)')'Domain: ',
-     &    TITLE(ICP)(1:lnblnk(TITLE(ICP)))
-        iside=1; isize=1; ifont=1
-        call viewtext(ETEXT,iside,isize,ifont)
+195     continue
       ENDIF
 
 C Help text for this menu.
@@ -3024,7 +2943,9 @@ C IER=0 indicates no error.
      &SPMTYP(MSPMNO),SSNAME(MSPMNO),NSPMNO,SSLINK1(MSPMNO,MCONTM)
       common/cfdconf/ICFBLD(MNZ),ICFMFS(MNZ)
       COMMON/CFDMFS1/ICFDNOD(MNZ),ICFDCNN(MNVLS,MNZ)
-      COMMON/CFDVIS/ISHSB,ISHAO,IFACES,ISHBLK
+      COMMON/CFDVIS/HAS_GEOM,ISHSB,ISHAO,IFACES,ISHBLK,ISHGEO,INITD
+      logical HAS_GEOM
+      character INITD*6
       common/param2/TITLE(MNZ),CFTRFL(MNZ),LPHI(MNZ)
       common/pophelp/h(60)   ! needed for dynamic popup
       character H*72
@@ -3167,35 +3088,7 @@ C Recalculate gridding in case this has changed.
         CALL GRID(ier)
         call NEW2OLD
 
-C Display domain
-        if (IFACES.lt.0) then
-          write(zngeo,'(a)')'zn '
-        else
-          write(zngeo,'(a)')'---'
-        endif
-        if(abs(IFACES).eq.1)then
-          call VGRID3D(zngeo,'xyz',izone)
-        elseif(abs(IFACES).eq.2)then
-          call VGRID3D(zngeo,'xzg',izone)
-        elseif(abs(IFACES).eq.3)then
-          call VGRID3D(zngeo,'yzg',izone)
-        elseif(abs(IFACES).eq.4)then
-          call VGRID3D(zngeo,'xyg',izone)
-        endif
-        if (ISHSB.eq.1) then
-          call VSB3D(0)
-        endif
-        if (ISHAO.eq.1) then
-          call VAO3D(0)        
-        endif
-        if (ISHBLK.eq.1) then
-          call VSBL3D(0)  ! for testing of blockages
-        endif
-      
-        WRITE(ETEXT,'(2A)')'Domain: ',
-     &    TITLE(izone)(1:lnblnk(TITLE(izone)))
-        iside=1; isize=1; ifont=1
-        call viewtext(ETEXT,iside,isize,ifont)
+        call redraw(ier)
       ENDIF
 
 C Display menu.
@@ -3732,7 +3625,9 @@ C IER=0 indicates no error.
 
       common/blksso/NBLK(MNZ),INBLK(MNVLS,MNZ),NSSO(MNZ),
      &          INSSO(MNVLS,MNZ)
-      COMMON/CFDVIS/ISHSB,ISHAO,IFACES,ISHBLK
+      COMMON/CFDVIS/HAS_GEOM,ISHSB,ISHAO,IFACES,ISHBLK,ISHGEO,INITD
+      logical HAS_GEOM
+      character INITD*6
  
       character ITMSS(14)*50,FACE*6
       character ltmp*16,t12*12,d12*12,t20*20
@@ -3837,30 +3732,17 @@ C Debug echo the coordinates of the blockage.
       NITMS=14
 
       IF(MMOD.EQ.8)THEN
-C Display domain, but override values in CFDVIS; always
-C display solid and air flow boundary conditions, highlighting
-C the chosen one, and never display zone geometry.
-        write(zngeo,'(a)')'---'
-        if(abs(IFACES).eq.1)then
-          call VGRID3D(zngeo,'xyz',ICP)
-        elseif(abs(IFACES).eq.2)then
-          call VGRID3D(zngeo,'xzg',ICP)
-        elseif(abs(IFACES).eq.3)then
-          call VGRID3D(zngeo,'yzg',ICP)
-        elseif(abs(IFACES).eq.4)then
-          call VGRID3D(zngeo,'xyg',ICP)
-        endif
-        call VSB3D(0)
-        call VAO3D(0)
         do 639 I=1,NBLK(ICFD)
           if (ISB.eq.INBLK(I,ICFD)) then
-            call VSBL3D(I)
+            ISHBLK_TMP=ISHBLK
+            ISHGEO_TMP=ISHGEO
+            ISHBLK=I
+            ISHGEO=0
+            CALL redraw(IER)
+            ISHBLK=ISHBLK_TMP
+            ISHGEO=ISHGEO_TMP
           endif
 639     continue   
-        WRITE(ETEXT,'(2A)')'Domain: ',
-     &    TITLE(ICP)(1:lnblnk(TITLE(ICP)))
-        iside=1; isize=1; ifont=1
-        call viewtext(ETEXT,iside,isize,ifont)
       ENDIF
 
 C Help text for this menu.

@@ -635,8 +635,8 @@ C Add new image definition.
 
 C Display grid, to aid user in picking a plane.
           call INIT_CFDTRANS(IER)
-          call VGRID3D('zn ','xyz',ICP)
-
+          call VGRID3D(ICP,1)
+  
           IF(IWM.EQ.1)THEN
 
 C View from south.
@@ -923,7 +923,7 @@ C View direction and layer.
 
 C Display grid, to aid user in picking a plane.
           call INIT_CFDTRANS(IER)
-          call VGRID3D('zn ','xyz',ICP)
+          call VGRID3D(ICP,1)
 
           IF(IWM.EQ.1)THEN
 
@@ -2139,7 +2139,7 @@ C Clear all selections (time series plot).
           call MOFLOWSU
         else
 
-C Occupancy filter (all types bar time series plot).
+C Occupancy filter (all types except time series plot).
 C Occupancy filter for flow results requires the user to specify>>
 C a thermal zone.
           if(iocupf.eq.0)then
@@ -2474,7 +2474,7 @@ C pick one manually.
 C If in graphic mode, display grid to aid user in picking a cell.
           if (MMOD.eq.8) then
             call INIT_CFDTRANS(IER)
-            call VGRID3D('zn ','xyz',ICP)
+            call VGRID3D(ICP,1)
           endif
 
           ilayer=IMFLIST(NMFLST,1)
@@ -2572,7 +2572,7 @@ C highlights. Also decrement ?layer, because outputs from FDCFDPT do
 C consider additional 
           if (iopt.eq.2.or.iopt.eq.3) then
             call INIT_CFDTRANS(IER)
-            call VGRID3D('zn ','xyz',ICP)
+            call VGRID3D(ICP,1)
           endif
 
           call V1CEL3D(ilayer,jlayer,klayer)

@@ -333,6 +333,7 @@ C enthmaxy enthalpy y axis maximum
       integer iicol
       integer iigl,iigr,iigt,iigb,iigw,iigwh
       integer iiw1,iiw2,iiw3,iiw4,iimenu
+      integer ilf,igfw,igfh,ild,igdw,igdh
 #else
       integer*8 igwid,igheight  ! for use with axiscale
       integer*8 ipos,isize      ! for use with etlabel
@@ -340,6 +341,7 @@ C enthmaxy enthalpy y axis maximum
       integer*8 iicol
       integer*8 iigl,iigr,iigt,iigb,iigw,iigwh
       integer*8 iiw1,iiw2,iiw3,iiw4,iimenu
+      integer*8 ilf,igfw,igfh,ild,igdw,igdh
 #endif
 
       PATMOS=1013.25
@@ -356,12 +358,13 @@ C Colours used are nb 15 = grey40, nb 17 =grey60.
       if(iglib.eq.1)then
         LIMTTY=8
         LIMIT =8
-        call feedbox(menuchw,2,igfw,igfh)      
-        call opengdisp(menuchw,LIMTTY,2,igdw,igdh)
 
 C Setup and pass in parameters to win3d.
         iiw1=10; iiw2=15; iiw3=5; iiw4=3; iimenu=menuchw
         iigl=igl; iigr=igr; iigt=igt; iigb=igb; iigw=igw; iigwh=igwh
+        ilf=2; ild=LIMTTY
+        call feedbox(iimenu,ilf,igfw,igfh)      
+        call opengdisp(iimenu,ild,ilf,igdw,igdh)
         CALL win3d(iimenu,iiw1,iiw2,iiw3,iiw4,
      &    iigl,iigr,iigt,iigb,iigw,iigwh)
         igl=int(iigl); igr=int(iigr); igt=int(iigt); igb=int(iigb)

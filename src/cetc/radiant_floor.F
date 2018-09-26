@@ -373,8 +373,10 @@ C     specific heat of slab system
 
 C     Check if the specified injection node is valid -----------------
       IF(In .LT. 1 .OR. In .GT. Ncentr+1) THEN
-         WRITE(outs,*)'Radiant floor fatal error: injection node ',In,
-     &' not in range 1 to',Ncentr+1
+         WRITE(outs,'(A,A,I3,A,I3,A,I3,A,I3)')
+     &         'Radiant floor fatal error: ',
+     &         'Zone ',Iz,', Surface ',Is,' injection node ',
+     &                       In,' not in range 1 to',(Ncentr+1)
          call edisp(iuout,outs)
          WRITE(*,outs)
          WRITE(*,*)'Source error: radiant floor.  Simulation halted'

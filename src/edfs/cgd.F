@@ -51,7 +51,10 @@ C IC = zone number (if in dfs set to 1)
      3            SEW(ntcelx),SNS(ntcely),SHL(ntcelz),
      4            XU(ntcelx),YV(ntcely),ZW(ntcelz)
       COMMON/ALL/NI,NJ,NK,NIM1,NJM1,NKM1,NIM2,NJM2,NKM2
-      COMMON/CFDVIS/ISHSB,ISHAO,IFACES,ISHBLK
+      COMMON/CFDVIS/HAS_GEOM,ISHSB,ISHAO,IFACES,ISHBLK,ISHGEO,INITD
+      logical HAS_GEOM
+      character INITD*6
+      COMMON/MODVIS/IVISMOD
 
       CHARACTER ITEM(16)*32
       character outs*124,ETEXT*30
@@ -105,8 +108,7 @@ C Set wire-frame display options so that we see only surfaces,
 C we are focused on this zone, no origin no grid, no surface normals
         itorg=1; itgrd=1; itsnr=1; 
       ENDIF
-      CALL INICNT
-      CALL GRID(ier)
+      IVISMOD=2
 
 C Let the user pick a menu item.
    1  INO=-5
@@ -114,9 +116,15 @@ C Let the user pick a menu item.
       ITEM(2) ='b Plot x-z plane (2D) grid     '
       ITEM(3) ='c Plot y-z plane (2D) grid     '
       ITEM(4) =' --3D grid options -------     '
-      ITEM(5) ='d  geometry+grid               '
-      ITEM(6) ='e  geometry+grid+solid         '
-      ITEM(7) ='f  geometry+grid+solid+openings'
+      if (HAS_GEOM) then
+        ITEM(5) ='d  geometry+grid               '
+        ITEM(6) ='e  geometry+grid+solid         '
+        ITEM(7) ='f  geometry+grid+solid+openings'
+      else
+        ITEM(5) ='   option not available        '
+        ITEM(6) ='   option not available        '
+        ITEM(7) ='   option not available        '
+      endif
       ITEM(8) ='g  only grid                   '
       ITEM(9) ='h  only grid+solid             '
       ITEM(10)='i  only grid+solid+openings    '
@@ -163,21 +171,9 @@ C << how about an option to place grid on one face only ?? >>
      &    'south->north','east->west','high->low',IWO,nbhelp)
 
 C Initialise building - CFD domain transformations.
-        CALL INIT_CFDTRANS(IER)
-        if (IER.ne.0) then
-          call usrmsg(' Cannot draw this CFD domain in 3D',' ','W')
-          goto 1
-        endif
-        if(iwo.eq.1)then
-          call VGRID3D('zn ','xyz',ic)
-        elseif(iwo.eq.2)then
-          call VGRID3D('zn ','xzg',ic)
-        elseif(iwo.eq.3)then
-          call VGRID3D('zn ','yzg',ic)
-        elseif(iwo.eq.4)then
-          call VGRID3D('zn ','xyg',ic)
-        endif
-        ISHSB=0; ISHAO=0; ISHBLK=0; IFACES=-iwo
+        ISHSB=0; ISHAO=0; IFACES=iwo; ISHBLK=0; ISHGEO=1
+        MODIFYVIEW=.TRUE.
+        call redraw(IER)
       ELSEIF(INO.EQ.6.and.GRMODE)THEN
 
 C 3D gridding with zone geometry and solids.
@@ -185,22 +181,9 @@ C 3D gridding with zone geometry and solids.
      &    'south->north','east->west','high->low',IWO,nbhelp)
 
 C Initialise building - CFD domain transformations.
-        CALL INIT_CFDTRANS(IER)
-        if (IER.ne.0) then
-          call usrmsg(' Cannot draw this CFD domain in 3D',' ','W')
-          goto 1
-        endif
-        if(iwo.eq.1)then
-          call VGRID3D('zn ','xyz',ic)
-        elseif(iwo.eq.2)then
-          call VGRID3D('zn ','xzg',ic)
-        elseif(iwo.eq.3)then
-          call VGRID3D('zn ','yzg',ic)
-        elseif(iwo.eq.4)then
-          call VGRID3D('zn ','xyg',ic)
-        endif
-        call VSB3D(0)
-        ISHSB=1; ISHAO=0; ISHBLK=0; IFACES=-iwo
+        ISHSB=-1; ISHAO=0; IFACES=iwo; ISHBLK=-1; ISHGEO=1
+        MODIFYVIEW=.TRUE.
+        call redraw(IER)
       ELSEIF(INO.EQ.7.and.GRMODE)THEN
 
 C 3D gridding with zone geometry and solids and openings.
@@ -208,24 +191,9 @@ C 3D gridding with zone geometry and solids and openings.
      &    'south->north','east->west','high->low',IWO,nbhelp)
 
 C Initialise building - CFD domain transformations.
-        CALL INIT_CFDTRANS(IER)
-        if (IER.ne.0) then
-          call usrmsg(' Cannot draw this CFD domain in 3D',' ','W')
-          goto 1
-        endif
-        if(iwo.eq.1)then
-          call VGRID3D('zn ','xyz',ic)
-        elseif(iwo.eq.2)then
-          call VGRID3D('zn ','xzg',ic)
-        elseif(iwo.eq.3)then
-          call VGRID3D('zn ','yzg',ic)
-        elseif(iwo.eq.4)then
-          call VGRID3D('zn ','xyg',ic)
-        endif
-        call VSB3D(0)
-        call VAO3D(0) 
-        call VSBL3D(0)  ! for testing of blockages
-        ISHSB=1; ISHAO=1; ISHBLK=1; IFACES=-iwo
+        ISHSB=-1; ISHAO=-1; IFACES=iwo; ISHBLK=-1; ISHGEO=1
+        MODIFYVIEW=.TRUE.
+        call redraw(IER)
       ELSEIF(INO.EQ.8.and.GRMODE)THEN
 
 C 3D gridding without zone geometry.
@@ -233,21 +201,9 @@ C 3D gridding without zone geometry.
      &    'south->north','east_.west','high->low',IWO,nbhelp)
 
 C Initialise building - CFD domain transformations.
-        CALL INIT_CFDTRANS(IER)
-        if (IER.ne.0) then
-          call usrmsg(' Cannot draw this CFD domain in 3D',' ','W')
-          goto 1
-        endif
-        if(iwo.eq.1)then
-          call VGRID3D('---','xyz',ic)
-        elseif(iwo.eq.2)then
-          call VGRID3D('---','xzg',ic)
-        elseif(iwo.eq.3)then
-          call VGRID3D('---','yzg',ic)
-        elseif(iwo.eq.4)then
-          call VGRID3D('---','xyg',ic)
-        endif
-        ISHSB=0; ISHAO=0; ISHBLK=0; IFACES=iwo
+        ISHSB=0; ISHAO=0; IFACES=iwo; ISHBLK=0; ISHGEO=0
+        MODIFYVIEW=.TRUE.
+        call redraw(IER)
       ELSEIF(INO.EQ.9.and.GRMODE)THEN
 
 C 3D gridding without zone geometry and with solids.
@@ -255,22 +211,9 @@ C 3D gridding without zone geometry and with solids.
      &    'south->north','east->west','high->low',IWO,nbhelp)
 
 C Initialise building - CFD domain transformations.
-        CALL INIT_CFDTRANS(IER)
-        if (IER.ne.0) then
-          call usrmsg(' Cannot draw this CFD domain in 3D',' ','W')
-          goto 1
-        endif
-        if(iwo.eq.1)then
-          call VGRID3D('---','xyz',ic)
-        elseif(iwo.eq.2)then
-          call VGRID3D('---','xzg',ic)
-        elseif(iwo.eq.3)then
-          call VGRID3D('---','yzg',ic)
-        elseif(iwo.eq.4)then
-          call VGRID3D('---','xyg',ic)
-        endif
-        call VSB3D(0)
-        ISHSB=1; ISHAO=0; ISHBLK=0; IFACES=iwo
+        ISHSB=-1; ISHAO=0; IFACES=iwo; ISHBLK=-1; ISHGEO=0
+        MODIFYVIEW=.TRUE.
+        call redraw(IER)
       ELSEIF(INO.EQ.10.and.GRMODE)THEN
 
 C 3D gridding without zone geometry and with solids and openings.
@@ -278,24 +221,9 @@ C 3D gridding without zone geometry and with solids and openings.
      &    'south->north','east->west','high->low',IWO,nbhelp)
 
 C Initialise building - CFD domain transformations.
-        CALL INIT_CFDTRANS(IER)
-        if (IER.ne.0) then
-          call usrmsg(' Cannot draw this CFD domain in 3D',' ','W')
-          goto 1
-        endif
-        if(iwo.eq.1)then
-          call VGRID3D('---','xyz',ic)
-        elseif(iwo.eq.2)then
-          call VGRID3D('---','xzg',ic)
-        elseif(iwo.eq.3)then
-          call VGRID3D('---','yzg',ic)
-        elseif(iwo.eq.4)then
-          call VGRID3D('---','xyg',ic)
-        endif
-        call VSB3D(0)
-        call VAO3D(0)
-        call VSBL3D(0)  ! for testing of blockages
-        ISHSB=1; ISHAO=1; ISHBLK=1; IFACES=iwo
+        ISHSB=-1; ISHAO=-1; IFACES=iwo; ISHBLK=-1; ISHGEO=0
+        MODIFYVIEW=.TRUE.
+        call redraw(IER)
       ELSEIF(INO.EQ.12)THEN
 
 C Text listings
@@ -594,20 +522,20 @@ C Store the scaling parameters used in drawing the axes.
 
 
 C ********************* VGRID3D *********************
-C VGRID3D - draws the CFD domain gridding in 3d. The paremater
-C act has the following meanings:
-C   zact = zn then draw the zone geometry as well.
-C   zact = - do not draw zone geometry.
-C   gact = xyg then draw only top and bottom face grid
-C   gact = yzg then draw only east and west face grid
-C   gact = xzg then draw only north and south face grid
-C   gact = xyz then draw all face grids
-C izone is the index of the zone to be drawn (if zero do not bother`).
-      SUBROUTINE VGRID3D(zact,gact,izone)
+C VGRID3D - draws the CFD domain gridding in 3d.
+C   iz = 0 then do not draw zone geometry.
+C   iz > 0 then draw geometry for zone iz.
+C   ig = 1 then draw all face grids.
+C   ig = 2 then draw only north and south face grid.
+C   ig = 3 then draw only east and west face grid.
+C   ig = 4 then draw only top and bottom face grid.
+      SUBROUTINE VGRID3D(iz,ig)
 #include "building.h"
 #include "geometry.h"
 #include "prj3dv.h"
 #include "cfd.h"
+
+      integer iz,ig
 
       COMMON/SPAD/MMOD,LIMIT,LIMTTY
       integer ifs,itfs,imfs
@@ -633,7 +561,7 @@ C izone is the index of the zone to be drawn (if zero do not bother`).
 
       logical greyok,odd
       integer im
-      character gact*3,zact*3,btemp*6
+      character btemp*6
       real XPP,YPP,ZPP  ! points taking into account zone minimum
       real X0,Y0,Z0
       real DX,DY,DHX,DHY ! for intermediate label points 
@@ -694,13 +622,13 @@ C Determine the 2D coords of the site extremes.
       call linescale(iigl,Xadd,sca,iigb,Yadd,sca)
 
 C Debug.
-C      write(6,*) 'zact gact ',zact,gact
+C      write(6,*) 'iz ig ',iz,ig
 
 C Reset to smallest font for drawing i j k labels.
       IF(IFS.GT.0)CALL winfnt(0)
 
 C Loop through all X-Y plane grid lines.
-      if(gact.eq.'xyz'.or.gact.eq.'xyg')then
+      if(ig.eq.1.or.ig.eq.4)then
         do 10 I=2,NI    ! I traverses along south X axis cells
           do 20 J=2,NJ  ! J traverses along west Y axis cells
 
@@ -794,7 +722,7 @@ C Draw the dotted line after casting to local variable.
       endif
 
 C Loop through all Z-Y plane grid lines.
-      if(gact.eq.'xyz'.or.gact.eq.'yzg')then
+      if(ig.eq.1.or.ig.eq.3)then
         do 30 K=2,NK    ! is along the West Z face
           do 40 J=2,NJ  ! is along the West Y face
 
@@ -825,7 +753,7 @@ C Get half way point for west face cells.
                 endif
               endif
             endif
-            if(gact.eq.'yzg')then
+            if(ig.eq.3)then
               if(K.eq.2.and.J.lt.NJ)then
                 btemp='   '  ! along the left lower Y
                 write(btemp,'(a,i2.2)') 'j',j-1
@@ -873,7 +801,7 @@ C Draw line to end point.
       endif
 
 C Loop through all Z-X plane grid lines.
-      if(gact.eq.'xyz'.or.gact.eq.'xzg')then
+      if(ig.eq.1.or.ig.eq.2)then
         do 50 K=2,NK    ! along South face X axis
           do 60 I=2,NI  ! along South face Z axis
 
@@ -890,7 +818,7 @@ C Get half way point for south face cells.
             CALL ORTTRN(X0,Y0,Z0,ETSMAT,X1,Y1,Z1,IERR)
             call u2pixel(X1,Y1,iixxhs,iixyhs)
 
-            if(gact.eq.'xzg')then
+            if(ig.eq.2)then
               if(k.eq.2.and.I.lt.NI)then
                 btemp='   '   ! labels along lower X axis
                 write(btemp,'(a,i2.2)') 'i',i-1
@@ -913,7 +841,7 @@ C Transform end point to screen coords.
             CALL ORTTRN(X0,Y0,Z0,ETSMAT,X1,Y1,Z1,IERR)
             call u2pixel(X1,Y1,iix,iiy)
 
-            if(gact.eq.'xzg')then
+            if(ig.eq.2)then
               if(I.eq.2.and.K.lt.NK)then
                 btemp='   '   ! labels along left vertical
                 write(btemp,'(a,i2.2)') 'k',k-1
@@ -960,11 +888,11 @@ C Restore the original font size.
 
 C If the zone geometry is requested then use some of the code from
 C cread3dv.F to draw the surfaces of the zone in bold lines.
-      if(zact(1:2).eq.'zn'.and.izone.ne.0)then
+      if(iz.gt.0)then
 
 C Continue on with any surfaces in the zone.
-  205   DO 1000 I=1,NZSUR(izone)
-          icc=IZSTOCN(izone,I)
+  205   DO 1000 I=1,NZSUR(iz)
+          icc=IZSTOCN(iz,I)
 
 C Copy polygon for Surface I into structure A for compatibility with
 C viewer format 'holes' in surfaces.
@@ -975,9 +903,9 @@ C IAPNT = Pointer to first vertex of polygon
           NAP = NZNVER(icc)
           DO 1100 J = 1,NZNVER(icc)
             K = NZJVN(icc,J)
-            AX(J) = VCOORD(izone,K,1)
-            AY(J) = VCOORD(izone,K,2)
-            AZ(J) = VCOORD(izone,K,3)
+            AX(J) = VCOORD(iz,K,1)
+            AY(J) = VCOORD(iz,K,2)
+            AZ(J) = VCOORD(iz,K,3)
             IANXT(J) = J + 1
  1100     CONTINUE
 
@@ -1872,14 +1800,11 @@ C orthogonal matrix, hence the inverse equals the transpose.
 #include "cfd.h"
 
       COMMON/OUTIN/IUOUT,IUIN
-
       common/GRDVRTS/iorg(MNZ),ixend(MNZ),iyend(MNZ),izend(MNZ),
      &  izende(MNZ)
       COMMON/ICFNOD/ICFD,ICP
-
-      common/CFD2GEOM/Ox,Oy,Oz,Uxu,Uxv,Uxw,Uyu,Uyv,Uyw,Uzu,Uzv,Uzw,initd
+      common/CFD2GEOM/Ox,Oy,Oz,Uxu,Uxv,Uxw,Uyu,Uyv,Uyw,Uzu,Uzv,Uzw
       real Ox,Oy,Oz,Uxu,Uxv,Uxw,Uyu,Uyv,Uyw,Uzu,Uzv,Uzw
-      logical initd
 
 C Get coordinates of CFD origin vertex, in terms of the geometry domain.
       Ox=VCOORD(ICP,IORG(ICFD),1)
@@ -1932,14 +1857,30 @@ C Similarly for k axis.
       Uyw=vdy/crowa
       Uzw=vdz/crowa
 
-      if (IER.eq.0) then
-        initd=.true.
-      else
-        initd=.false.
+      if (IER.ne.0) then
         call edisp(iuout,
      &    'INIT_CFDTRANS: transformation initialisation failed')
       endif
   999 return
+      end
+
+C ************* INIT_CFDTRANS_NOGEOM
+C INIT_CFDTRANS_NOGEOM is a version of INIT_CFDTRANS that runs without
+C building geometry.  This is needed for viewing CFD domains that are
+C not associated with a building zone.
+
+      SUBROUTINE INIT_CFDTRANS_NOGEOM(IER)
+
+      COMMON/OUTIN/IUOUT,IUIN
+      common/CFD2GEOM/Ox,Oy,Oz,Uxu,Uxv,Uxw,Uyu,Uyv,Uyw,Uzu,Uzv,Uzw
+      real Ox,Oy,Oz,Uxu,Uxv,Uxw,Uyu,Uyv,Uyw,Uzu,Uzv,Uzw
+
+      Ox=0.0; Oy=0.0; Oz=0.0
+      Uxu=1.0; Uxv=0.0; Uxw=0.0
+      Uyu=0.0; Uyv=1.0; Uyw=0.0
+      Uzu=0.0; Uzv=0.0; Uzw=1.0
+
+      return
       end
 
 C ************* CFDTRANS
@@ -1960,16 +1901,8 @@ C this subroutine.
       real Xin,Yin,Zin,Xout,Yout,Zout      
 
       COMMON/OUTIN/IUOUT,IUIN
-
-      common/CFD2GEOM/Ox,Oy,Oz,Uxu,Uxv,Uxw,Uyu,Uyv,Uyw,Uzu,Uzv,Uzw,initd
+      common/CFD2GEOM/Ox,Oy,Oz,Uxu,Uxv,Uxw,Uyu,Uyv,Uyw,Uzu,Uzv,Uzw
       real Ox,Oy,Oz,Uxu,Uxv,Uxw,Uyu,Uyv,Uyw,Uzu,Uzv,Uzw
-      logical initd
-
-      if (.not.initd) then
-        call edisp(iuout,'CFDTRANS: transformations not initialised')
-        IER=1
-        goto 999
-      endif
 
       if (MODE.eq.1) then
         Xout=Ox+Uxu*Xin+Uxv*Yin+Uxw*Zin
@@ -2090,7 +2023,7 @@ C Upper back right corner of blockage.
       call u2pixel(X1,Y1,iix,iiy)
       iixv(8)=iix; iiyv(8)=iiy
 
-C Draw around cell in double lines is the usual order.
+C Draw around cell in double lines in the usual order.
       call edwline(iixv(1),iiyv(1),iixv(2),iiyv(2))
       call edwline(iixv(2),iiyv(2),iixv(3),iiyv(3))
       call edwline(iixv(3),iiyv(3),iixv(4),iiyv(4))
@@ -2317,3 +2250,84 @@ C Projection on high face.
 
       return
       END
+
+      SUBROUTINE CFDVIEW(IER)
+
+C CFDVIEW is essentially the equivalent of ADJVIEW in common3dv.F
+C for CFD visualisation.
+
+#include "cfd.h"
+#include "building.h"
+#include "prj3dv.h"
+
+      COMMON/ICFNOD/ICFD,ICP
+      COMMON/CFDVIS/HAS_GEOM,ISHSB,ISHAO,IFACES,ISHBLK,ISHGEO,INITD
+      logical HAS_GEOM
+      character INITD*6
+      common/param2/TITLE(MNZ),CFTRFL(MNZ),LPHI(MNZ)
+      CHARACTER*72 TITLE,CFTRFL,LPHI
+
+      character ETEXT*82,tmpstr*6
+
+C Check initialisation.
+      write(tmpstr,'(2I3.3)')ICFD,ICP
+      if (INITD.ne.tmpstr) then
+        write(6,*)'initialising'
+        CALL INICNT
+        CALL GRID(IER)
+        CALL NEW2OLD
+        if (HAS_GEOM) then
+          CALL INIT_CFDTRANS(IER)
+        else
+          CALL INIT_CFDTRANS_NOGEOM(IER)
+        endif
+        if (IER.ne.0) then
+          call usrmsg(' Cannot draw this CFD domain in 3D',' ','W')
+          goto 999
+        endif
+        write(INITD,'(2I3.3)')ICFD,ICP
+      endif
+
+      write(6,*)HAS_GEOM,ISHSB,ISHAO,IFACES,ISHBLK,ISHGEO
+
+C Draw grid.
+      if(ISHGEO.eq.1)then
+        call VGRID3D(ICP,IFACES)
+      else
+        call VGRID3D(0,IFACES)
+      endif
+
+C Draw solid boundaries if needed.
+      if (ISHSB.lt.0) then 
+        call VSB3D(0)
+      elseif (ISHSB.gt.0) then
+        call VSB3D(ISHSB)
+      endif
+
+C Draw air flow openings if needed.
+      if (ISHAO.lt.0) then
+        call VAO3D(0) 
+      elseif (ISHAO.gt.0) then
+        call VAO3D(ISHAO)
+      endif
+
+C Draw blockages if needed.
+      if (ISHBLK.lt.0) then
+        call VSBL3D(0)
+      elseif (ISHBLK.gt.0) then
+        call VSBL3D(ISHBLK)
+      endif
+
+C Draw title.
+      WRITE(ETEXT,'(2A)')'Domain: ',
+     &  TITLE(ICP)(1:lnblnk(TITLE(ICP)))
+      iside=1; isize=1; ifont=1
+      call viewtext(ETEXT,iside,isize,ifont)
+      call forceflush()
+
+      MODIFYVIEW=.FALSE.
+      MODLEN=.FALSE.
+      MODBND=.FALSE.
+
+ 999  return
+      end

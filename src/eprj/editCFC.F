@@ -45,6 +45,7 @@ C of Waterloo.
 C
 C ********************************************************************
       subroutine makeCFCfile(icomp,ier)
+      use CFC_Module
 #include "building.h"
 #include "model.h"
 #include "geometry.h"

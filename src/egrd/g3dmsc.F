@@ -115,7 +115,7 @@ C *********************************************************************
   10    CONTINUE
         CALL INLNST(1)
         izgfoc=0
-        CALL ADJVIEW(IER)
+        CALL redraw(IER)
       ELSEIF(IDRW1.EQ.2)THEN
         CALL startbuffer()
         MODIFYVIEW=.TRUE.
@@ -125,7 +125,7 @@ C *********************************************************************
         nznog(1)=IDRW2
         izgfoc=IDRW2
         CALL INLNST(1)
-        CALL ADJVIEW(IER)
+        CALL redraw(IER)
       ELSEIF(IDRW1.EQ.3)THEN
         CALL DRWSRF(IDRW2)
       ELSEIF(IDRW1.EQ.4)THEN

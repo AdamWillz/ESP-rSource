@@ -828,7 +828,7 @@ C Read geometry file for chosen zone.
   33    CONTINUE
       endif
 
-      if (Iskip.eq.1) CALL ADJVIEW(IER)
+      if (Iskip.eq.1) CALL redraw(IER)
 
 C Multi-page list
       call edisp(iuout,'Please select surfaces to include in analysis.')

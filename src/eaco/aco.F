@@ -112,6 +112,9 @@ C ACO specific commons
 
       COMMON/AbsCHAR/PubType(MaxPub),FurType(MaxFur),FurCat(MaxFur)
       COMMON/Zones/TxtZone
+
+C 3D visualisation mode.
+      COMMON/MODVIS/IVISMOD
       
 C Significant figure reporting limit (NSIGFIG).
       common/SFIG/NSIGFIG
@@ -136,7 +139,7 @@ C Name of current application
       CHARACTER tg*1,delim*1,xfile*144,dstmp*24,LabFreq*4
       CHARACTER PubType*12,FurType*12,FurCat*4,CovSurf*12
 
-      character cVnum*36      ! returned from ESPrVersionNum
+      character cVnum*38      ! returned from ESPrVersionNum
       character pagestitle*62 ! for banner title via epages call
 
       integer iglib   ! if 1 then X11, if 2 then GTK, if 3 then text only.
@@ -252,6 +255,7 @@ C Initialise coordinates for eye point, view point and angle of view.
       EYEM(1)=-100.; EYEM(2)=-100.; EYEM(3)=100.
       VIEWM(1)=10.; VIEWM(2)=10.; VIEWM(3)=10.
       ANG=40.
+      IVISMOD=1
 
 C General image option flags.
       ITDSP=0
@@ -417,7 +421,7 @@ C (Re)Set all surfaces to std line width.
             VIEWM(3)=VIEWMI(3)
             ANG=ANGI
           endif
-          CALL ADJVIEW(IER)
+          CALL redraw(IER)
 
 C Open core of databases.
           call module_opendb(ier)
@@ -969,6 +973,11 @@ C Dummy subroutine needed to compile (called from library code).
 
       SUBROUTINE BASESIMP_INPUTS(ICOMP,IER)
       integer icomp,ier
+      return
+      end
+
+      SUBROUTINE CFDVIEW(IER)
+      IER=0
       return
       end
 

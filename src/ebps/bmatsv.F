@@ -1365,7 +1365,7 @@ C and CFD.
             endif
 
 C And compute all inside and 'outside' convection coefficients.
-            call mzconv
+            call MZCONV
 
 C Update ground reflectivity depending on the model used (constant
 C reflectivity; simple model; or advanced model)

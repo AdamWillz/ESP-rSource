@@ -1506,6 +1506,7 @@ C Flags identifying if results libries are available. =0 no lib, =1 lib exists.
       integer iicol
       integer iigl,iigr,iigt,iigb,iigw,iigwh
       integer iiw1,iiw2,iiw3,iiw4,iimenu
+      integer ilf,igfw,igfh,ild,igdw,igdh
 #else
       integer*8 IGX  ! see common graf2
       integer*8 iside,isize,ifont     ! passed to viewtext
@@ -1513,6 +1514,7 @@ C Flags identifying if results libries are available. =0 no lib, =1 lib exists.
       integer*8 iicol
       integer*8 iigl,iigr,iigt,iigb,iigw,iigwh
       integer*8 iiw1,iiw2,iiw3,iiw4,iimenu
+      integer*8 ilf,igfw,igfh,ild,igdw,igdh
 #endif
 
       logical colok,ok,dok,unixok
@@ -2094,15 +2096,16 @@ C Empty bins of hits.
 
 C Write graph head and set up axis positions and draw.
         IF(MMOD.EQ.8)THEN
-          iglib = igraphiclib()  ! find out if X11 or GTK or text support only.
-          if(iglib.eq.1)then
-            call feedbox(menuchw,2,igfw,igfh)
-            call opengdisp(menuchw,LIMTTY,2,igdw,igdh)
-          endif
 
 C Setup and pass in parameters to win3d.
           iiw1=9; iiw2=30; iiw3=4; iiw4=3; iimenu=menuchw
           iigl=igl; iigr=igr; iigt=igt; iigb=igb; iigw=igw; iigwh=igwh
+          ilf=2; ild=LIMTTY
+          iglib = igraphiclib()  ! find out if X11 or GTK or text support only.
+          if(iglib.eq.1)then
+            call feedbox(iimenu,ilf,igfw,igfh)
+            call opengdisp(iimenu,ild,ilf,igdw,igdh)
+          endif
           CALL win3d(iimenu,iiw1,iiw2,iiw3,iiw4,
      &      iigl,iigr,iigt,iigb,iigw,iigwh)
           igl=int(iigl); igr=int(iigr); igt=int(iigt); igb=int(iigb)
@@ -2761,15 +2764,16 @@ C indicate that several flow items (e.g. nodes) are included.
 
 C Write graph head and set up axis positions and draw.
             IF(MMOD.EQ.8)THEN
-              iglib = igraphiclib()  ! find out if X11 or GTK or text support only.
-              if(iglib.eq.1)then
-                call feedbox(menuchw,2,igfw,igfh)
-                call opengdisp(menuchw,LIMTTY,2,igdw,igdh)
-              endif
 
 C Setup and pass in parameters to win3d.
               iiw1=9; iiw2=30; iiw3=4; iiw4=3; iimenu=menuchw
               iigl=igl; iigr=igr;iigt=igt;iigb=igb;iigw=igw;iigwh=igwh
+              iglib = igraphiclib()  ! find out if X11 or GTK or text support only.
+              if(iglib.eq.1)then
+                ilf=2; ild=LIMTTY
+                call feedbox(iimenu,ilf,igfw,igfh)
+                call opengdisp(iimenu,ild,ilf,igdw,igdh)
+              endif
               CALL win3d(iimenu,iiw1,iiw2,iiw3,iiw4,
      &          iigl,iigr,iigt,iigb,iigw,iigwh)
               igl=int(iigl); igr=int(iigr);igt=int(iigt);igb=int(iigb)

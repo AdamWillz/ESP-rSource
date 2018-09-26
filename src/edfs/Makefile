@@ -18,7 +18,7 @@ default: $(PROG)
 %.o : %.f90
 	$(MCC) $(FFLAGS) -c $<
 
-MODULE_OBJECTS = startup.o h3kmodule.o aim2_module.o 
+MODULE_OBJECTS = startup.o h3kmodule.o aim2_module.o CFC_Module.o
 
 OBJECTS = dfs.o arrow.o ascii_mat.o bndarybl.o bndaryl.o bndaryt.o \
 	c2fdum.o cfcalc.o cfdat.o cfconv.o cfdrw.o cfdumb.o cfdumm.o \
@@ -29,7 +29,7 @@ OBJECTS = dfs.o arrow.o ascii_mat.o bndarybl.o bndaryl.o bndaryt.o \
 	read3dv.o sort.o visgrd.o visual.o visvec.o wvapour.o 
 
 MODULES = aim2.mod aim2_calcdata.mod aim2_h2k_dummy.mod aim2_inputdata.mod start_up.mod \
-     parse_command_line.mod h3kmodule.mod
+     parse_command_line.mod h3kmodule.mod CFC_Module.mod
 
 $(PROG): $(MODULE_OBJECTS) $(OBJECTS)
 	$(MFC) $(LD_FLAGS) -o $(PROG) $(FFLAGS) $(MODULE_OBJECTS) $(OBJECTS) $(ULIBS)
@@ -52,6 +52,9 @@ cfdrw.F:
 cfgrid.F:
 	rm -f cfgrid.F
 	ln -s $(COMdir)/cfgrid.F .
+CFC_Module.f90:
+	rm -f CFC_Module.f90
+	ln -s $(BLDdir)/CFC_Module.f90 .
 common3dv.F:
 	rm -f common3dv.F
 	ln -s $(COMdir)/common3dv.F .
@@ -104,7 +107,7 @@ clean:
 	aim2_module.F arrow.F ascii_mat.F c2fdum.F \
 	cfdrw.F cfgrid.F common3dv.F dossupport.F e3dviews.F edatabase.F egeometry.F \
 	eroper.F esru_misc.F filelist.F psychro.F read3dv.F sort.F startup.F \
-	h3kmodule.f90
+	h3kmodule.f90 CFC_Module.f90 cfc_module.mod
 
 distclean: clean
 

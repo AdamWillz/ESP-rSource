@@ -67,6 +67,9 @@ C Path to problem
       common/rzone/inzone
 
       COMMON/GR3D110/ICVS,ICNC,INDC,INDD,ITAQ,ITLW,ILWV,ITF3
+
+C 3D visualisation mode.
+      COMMON/MODVIS/IVISMOD
       
 C Significant figure reporting limit (NSIGFIG).
       common/SFIG/NSIGFIG
@@ -88,8 +91,8 @@ C Name of current application
       character outs248*248,L144*144
       character inz*16,inzone*16,outs*124,MODE*4
 
-      character cVnum*36      ! returned from ESPrVersionNum
-      character pagestitle*62 ! for banner title via epages call
+      character cVnum*38      ! returned from ESPrVersionNum
+      character pagestitle*68 ! for banner title via epages call
 
       integer iglib   ! if 1 then X11, if 2 then GTK, if 3 then text only.
 #ifdef OSI
@@ -159,6 +162,7 @@ C Initial coords for eyepoint, viewing point, angle of view.
       VIEWM(2)=10.
       VIEWM(3)=10.
       ANG=40.
+      IVISMOD=1
 
 C General image option flags.
       ITDSP=1
@@ -628,6 +632,11 @@ C Dummy subroutine needed to compile (called from library code).
 
       SUBROUTINE BASESIMP_INPUTS(ICOMP,IER)
       integer icomp,ier
+      return
+      end
+
+      SUBROUTINE CFDVIEW(IER)
+      IER=0
       return
       end
 

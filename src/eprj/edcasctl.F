@@ -244,7 +244,7 @@ C Reset all surface lines to standard width and redraw if revised data.
         nzg=1
         nznog(1)=ICOMP
         izgfoc=ICOMP
-        CALL ADJVIEW(IER)
+        CALL redraw(IER)
       endif
       NL=NLITZ(ICOMP)
       write(ITEM(1),'(A,A)')     '  Zone: ',zname(ICOMP)

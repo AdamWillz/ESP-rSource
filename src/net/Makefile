@@ -5,6 +5,7 @@ else
 	SWTCH= -D
 endif
 SRCdir = `pwd`/..
+BLDdir = $(SRCdir)/ebld
 COMdir = $(SRCdir)/common
 MFSdir = $(SRCdir)/emfs
 LIBdir = $(SRCdir)/lib
@@ -18,13 +19,13 @@ default: $(PROG)
 %.o : %.f90
 	$(MCC) $(FFLAGS) -c $<
 
-MODULE_OBJECTS = startup.o
+MODULE_OBJECTS = startup.o CFC_Module.o
 
 OBJECTS = network.o arrow.o ascii_mat.o azalt.o dossupport.o edatabase.o emfnetw.o \
 	filelist.o icndbscn.o mfcdat.o mfrlst.o netwedit.o nwkrewr.o netwkc2f.o \
 	netutil.o sort.o
 
-MODULES = start_up.mod parse_command_line.mod
+MODULES = start_up.mod parse_command_line.mod CFC_Module.mod
 
 $(PROG): $(MODULE_OBJECTS) $(OBJECTS)
 	$(MFC) $(LD_FLAGS) -o $(PROG) $(FFLAGS) $(MODULE_OBJECTS) $(OBJECTS) $(ULIBS)
@@ -38,6 +39,9 @@ ascii_mat.F:
 azalt.F:
 	rm -f azalt.F
 	ln -s $(COMdir)/azalt.F .
+CFC_Module.f90:
+	rm -f CFC_Module.f90
+	ln -s $(BLDdir)/CFC_Module.f90 .
 dossupport.F:
 	rm -f dossupport.F
 	ln -s $(COMdir)/dossupport.F .
@@ -75,7 +79,7 @@ install:
 clean:
 	rm -f core $(PROG) $(PROG).exe $(MODULE_OBJECTS) $(OBJECTS) $(MODULES) \
 	*.o arrow.F ascii_mat.F azalt.F dossupport.F edatabase.F emfnetw.F \
-	filelist.F nwkrewr.F mfcdat.F mfrlst.F sort.F startup.F
+	filelist.F nwkrewr.F mfcdat.F mfrlst.F sort.F startup.F CFC_Module.f90
 
 distclean: clean
 

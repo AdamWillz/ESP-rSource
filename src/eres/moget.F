@@ -127,11 +127,12 @@ C IGET = 24 Mean radiant temperature
 C IGET = 25 Surface flux (various IGET,4) where 1=conduction (inside),
 C   2=convec (inside), 3=LW radiation (inside), 4=SW rad absorb inside,
 C   5=radiant casual occup, 6=radiant casual light
-C   7=radiant casual equip, 8=contrld casual gains, 9=heat storage (inside)
-C   10=plant inj/extr (ins), 11=conduction (other fc), 12=convec (other),
-C   13=long wave > buildings
-C   14=long wave > sky, 15=long wave > ground, 16= SW radiation (othr),
-C   17=heat storage (othr)
+C   7=radiant casual equip, 8=radiant casual other
+C   9=contrld casual gains, 10=heat storage (inside)
+C   12=plant inj/extr (ins), 12=conduction (other fc), 13=convec (other),
+C   14=long wave > buildings
+C   15=long wave > sky, 16=long wave > ground, 17= SW radiation (other),
+C   18=SW incident radiation (other), 19=heat storage (other)
 C IGET = 26 External lux level
 
 C IGET = 27 Real electrical power consumption
@@ -928,12 +929,12 @@ C From the allclm type check the 1st static item value.
           call MENUATOL('Select a climate metric',' Climate choices:',
      &      'a Ambient temperature','b Solar Dir N','c Solar diffuse',
      &      'd Wind speed','e Wind direction','f Ambient RH',
-     &      'g Sky illumunance',' ',' ',' ',' ',' ',inoc,idnoc,nbhelp)
+     &      'g Sky illuminance',' ',' ',' ',' ',' ',inoc,idnoc,nbhelp)
         else
           call MENUATOL('Select a climate metric',' Climate choices:',
      &      'a Ambient temperature','b Solar GlobH','c Solar diffuse',
      &      'd Wind speed','e Wind direction','f Ambient RH',
-     &      'g Sky illumunance',' ',' ',' ',' ',' ',inoc,idnoc,nbhelp)
+     &      'g Sky illuminance',' ',' ',' ',' ',' ',inoc,idnoc,nbhelp)
         endif
         call usrmsg('  ','  ','-')
         if(inoc.eq.0)goto 1
@@ -1640,8 +1641,8 @@ C IGET = 15  Casual gains by type.
           IGETNO(NGET,7)=16
           SUFFIX=' CtlCasG'
           if(IROC.eq.0)then
-            SLABEL(NGET)='Total controled casual gain (W)'
-            LNSLABEL(NGET)=31
+            SLABEL(NGET)='Total controlled casual gain (W)'
+            LNSLABEL(NGET)=32
           elseif(IROC.eq.1)then
             SLABEL(NGET)='Total ctld casual gain (W/hr)'
             LNSLABEL(NGET)=29
@@ -1675,11 +1676,11 @@ C IGET = 43 Zone balance opaque partitions conv.
             SLABEL(NGET)='Opaque partitions conv (W)'
             LNSLABEL(NGET)=26
           elseif(IROC.eq.1)then
-            SLABEL(NGET)='Opaque partitionns conv (W/hr)'
-            LNSLABEL(NGET)=30
-          elseif(IROC.eq.-1)then
-            SLABEL(NGET)='Opaque partitionns conv (Whr)'
+            SLABEL(NGET)='Opaque partitions conv (W/hr)'
             LNSLABEL(NGET)=29
+          elseif(IROC.eq.-1)then
+            SLABEL(NGET)='Opaque partitions conv (Whr)'
+            LNSLABEL(NGET)=28
           endif
         elseif(inoc.eq.10)then
 
@@ -1768,7 +1769,7 @@ C Set up surface flux selection items.
      &    23,19,ITEMS,'surface fluxes',IER,nbhelp)
         if(IVALS(1).eq.0)goto 1
         dok=.false.
-        call askok('Report per square meter of surface',' ',OK,dok,
+        call askok('Report per square metre of surface',' ',OK,dok,
      &    nbhelp)
         ism=0
         if(ok)ism=1
@@ -2592,7 +2593,7 @@ C IGET = 15  Casual gains.
           ITEMC(9)='lighting (conv+rad) '
           ITEMC(10)='lighting convective '
           ITEMC(11)='lighting radiant '
-          ITEMC(12)='lighitng latent '
+          ITEMC(12)='lighting latent '
           ITEMC(13)='equipment (conv+rad) '
           ITEMC(14)='equipment convective '
           ITEMC(15)='equipment radiant '
@@ -2926,8 +2927,8 @@ C IGET = 15  Casual gains.
             IGETNO(NGET,6)=-3; IGETNO(NGET,7)=16
             SUFFIX=' CtlCasG'
             if(IROC.eq.0)then
-              SLABEL(NGET)='Total controled casual gain (W)'
-              LNSLABEL(NGET)=31
+              SLABEL(NGET)='Total controlled casual gain (W)'
+              LNSLABEL(NGET)=32
             elseif(IROC.eq.1)then
               SLABEL(NGET)='Total ctld casual gain (W/hr)'
               LNSLABEL(NGET)=29
@@ -3127,8 +3128,8 @@ C Aggregate lighting (r+c) for all currently selected zones.
             IGETNO(NGET,6)=-3; IGETNO(NGET,7)=16
             SUFFIX=' CtlCasG'
             if(IROC.eq.0)then
-              SLABEL(NGET)='Total controled casual gain (W)'
-              LNSLABEL(NGET)=31
+              SLABEL(NGET)='Total controlled casual gain (W)'
+              LNSLABEL(NGET)=32
             elseif(IROC.eq.1)then
               SLABEL(NGET)='Total ctld casual gain (W/hr)'
               LNSLABEL(NGET)=29
@@ -3209,7 +3210,7 @@ C and node logic below.
             SLABEL(NGET)='Reactive power consmp chg (W/hr)'
             LNSLABEL(NGET)=32
           elseif(IROC.eq.-1)then
-            SLABEL(NGET)='Reactive power consmption (Whr)'
+            SLABEL(NGET)='Reactive power consumption (Whr)'
             LNSLABEL(NGET)=31
           endif
         endif
@@ -3641,7 +3642,7 @@ C Toggle delimeter.
           helptopic='tabular_delimiter_choice'
           call gethelptext(helpinsub,helptopic,nbhelp)
           IWM=1
-          CALL EASKATOG('Delimeter to use between columns of data:',' ',
+          CALL EASKATOG('Delimiter to use between columns of data:',' ',
      &      'normal spaces','single space','tab','comma','tagged',
      &      'continue',' ',IWM,nbhelp)
           if(iwm.eq.1)then
@@ -4361,7 +4362,7 @@ C      character outs*124
       integer iset    ! IGETNO(*,5)
       logical dmdsok,xst,ok
 
-C Check existance of demands file (it will have been scanned elsewhere).
+C Check existence of demands file (it will have been scanned elsewhere).
       call FINDFIL(bdmds,XST)
       if(XST)then
         dmdsok=.true.
@@ -4514,7 +4515,7 @@ C IGETNO(KGET,1) = 13 Zone RH (%)
       elseif(IGETNO(KGET,1).eq.14)then
 
 C IGETNO(KGET,1) = 14 Zone dew point.
-C Get zone air temperatureand RH, use xdum and xdum1 for processing.
+C Get zone air temperature and RH, use xdum and xdum1 for processing.
         CALL GZDP(IDAY,IGETNO(KGET,2),IGETNO(KGET,5))
         CALL XTVAL1(GVAL,ISTART,IEND,KGET)
 
@@ -4523,7 +4524,7 @@ C Get zone air temperatureand RH, use xdum and xdum1 for processing.
 C IGETNO(KGET,1) = 15 Casual gains. Total, convective, radiant or by type.
 C IGETNO(KGET,3) 1=all c+r, 2=all conv, 3=all rad, 4=ocup, 5=light, 6=sm pwr, 
 C 7=other, 8=ctld
-C (also check if aggregate occupant, lighting or small power or lighitng+small
+C (also check if aggregate occupant, lighting or small power or lighting+small
 C power requested.
         iicrcg=IGETNO(KGET,3)
         if(izver.ge.4)then
@@ -4552,7 +4553,7 @@ C If izver >= 4 the read the data directly for individual items.
               elseif(IICRCG.eq.7)then
                 GC(J2)=perotherc+perotherr ! Total other gain (W)
               elseif(IICRCG.eq.8)then
-                if(theonectld.eq.0)then ! Total controled casual gain (W)
+                if(theonectld.eq.0)then ! Total controlled casual gain (W)
                   GC(J2)=0.0
                 elseif(theonectld.eq.1)then
                   GC(J2)=perocupc+perocupr
@@ -4794,7 +4795,7 @@ C << Work towards not reading zone files >>
 
         CALL ECONST(LTHRM(IZ),IUNIT,IZ,0,IUOUT,IER)
 
-C Set default surface absorbtivity.
+C Set default surface absorptivity.
         absorb=1.0
         absorb=ABSE(IS)
 
@@ -4869,21 +4870,21 @@ C no radiant plant component.
               GVAL(JTS)=qlwrdi/SAREA
             elseif(IPK.eq.4)then
               GVAL(JTS)=qswrdi/SAREA
-            elseif(IPK.eq.9)then
+            elseif(IPK.eq.10)then
               GVAL(JTS)=qstori/SAREA
-            elseif(IPK.eq.11)then
-              GVAL(JTS)=qconde/SAREA
             elseif(IPK.eq.12)then
-              GVAL(JTS)=qconve/SAREA
+              GVAL(JTS)=qconde/SAREA
             elseif(IPK.eq.13)then
-              GVAL(JTS)=qlwrbd/SAREA
+              GVAL(JTS)=qconve/SAREA
             elseif(IPK.eq.14)then
-              GVAL(JTS)=qlwrsk/SAREA
+              GVAL(JTS)=qlwrbd/SAREA
             elseif(IPK.eq.15)then
-              GVAL(JTS)=qlwrde/SAREA
+              GVAL(JTS)=qlwrsk/SAREA
             elseif(IPK.eq.16)then
-              GVAL(JTS)=qswrde/SAREA
+              GVAL(JTS)=qlwrde/SAREA
             elseif(IPK.eq.17)then
+              GVAL(JTS)=qswrde/SAREA
+            elseif(IPK.eq.18)then
 
 C Determine if the surface is transparent or opaque.
               if(SSOTF(ICN)(1:4).EQ.'OPAQ'.OR.
@@ -4894,7 +4895,7 @@ C Determine if the surface is transparent or opaque.
      & ' Surface solar abs is only available for opaque surfaces.')
                 GVAL(JTS)=0.0
               endif
-            elseif(IPK.eq.18)then
+            elseif(IPK.eq.19)then
               GVAL(JTS)=qstore/SAREA
             else
             endif

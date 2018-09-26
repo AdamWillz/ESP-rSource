@@ -4918,10 +4918,7 @@ C          MODIFYVIEW=.TRUE.
         endif
 
         CALL INLNST(1)
-        CALL ADJVIEW(IER)
-        MODLEN=.FALSE.
-        MODBND=.FALSE.
-        MODIFYVIEW=.FALSE.
+        CALL redraw(IER)
       elseif(ITPPSW.eq.1)then
 
 C User toggle to a plan view.

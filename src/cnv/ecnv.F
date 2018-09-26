@@ -1407,12 +1407,17 @@ C calls in esru_lib.F
       ier=0
       return
       end
-
-      subroutine chgazi(icazi)
+      
+      subroutine redraw(ier)
+      ier=0
       return
       end
 
-      subroutine chgelev(icelev)
+      subroutine chgazi(icazi,ifrlk)
+      return
+      end
+
+      subroutine chgelev(icelev,ifrlk)
       return
       end
 

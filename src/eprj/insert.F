@@ -602,7 +602,7 @@ C Reset all surface lines in donor zone.
           nzg=1
           nznog(1)=IZC   ! alter focus to the other zone
           izgfoc=ICOMP
-          CALL ADJVIEW(IER)
+          CALL redraw(IER)
           MODIFYVIEW=.TRUE.
           MODBND=.TRUE.
         endif
@@ -1409,7 +1409,7 @@ C Confirm opening.
           nzg=1
           nznog(1)=ICOMP
           izgfoc=ICOMP
-          CALL ADJVIEW(IER)
+          CALL redraw(IER)
           ier=-1
           return
         elseif(INVT.eq.3)then
@@ -1822,7 +1822,7 @@ C Check to see if new vertex is beyond current bounds of zone.
       endif
 
 C If we modified the geometry then write it out because subsequent
-C calls to ADJVIEW will rescan this geometry file and undo the
+C calls to redraw will rescan this geometry file and undo the
 C changes.
       if(changedgeo)then
         call eclose(gversion(icomp),1.1,0.01,newgeo)
@@ -2353,7 +2353,7 @@ C surface being edited to a thick line if currently in graphics mode.
           nzg=1
           nznog(1)=ICOMP
           izgfoc=ICOMP
-          CALL ADJVIEW(IER)
+          CALL redraw(IER)
         endif
         goto 72
       endif
@@ -2423,7 +2423,7 @@ C edited to a thick line if currently in graphics mode.
         nzg=1
         nznog(1)=ICOMP
         izgfoc=ICOMP
-        CALL ADJVIEW(IER)
+        CALL redraw(IER)
       endif
 
 C Report parent surface length and height (bounding box).

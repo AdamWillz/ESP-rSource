@@ -12,7 +12,6 @@ MFSdir = $(SRCdir)/emfs
 MRTdir = $(SRCdir)/emrt
 PRJdir = $(SRCdir)/eprj
 CETCdir = $(SRCdir)/cetc
-BLDdir = $(SRCdir)/ebld
 PROG= eco$(EXE)
 default: $(PROG)
 
@@ -23,7 +22,7 @@ default: $(PROG)
 %.o : %.f90
 	$(MCC) $(FFLAGS) -c $<
 
-MODULE_OBJECTS = h3kmodule.o startup.o aim2_module.o
+MODULE_OBJECTS = h3kmodule.o startup.o aim2_module.o CFC_Module.o
 
 OBJECTS = eco.o arrow.o ascii_mat.o c2fdum.o common3dv.o cread3dv.o \
 	  CDBPlugins.o CDBCommon.o CDBExplore.o \
@@ -35,7 +34,7 @@ OBJECTS = eco.o arrow.o ascii_mat.o c2fdum.o common3dv.o cread3dv.o \
 	  FMIcom.o
 
 MODULES = aim2.mod aim2_calcdata.mod aim2_h2k_dummy.mod aim2_inputdata.mod start_up.mod \
-	parse_command_line.mod h3kmodule.mod
+	parse_command_line.mod h3kmodule.mod CFC_Module.mod
 
 $(PROG): $(MODULE_OBJECTS) $(OBJECTS)
 	$(MFC) $(LD_FLAGS) -o  $(PROG) $(FFLAGS) $(MODULE_OBJECTS) $(OBJECTS) $(ULIBS)
@@ -58,6 +57,9 @@ CDBCommon.F:
 CDBExplore.F:
 	rm -f CDBExplore.F
 	ln -s $(CDBdir)/CDBExplore.F .
+CFC_Module.f90:
+	rm -f CFC_Module.f90
+	ln -s $(BLDdir)/CFC_Module.f90 .
 c2fdum.F:
 	rm -f c2fdum.F
 	ln -s $(COMdir)/c2fdum.F .
@@ -167,8 +169,7 @@ clean:
 	enetrewr.F emfnetw.F enetmisc.F eroper.F esru_misc.F \
 	filelist.F esystem.F inside.F item.F mfcdat.F nwkrewr.F \
 	pltcfg.F readTrnsys.F rwipv.F rwsbem.F sort.F startup.F tdfile.F \
-	h3kmodule.f90 \
-	FMIcom.F
+	h3kmodule.f90 FMIcom.F CFC_Module.f90 cfc_module.mod
 
 distclean: clean
 

@@ -582,7 +582,7 @@ C Refresh the view of the zone prior to display of the intersection points.
             itsnm=1
             CALL INLNST(1)
             nzg=1; nznog(1)=ICOMP; izgfoc=ICOMP
-            CALL ADJVIEW(IER)
+            CALL redraw(IER)
             write(outs,'(3a,i2,a,i3,2a)') 'Direct insolation: ',
      &        month(mon),' @ ',j,':00, from surface ',isrc,' ',
      &        ssname(iccisrc)

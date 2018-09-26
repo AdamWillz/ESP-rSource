@@ -128,13 +128,13 @@ C has not a type 3 then don`t highlight.
         CALL SURADJ(IC1(IFOC),IC2(IFOC),IE,TMP,IZC,ISC,IC,DESCRC)
         LINSTY(IC)=2
         izgfoc=IC1(IFOC)
-        CALL ADJVIEW(IER)
+        CALL redraw(IER)
       else
         LINSTY(IFOC)=2
         nzg=1
         nznog(1)=IC1(IFOC)
         izgfoc=IC1(IFOC)
-        CALL ADJVIEW(IER)
+        CALL redraw(IER)
       endif
 
 C General image option flags.
@@ -225,7 +225,7 @@ C and display both zones.
         nznog(1)=IC1(IFOC)
         nznog(2)=IZ
         izgfoc=IC1(IFOC)
-        CALL ADJVIEW(IER)
+        CALL redraw(IER)
         MODIFYVIEW=.TRUE.
         MODBND=.TRUE.
 

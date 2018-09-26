@@ -244,9 +244,11 @@ C  terms of a dimensionless number - the CSI.
 #ifdef OSI
       integer iigl,iigr,iigt,iigb,iigw,iigwh
       integer iiw1,iiw2,iiw3,iiw4,iimenu
+      integer ilf,igfw,igfh,ild,igdw,igdh
 #else
       integer*8 iigl,iigr,iigt,iigb,iigw,iigwh
       integer*8 iiw1,iiw2,iiw3,iiw4,iimenu
+      integer*8 ilf,igfw,igfh,ild,igdw,igdh
 #endif
 
       integer iglib   ! if 1 then X11, if 2 then GTK, if 3 then text only.
@@ -308,15 +310,16 @@ C displaying the following data.
           LIMTTY=28
           LIMIT =28
         endif
-        iglib = igraphiclib()  ! find out if X11 or GTK or text support only.
-        if(iglib.eq.1)then
-          CALL feedbox(menuchw,2,igfw,igfh)
-          CALL opengdisp(menuchw,LIMTTY,2,igdw,igdh)
-        endif
 
 C Setup and pass in parameters to win3d.
         iiw1=10; iiw2=20; iiw3=5; iiw4=3; iimenu=menuchw
         iigl=igl; iigr=igr; iigt=igt; iigb=igb; iigw=igw; iigwh=igwh
+        iglib = igraphiclib()  ! find out if X11 or GTK or text support only.
+        if(iglib.eq.1)then
+          ilf=2; ild=LIMTTY
+          CALL feedbox(iimenu,ilf,igfw,igfh)
+          CALL opengdisp(iimenu,ild,ilf,igdw,igdh)
+        endif
         CALL win3d(iimenu,iiw1,iiw2,iiw3,iiw4,
      &    iigl,iigr,iigt,iigb,iigw,iigwh)
         igl=int(iigl); igr=int(iigr); igt=int(iigt); igb=int(iigb)

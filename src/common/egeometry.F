@@ -155,7 +155,6 @@ C Error subroutine and error details for dll mode.
       integer iflag ! for read errors
       integer iCountWords ! to test legacy items on surface line
 
-      
 C Variables used in parsing of space-separated geo files      
       character*248 cLnWords(124)! Array containing contents of a line
       integer iEGetArrW          ! Returns space-separated contents of 
@@ -2096,7 +2095,7 @@ C Assume partition so setup sother arrays with this in mind.
 C The list-based definition of base surfaces. 
 C A typical entry would look like:
 C *base_list,1,6,13.50 0
-C were the 1st item is the number of associated surfaces, then the
+C where the 1st item is the number of associated surfaces, then the
 C list of surfaces followed by the base area followed by user flag.
           CALL EGETWI(lkout,K,IB0,0,MBL,'-','zn base list',IER)
           izbaselist(icomp)=IB0
@@ -2109,20 +2108,12 @@ C There are items in the list so scan the surface indices.
      &          'zn base surface list item',IER)
               IBASES(ICOMP,inthelist)=IB1
   63        continue
-          else
-
-C No items in the list so user must have edited the base area.
-            iuzbasea(icomp)=1
           endif
           CALL EGETWR(lkout,K,VAL,0.,99999.,'W','zn base area',IER)
           ZBASEA(ICOMP)=VAL
           CALL EGETWI(lkout,K,IUB,0,2,'-',
      &      'zn base area user flag',IER)
-          if(iub.eq.0)then
-            iuzbasea(icomp)=0
-          elseif(iub.eq.2)then
-            iuzbasea(icomp)=2
-          endif
+          iuzbasea(icomp)=iub
           goto 62
 
         elseif(WORD(1:10).eq.'*shad_calc')then

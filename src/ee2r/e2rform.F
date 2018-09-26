@@ -377,7 +377,7 @@ C the image.
         MODIFYVIEW=.TRUE.
         MODBND=.TRUE.
         izgfoc=ICOMP
-        CALL ADJVIEW(IER)
+        CALL redraw(IER)
         outdone=.true.
       elseif(INO.EQ.8)then
         CALL EASKABC(' Glazing description:',' ',
@@ -1096,7 +1096,7 @@ C Display the other zone, resetting all surface lines to std.
           nzg=1
           nznog(1)=newfoc
           izgfoc=newfoc
-          CALL ADJVIEW(IER)
+          CALL redraw(IER)
         endif
 
 C Generate combined zone & generate surface names as identifiers.
@@ -1422,7 +1422,7 @@ C Highlight surface on image.
                   CALL INLNST(1)
                   CALL SURADJ(ifocz,isf,IE,TMP,IZC,ISC,IC,DESCRC)
                   LINSTY(IC)=2
-                  CALL ADJVIEW(IER)
+                  CALL redraw(IER)
 
                   helptopic='precalculate_indirect_i'
                   call gethelptext(helpinsub,helptopic,nbhelp)

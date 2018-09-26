@@ -256,7 +256,7 @@ C read of file).
       nzg=1
       nznog(1)=ICOMP
       izgfoc=ICOMP
-      CALL ADJVIEW(IER)
+      CALL redraw(IER)
 
 C Having updated the view (which uses MODIFYVIEW), if havesaved is true
 C then we can unset MODIFYVIEW.
@@ -376,7 +376,7 @@ C << TODO mat and EREVEAL need to be updated to 32 char >>
           call EREVEAL(ICOMP,IRS,AZI,ELV,RTK,OWID,blkroot,mat,IER)
           MODIFYVIEW=.TRUE.
           call warnmod(ICOMP,'ob+')
-          CALL ADJVIEW(IER)
+          CALL redraw(IER)
         endif
 
       ELSEIF(IVERT.EQ.(MVERT-5))THEN
@@ -561,7 +561,7 @@ C To delete the last obstruction, dereference the file and exit.
             else
               CALL MKGOMST(IUF,ZOBS(ICOMP),ICOMP,IER)
             endif
-            CALL ADJVIEW(IER)
+            CALL redraw(IER)
           ELSE
             CALL USRMSG(' ',' Too many obstructions defined!','W')
             GOTO 92
@@ -571,7 +571,7 @@ C Edit the new block, first hilight the obstruction.
           nbo=nbobs(icomp)
           ITOBS = nbo
           CALL EPMENSV      ! save state of the calling menue
-   77     CALL ADJVIEW(IER) ! redraw the model
+   77     CALL redraw(IER) ! redraw the model
           CALL EDOBSB(ITRU,IUF,ICOMP,nbo,ianother,IER)
           MODIFYVIEW=.TRUE.
           call warnmod(ICOMP,'ob+')
@@ -659,7 +659,7 @@ C time for copy use zeros, otherwise re-present the previous values.
             nbo=nbobs(icomp)
             ITOBS = nbo
             CALL EPMENSV       ! save the calling menu layout
-  78        CALL ADJVIEW(IER)  ! redraw wireframe
+  78        CALL redraw(IER)  ! redraw wireframe
             call cfgtogg(icfg_type,icfgz,icfgn,icfgc,icfgdfn,
      &                   iicfgz,iicfgn,iicfgc,iicfgdfn)
 
@@ -715,7 +715,7 @@ C Edit block identified by KEYIND.
           CALL EPMENSV     ! record calling menu status
           ITOBS = ib       ! mark which obs to highlight
           MODIFYVIEW=.TRUE.    ! tell it to pay attention to the highlight
-  79      CALL ADJVIEW(IER)  ! redraw wireframe
+  79      CALL redraw(IER)  ! redraw wireframe
           CALL EDOBSB(ITRU,IUF,ICOMP,IB,ianother,IER)
 
 C If user asked for next or prior obstruction reset nbo and call again.
@@ -1262,7 +1262,7 @@ C Display the zone.
       nzg=1
       nznog(1)=ICOMP
       izgfoc=ICOMP
-      CALL ADJVIEW(IER)
+      CALL redraw(IER)
 
 C Having updated the view (which uses MODIFYVIEW), if havesaved is true
 C then we can unset MODIFYVIEW.
@@ -1287,7 +1287,7 @@ C One set of interface actions if type 'obs' or 'obs3'.
      &   BLOCKTYP(ICOMP,IB)(1:4).eq.'obs3')then
         if(IVERT.EQ.25)then
           ITOBS = 0
-          CALL ADJVIEW(IER)
+          CALL redraw(IER)
           ianother=0  ! signal no jump to previous or next
           RETURN
         elseif(IVERT.EQ.1)then
@@ -1515,7 +1515,7 @@ C Convert current obstruction block into general polygon obstruction.
 C Interface options if a general polygon obstruction.
         if(IVERT.EQ.20)then
           ITOBS = 0
-          CALL ADJVIEW(IER)
+          CALL redraw(IER)
           ianother=0  ! signal no jump to previous or next
           RETURN
         elseif(IVERT.EQ.2)then
@@ -2173,7 +2173,7 @@ C read of file).
       nzg=1
       nznog(1)=ICOMP
       izgfoc=ICOMP
-      CALL ADJVIEW(IER)
+      CALL redraw(IER)
 
 C Having updated the view (which uses MODIFYVIEW), if havesaved is true
 C then we can unset MODIFYVIEW.
@@ -2409,7 +2409,7 @@ C Present a list of available compound visuals to select from.
               NBVOBJ(icomp)=NBVOBJ(icomp)+1
               MODIFYVIEW=.TRUE.
               call geowrite(IUF,LGEOM(ICOMP),ICOMP,iuout,3,IER)
-              CALL ADJVIEW(IER)
+              CALL redraw(IER)
 
               call usrmsg('Object details are now presented. You can',
      &          'use the editing transform & rotation facilities.','W')
@@ -2417,7 +2417,7 @@ C Present a list of available compound visuals to select from.
               ITVIS = 0        ! turn off highlighting of single visual entities
               ITVOBJ = newobj  ! mark which compound object to highlight
               MODIFYVIEW=.TRUE. ! tell it to pay attention to the highlight
-              CALL ADJVIEW(IER)  ! redraw wireframe with object highlighted
+              CALL redraw(IER)  ! redraw wireframe with object highlighted
 
 C Present editing facilitiy for this new compound object.
               CALL EDVISOBJ(ICOMP,newobj,IER)
@@ -2588,7 +2588,7 @@ C present the editing menu.
             ITVIS = 0        ! turn off highlighting of single visual entities
             ITVOBJ = newobj      ! mark which compound object to highlight
             MODIFYVIEW=.TRUE.    ! tell it to pay attention to the highlight
-            CALL ADJVIEW(IER)  ! redraw wireframe with object highlighted
+            CALL redraw(IER)  ! redraw wireframe with object highlighted
 
 C Present editing facilitiy for this copied compound object.
             CALL EDVISOBJ(ICOMP,newobj,IER)
@@ -2662,7 +2662,7 @@ C deleted at one time.
               VISTYP(icomp,nbo)='vis '
               MODIFYVIEW=.TRUE.
               call geowrite(IUF,LGEOM(ICOMP),ICOMP,iuout,3,IER)
-              CALL ADJVIEW(IER)
+              CALL redraw(IER)
             ELSE
               CALL USRMSG(' ',' Too many visuals defined!','W')
               GOTO 92
@@ -2672,7 +2672,7 @@ C Edit the new visual entity, first hilight it.
             nbo=nbvis(icomp)
             ITVIS = nbo       ! ray2 common for visual entity
             CALL EPMENSV      ! save state of the calling menue
-   77       CALL ADJVIEW(IER) ! redraw the model
+   77       CALL redraw(IER) ! redraw the model
 
             CALL EDVISB(ITRU,IUF,ICOMP,nbo,ianother,IER)
             MODIFYVIEW=.TRUE.
@@ -2755,7 +2755,7 @@ C time for copy use zeros, otherwise re-present the previous values.
               nbo=nbvis(icomp)
               ITOBS = nbo
               CALL EPMENSV       ! save the calling menu layout
-  78          CALL ADJVIEW(IER)  ! redraw wireframe
+  78          CALL redraw(IER)  ! redraw wireframe
               call cfgtogg(icfg_type,icfgz,icfgn,icfgc,icfgdfn,
      &                   iicfgz,iicfgn,iicfgc,iicfgdfn)
 
@@ -2801,7 +2801,7 @@ C Edit block identified by KEYIND.
             ITVOBJ = ib      ! mark which compound object to highlight
             IOBJ = ib        ! which object to edit
             MODIFYVIEW=.TRUE.    ! tell it to pay attention to the highlight
-            CALL ADJVIEW(IER)  ! redraw wireframe with object highlighted
+            CALL redraw(IER)  ! redraw wireframe with object highlighted
 
 C Present editing facilitiy for this compound object.
             CALL EDVISOBJ(ICOMP,IOBJ,IER)
@@ -2811,7 +2811,7 @@ C Present editing facilitiy for this compound object.
             CALL EPMENSV     ! record calling menu status
             ITVIS = ib       ! mark which obs to highlight
             MODIFYVIEW=.TRUE.    ! tell it to pay attention to the highlight
-  79        CALL ADJVIEW(IER)  ! redraw wireframe
+  79        CALL redraw(IER)  ! redraw wireframe
 
 C Present editing facilitiy for this visual entity.
             CALL EDVISB(ITRU,IUF,ICOMP,IB,ianother,IER)
@@ -3023,7 +3023,7 @@ C Display the zone with the current visual entity highlighted.
       nznog(1)=ICOMP
       izgfoc=ICOMP
       itvis=ib
-      CALL ADJVIEW(IER)
+      CALL redraw(IER)
 
 C Having updated the view (which uses MODIFYVIEW), if havesaved is true
 C then we can unset MODIFYVIEW.
@@ -3048,7 +3048,7 @@ C One set of interface actions if type 'vis' or 'vis3'.
      &   VISTYP(ICOMP,IB)(1:4).eq.'vis3')then
         if(IVERT.EQ.25)then
           ITVIS = 0   ! stop highlighting it
-          CALL ADJVIEW(IER)
+          CALL redraw(IER)
           ianother=0  ! signal no jump to previous or next
           RETURN
         elseif(IVERT.EQ.1)then
@@ -3263,7 +3263,7 @@ C Convert current visual into general polygon.
 C Interface options if a general polygon visual.
         if(IVERT.EQ.22)then
           ITOBS = 0
-          CALL ADJVIEW(IER)
+          CALL redraw(IER)
           ianother=0  ! signal no jump to previous or next
           RETURN
         elseif(IVERT.EQ.2)then
@@ -3610,7 +3610,7 @@ C Display the zone.
       nznog(1)=ICOMP
       izgfoc=ICOMP
       itvobj=iobj  ! signal which one to highlight
-      CALL ADJVIEW(IER)
+      CALL redraw(IER)
 
 C Having updated the view (which uses MODIFYVIEW), if havesaved is true
 C then we can unset MODIFYVIEW.

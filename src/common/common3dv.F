@@ -33,6 +33,7 @@ C  EGRNDR:  Draws ground topology.
 C  DSGRID:  Draws a dotted site grid with current scaling factors.
 C  EMKVIEW: Constructs a 'viewer' format file.
 C  wiresymbol: draws a user defined symbol in wireframe
+C  REDRAW : Entry point for redrawing model display.
 
 C ************* ADJVIEW 
 C ADJVIEW takes the current status of view and boundary mods
@@ -40,7 +41,7 @@ C and adjusts the viewing transforms & object boundaries if
 C necessary before displaying the zone.
 C IER=0 OK, IER=1 problem. If izgfoc is not 0
 C then it represents the zone which is currently being edited.
-      SUBROUTINE ADJVIEW(IER)
+      SUBROUTINE adjview(IER)
 #include "building.h"
 #include "model.h"
 #include "prj3dv.h"
@@ -62,14 +63,26 @@ C Passed parameters.
       integer numberofzones
       integer JITZNM,JITSNM,JITVNO,JITOBS,JITVIS,JITVOBJ,JITSNR,JITGRD
       integer JITORG,JITBND,JITDSP,JITHLS,JITHLZ,JITPPSW
-      integer jizgfoc,jnzg,jnznog,jnznogv
+      integer jizgfoc,jnzg,jnznog,jnznogv      
+      integer icfg_type  ! model cfg type
+      integer icfgz      ! if non-zero then there are zones
+      integer icfgn      ! if non-zero then there are networks
+      integer icfgc      ! if non-zero then cfg file known
+      integer icfgdfn    ! if non-zero then cdf domain exists
+      integer iicfgz     ! there are zone related images
+      integer iicfgn     ! there are network related images
+      integer iicfgc     ! there are control related images
+      integer iicfgdfn   ! there are cfd related images
 #else
       integer*8 iside,isize,ifont     ! passed to viewtext
       integer*8 numberofzones
       integer*8 JITZNM,JITSNM,JITVNO,JITOBS,JITVIS,JITVOBJ,JITSNR
       integer*8 JITGRD,JITORG,JITBND,JITDSP,JITHLS,JITHLZ,JITPPSW
       integer*8 jizgfoc,jnzg,jnznog,jnznogv
+      integer*8 icfg_type,icfgz,icfgn,icfgc,icfgdfn,iicfgz
+      integer*8 iicfgn,iicfgc,iicfgdfn
 #endif
+
       real EVX,EVY,EVZ,VX,VY,VZ,EAN,GDIS
 
       SMALL=0.01
@@ -107,7 +120,7 @@ C parameters then use EYEMI & VIEWMI rather than EYEM VIEWM.
      &  JITOBS,JITVIS,JITVOBJ,JITSNR,JITGRD,JITORG,GDIS,JITBND,
      &  JITDSP,JITHLS,JITHLZ,JITPPSW)
 
-C Tell woreframe how many zones to include in the image.
+C Tell wireframe how many zones to include in the image.
       jizgfoc=izgfoc; jnzg=nzg
       call pushgzonpik(jizgfoc,jnzg)
       if(nzg.gt.0)then
@@ -139,15 +152,21 @@ C If viewpoint or bounds different then initialise viewing paramters.
           CALL LENS(IER)
         ENDIF
 
+C Draw the selected bodies.
+        CALL DRAWESP(IER)
+
+C Show domain buttons.
+        call cfgtogg(icfg_type,icfgz,icfgn,icfgc,icfgdfn,
+     &                             iicfgz,iicfgn,iicfgc,iicfgdfn)
+        call opencfg(icfg_type,icfgz,icfgn,icfgc,icfgdfn,
+     &                             iicfgz,iicfgn,iicfgc,iicfgdfn)
+
 C Remind user of which model even when looking at one zone.
-        WRITE(ETEXT,'(2A)')'Project: ',modeltitle(1:lnblnk(modeltitle))
+        WRITE(ETEXT,'(2A)')'Model: ',modeltitle(1:lnblnk(modeltitle))
         iside=1
         isize=1
         ifont=1
         call viewtext(etext,iside,isize,ifont)
-
-C Draw the selected bodies.
-        CALL DRAWESP(IER)
 
 C Recover information begin edited and reset modifyview flag.
         if(izgfoc.NE.0)CALL ERCZONE(izgfoc)
@@ -162,7 +181,7 @@ C Recover information begin edited and reset modifyview flag.
 C ********* chgazi
 C CHGAZI is called from C code in esp-r.c or esru_x.c with an increment or 
 C decrement to the viewing azimuth (icazi). If not needed then provide a dummy. 
-      subroutine chgazi(icazi)
+      subroutine chgazi(icazi,ifrlk)
 #include "building.h"
 #include "prj3dv.h"
 
@@ -171,7 +190,7 @@ C Passed paremter.
       
       PI = 4.0 * ATAN(1.0)
       tdis= crow(eyem,viewm)
-      call ln2az(VIEWM(1),VIEWM(2),VIEWM(3),eyem(1),eyem(2),eyem(3),
+      call LN2AZ(VIEWM(1),VIEWM(2),VIEWM(3),eyem(1),eyem(2),eyem(3),
      &  az,el)
       aznew=az + float(icazi)
 
@@ -192,7 +211,27 @@ C Passed paremter.
       EYEM(3)=Z+VIEWM(3)
       MODIFYVIEW=.TRUE.
       MODLEN=.TRUE.
-      CALL ADJVIEW(IER)
+
+C If we are in a freelook, turn off grid, site origin and names.
+      if (ifrlk.eq.1) then
+        ITZNMP=ITZNM
+        ITZNM=1
+        ITSNMP=ITSNM
+        ITSNM=1
+        ITORGP=ITORG
+        ITORG=1
+        ITGRDP=ITGRD
+        ITGRD=1
+      endif
+
+      call redraw(IER)
+
+      if (ifrlk.eq.1) then
+        ITZNM=ITZNMP
+        ITSNM=ITSNMP
+        ITORG=ITORGP
+        ITGRD=ITGRDP
+      endif
 
       return
       end
@@ -200,7 +239,7 @@ C Passed paremter.
 C ********* chgelev
 C CHGELEV is called from C code in esp-r.c or esru_x.c with an increment or 
 C decrement to the viewing elevation (icelev). If not needed then provide a dummy. 
-      subroutine chgelev(icelev)
+      subroutine chgelev(icelev,ifrlk)
 #include "building.h"
 #include "prj3dv.h"
 
@@ -230,7 +269,27 @@ C Passed paramter.
       EYEM(3)=Z+VIEWM(3)
       MODIFYVIEW=.TRUE.
       MODLEN=.TRUE.
-      CALL ADJVIEW(IER)
+
+C If we are in a freelook, turn off grid, site origin and names.
+      if (ifrlk.eq.1) then
+        ITZNMP=ITZNM
+        ITZNM=1
+        ITSNMP=ITSNM
+        ITSNM=1
+        ITORGP=ITORG
+        ITORG=1
+        ITGRDP=ITGRD
+        ITGRD=1
+      endif
+
+      call redraw(IER)
+
+      if (ifrlk.eq.1) then
+        ITZNM=ITZNMP
+        ITSNM=ITSNMP
+        ITORG=ITORGP
+        ITGRD=ITGRDP
+      endif
 
       return
       end
@@ -315,7 +374,7 @@ C          ITHLZ=ISEL
 C          MODIFYVIEW=.TRUE.
         endif
         CALL INLNST(1)
-        CALL ADJVIEW(IER)
+        call redraw(IER)
         MODLEN=.FALSE.
         MODBND=.FALSE.
         MODIFYVIEW=.FALSE.
@@ -395,7 +454,7 @@ C Ask for initial date and time and present view.
           ITSNM=1
           MODIFYVIEW=.TRUE.
           MODLEN=.TRUE.
-          CALL ADJVIEW(IER)
+          call redraw(IER)
 
 C Generate a heading for the view.
           CALL EDTIME(STIME,DESCRH,DESCRD,TIMER)
@@ -444,7 +503,7 @@ C User asked for next hour, increment and display unless below horizon.
           ITSNM=1
           MODIFYVIEW=.TRUE.
           MODLEN=.TRUE.
-          CALL ADJVIEW(IER)
+          call redraw(IER)
 
 C Generate a heading for the view.
           CALL EDTIME(STIME,DESCRH,DESCRD,TIMER)
@@ -481,7 +540,7 @@ C User asked for animation.
           ITSNM=1
           MODIFYVIEW=.TRUE.
           MODLEN=.TRUE.
-          CALL ADJVIEW(IER)
+          call redraw(IER)
 
 C Generate a heading for the view.
           CALL EDTIME(STIME,DESCRH,DESCRD,TIMER)
@@ -1869,4 +1928,30 @@ C Parameters
       return
       end
 
+C ************* REDRAW
+C REDRAW refreshes the 3D model display. Any view mode that takes notice
+C of the change azimuth and elevation buttons should be implemented
+C here.
+C IVISMOD is the visualisation mode:
+C -1 = blank
+C 1 = building geometry (standard)
+C 2 = CFD domain
 
+      subroutine redraw(IER)
+
+      COMMON/SPAD/MMOD,LIMIT,LIMTTY
+      COMMON/MODVIS/IVISMOD
+
+C Check we're in graphic mode, just in case.
+      if (MMOD.ne.8) goto 999
+
+      if (IVISMOD.eq.-1) then
+        call startbuffer()
+      elseif (IVISMOD.eq.1) then
+        CALL ADJVIEW(IER)
+      elseif (IVISMOD.eq.2) then
+        CALL CFDVIEW(IER)
+      endif
+
+ 999  return
+      end

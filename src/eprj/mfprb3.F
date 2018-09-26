@@ -1006,7 +1006,7 @@ C Reset all surface lines to standard width and display the zone.
           nzg=1
           nznog(1)=IZ
           izgfoc=IZ
-          CALL ADJVIEW(IER)
+          CALL redraw(IER)
 
           ISO=1
           CALL EPMENSV
@@ -1212,7 +1212,7 @@ C Reset all surface lines to standard width and display the zone.
           nzg=1
           nznog(1)=IZ
           izgfoc=IZ
-          CALL ADJVIEW(IER)
+          CALL redraw(IER)
           MODIFYVIEW=.TRUE.; MODBND=.TRUE.
 
           if(NDTYP(INOD).eq.0)then

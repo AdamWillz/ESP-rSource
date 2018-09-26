@@ -217,7 +217,7 @@ C On entry display the current zone. Reset all surface lines to std.
         nzg=1
         nznog(1)=ICOMP
         izgfoc=ICOMP
-        CALL ADJVIEW(IER)
+        CALL redraw(IER)
       endif
 
 C Read construction file into common.
@@ -481,7 +481,7 @@ C has resized the display, redraw.
       nzg=1
       nznog(1)=ICOMP
       izgfoc=ICOMP
-      CALL ADJVIEW(IER)
+      CALL redraw(IER)
       call cfgtogg(icfg_type,icfgz,icfgn,icfgc,icfgdfn,
      &             iicfgz,iicfgn,iicfgc,iicfgdfn)
       if(MMOD.EQ.8)then
@@ -735,6 +735,8 @@ C Edit zone surface construction attributes in common block G6 and
 C allow this to be saved. ITRU unit number for user output, IER=0 OK,
 C IER=1 problem. Make use of construction information in common MLC.
       SUBROUTINE EDSCON(ITRU,ICOMP,ISUR,MODGEO,MODCON,IER)
+      use CFC_Module, Only: cfcver, ITMCFCDB, cfcitmindex, cfcdbcon,
+     & cfcdbden, cfcdbsht, CFCshdtp
 #include "building.h"
 #include "geometry.h"
 #include "esprdbfile.h"
@@ -1188,6 +1190,8 @@ C zone geometry file (surface attributes) and attempts to construct a
 C zone construction file with minimum intervention by the user.
 
       SUBROUTINE EDZCON(ICOMP,MODGEO,MODCON,IER)
+      use CFC_Module, Only: ITMCFCDB, cfcver, cfcdbcon, cfcdbden,
+     & cfcdbsht, CFCshdtp
 #include "building.h"
 #include "geometry.h"
 #include "esprdbfile.h"

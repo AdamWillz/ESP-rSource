@@ -74,11 +74,13 @@ C Logical flags for file openings.
       integer iigl,iigr,iigt,iigb,iigw,iigwh
       integer iiw1,iiw2,iiw3,iiw4,iimenu
       integer iicapture,iiazi    ! to pass to updcapt updazi
+      integer ilf,igfw,igfh,ild,igdw,igdh
 #else
       integer*8 numberofzones
       integer*8 iigl,iigr,iigt,iigb,iigw,iigwh
       integer*8 iiw1,iiw2,iiw3,iiw4,iimenu
       integer*8 iicapture,iiazi    ! to pass to updcapt updazi
+      integer*8 ilf,igfw,igfh,ild,igdw,igdh
 #endif
       integer IRE  ! for radio button
       integer MITEM,INO ! max items and current menu item
@@ -133,13 +135,14 @@ C      menuchw = 53
 C Open the text display box equal to LIMTTY if MMOD = 8.
       if(MMOD.EQ.8)then
         if(iglib.eq.1)then
-          call winclr
-          CALL feedbox(menuchw,2,igfw,igfh)
-          CALL opengdisp(menuchw,LIMTTY,2,igdw,igdh)
 
 C Setup and pass in parameters to win3d.
           iiw1=9; iiw2=12; iiw3=7; iiw4=3; iimenu=menuchw
           iigl=igl; iigr=igr; iigt=igt; iigb=igb; iigw=igw; iigwh=igwh
+          ilf=2; ild=LIMTTY
+          call winclr
+          CALL feedbox(iimenu,ilf,igfw,igfh)
+          CALL opengdisp(iimenu,ild,ilf,igdw,igdh)
           CALL win3d(iimenu,iiw1,iiw2,iiw3,iiw4,
      &      iigl,iigr,iigt,iigb,iigw,iigwh)
           igl=int(iigl); igr=int(iigr); igt=int(iigt); igb=int(iigb)
@@ -467,13 +470,14 @@ C Free the scratch file. If the file name ends with temporalscratch remove it.
         endif
         menuchw = lastmenuchw
         if(MMOD.EQ.8)then
-          call winclr
-          CALL feedbox(menuchw,2,igfw,igfh)
-          CALL opengdisp(menuchw,LIMTTY,2,igdw,igdh)
 
 C Setup and pass in parameters to win3d.
           iiw1=4; iiw2=1; iiw3=1; iiw4=3; iimenu=menuchw
           iigl=igl; iigr=igr; iigt=igt; iigb=igb; iigw=igw; iigwh=igwh
+          ilf=2; ild=LIMTTY
+          call winclr
+          CALL feedbox(iimenu,ilf,igfw,igfh)
+          CALL opengdisp(iimenu,ild,ilf,igdw,igdh)
           CALL win3d(iimenu,iiw1,iiw2,iiw3,iiw4,
      &      iigl,iigr,iigt,iigb,iigw,iigwh)
           igl=int(iigl); igr=int(iigr); igt=int(iigt); igb=int(iigb)

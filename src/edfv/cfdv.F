@@ -109,7 +109,10 @@ C For number of openings NOPEN
      &             ICNACT(MCFND,MNZ),IVOLN(MCFND,MNZ)
 
 C Saved state of the visualisation
-      COMMON/CFDVIS/ISHSB,ISHAO,IFACES,ISHBLK
+      COMMON/MODVIS/IVISMOD
+      COMMON/CFDVIS/HAS_GEOM,ISHSB,ISHAO,IFACES,ISHBLK,ISHGEO,INITD
+      logical HAS_GEOM
+      character INITD*6
 
 C Commons from mocfd.F (RDCFDAT)
       COMMON/GEOM/XP(ntcelx),YP(ntcely),ZP(ntcelz),
@@ -157,6 +160,7 @@ C Commons from mocfd.F (RDCFDAT)
       real SIMTIMEF   ! time associated with the cfd3dasci file
       COMMON/DFVtime/ISIMDAY,SIMTIMEF
 
+      CHARACTER*24 ITEM(11)
       CHARACTER inf*144,LCFD*72,POLNAM*12
       CHARACTER DFCFD*72,Lflpar*72
       character cfd3dasci*72
@@ -169,7 +173,7 @@ C Commons from mocfd.F (RDCFDAT)
       character LCFDV*72
       character t24*24
 
-      character cVnum*36      ! returned from ESPrVersionNum
+      character cVnum*38      ! returned from ESPrVersionNum
       character pagestitle*62 ! for banner title via epages call
 
       LOGICAL INCALU,INCALV,INCALW,INCALK,INCALD,INCALT
@@ -304,6 +308,7 @@ C Initialise coordinates for eye point, view point and angle of view.
       EYEM(1)=-100.; EYEM(2)=-100.; EYEM(3)=100.
       VIEWM(1)=10.; VIEWM(2)=10.; VIEWM(3)=10.
       ANG=40.
+      IVISMOD=2
 
 C General image option flags.
       ITDSP=0; ITBND=1; ITEPT=0
@@ -516,21 +521,10 @@ C Translate and rotate the start and end points of each flow vector to the face
 C co-ordinate system of the face under consideration.
           CALL TRNSF2
 
-C Draw the domain prior to the arrows. Use local version VGRID3DF
-C which does not need to scan zone geometry file.
-          if(doslice)then
-            call VGRID3DF('xzg',iz) ! draw only north and south face grid
-          else
-            call VGRID3DF('xyz',iz) ! draw all face grids
-          endif
-          if (ISHSB.eq.1) then
-            call VSB3DF(0,IZ)
-          endif
-          if (ISHAO.eq.1) then
-            do iaop=1,NOPEN(IZ)
-              call VAO3D(iaop)
-            enddo
-          endif
+C Draw the domain prior to the arrows. 
+          HAS_GEOM=.FALSE.
+          ISHSB=-1; ISHAO=-1; IFACES=1; ISHBLK=-1; ISHGEO=0
+          call redraw(ier)
 
           if(doslice)then
             call pauses(1) 
@@ -593,12 +587,12 @@ C Then in mocfd.F we go into local version of MAKS3DF.
       ENDIF
 
 C Write the CFD title on the 3rd line of the header.
-      WRITE(etext,'(2A)')'Model: ',
-     &  TITLE(IZ)(1:lnblnk(TITLE(IZ)))
-      iside=3
-      isize=1
-      ifont=1
-      call viewtext(etext,iside,isize,ifont)
+c      WRITE(etext,'(2A)')'Domain: ',
+c     &  TITLE(IZ)(1:lnblnk(TITLE(IZ)))
+c      iside=1
+c      isize=1
+c      ifont=1
+c      call viewtext(etext,iside,isize,ifont)
 
 C From this point need to draw as in MOCFD->VISMAK->FTV-MAKS3D
       call EASKABC('  ','Option:','Exit application',
@@ -955,34 +949,18 @@ C Dummy subroutines needed by e3dviews.F
       end
 
 C Dummy subroutines needed by common3dv.F
-      SUBROUTINE ADJVIEW(IER)
-      return
-      end
-
       SUBROUTINE EPKMLC(ISEL,PROMPT1,PROMPT2,IER)
       CHARACTER*(*) PROMPT1,PROMPT2
       return
       end
 
-      SUBROUTINE EMKVIEW(IUO,CFGOK,IER)
-      logical cfgok
-      return
-      end
-
-      subroutine chgazi(icazi)
-      return
-      end
-
-      subroutine chgelev(icelev)
+      subroutine cfgtogg(icfg_type,icfgz,icfgn,icfgc,icfgdfn,
+     &                             iicfgz,iicfgn,iicfgc,iicfgdfn)
       return
       end
 
       subroutine cfgpk(act)
       character act*1
-      return
-      end
-
-      subroutine chgsun(isunhour)
       return
       end
 
@@ -1163,717 +1141,6 @@ C If one parameter.
       return
       end
 
-C Local version of VGRID3DF (fixed view without zone-cfd geom transforms)
-C ********************* VGRID3DF *********************
-C VGRID3DF - draws the CFD domain gridding in 3d. The paremater
-C act has the following meanings:
-C   gact = xyg then draw only top and bottom face grid
-C   gact = yzg then draw only east and west face grid
-C   gact = xzg then draw only north and south face grid
-C   gact = xyz then draw all face grids
-C izone is the index of the zone to be drawin (if zero do not bother`).
-      SUBROUTINE VGRID3DF(gact,izone)
-#include "building.h"
-#include "geometry.h"
-#include "prj3dv.h"
-#include "cfd.h"
-
-      COMMON/SPAD/MMOD,LIMIT,LIMTTY
-      integer ifs,itfs,imfs
-      COMMON/GFONT/IFS,ITFS,IMFS
-
-      integer menuchw,igl,igr,igt,igb,igw,igwh
-      COMMON/VIEWPX/menuchw,igl,igr,igt,igb,igw,igwh
-      common/appcols/mdispl,nifgrey,ncset,ngset,nzonec
-      integer IZSTOCN
-      COMMON/C24/IZSTOCN(MCOM,MS)
-
-      COMMON/ALL/NI,NJ,NK,NIM1,NJM1,NKM1,NIM2,NJM2,NKM2
-      COMMON/GEOM/XP(ntcelx),YP(ntcely),ZP(ntcelz),
-     1            DXEP(ntcelx),DXPW(ntcelx),DYNP(ntcely),DYPS(ntcely),
-     2            DZHP(ntcelz),DZPL(ntcelz),
-     3            SEW(ntcelx),SNS(ntcely),SHL(ntcelz),
-     4            XU(ntcelx),YV(ntcely),ZW(ntcelz)
-      COMMON/gzonpik/izgfoc,nzg,nznog(mcom)
-
-      DIMENSION  AX(MPL),AY(MPL),AZ(MPL),IANXT(MPL)
-      DIMENSION  BX(MPL),BY(MPL),BZ(MPL),IBNXT(MPL)
-      DIMENSION  SBBOX(3,2)
-
-      logical greyok,odd
-      integer im
-      character gact*3,zact*3,btemp*6
-      real XPP,YPP,ZPP  ! points taking into account zone minimum
-      real X0,Y0,Z0
-      real DX,DY,DHX,DHY ! for intermediate label points 
-
-#ifdef OSI
-      integer igwid,igheight  ! for use with axiscale
-      integer iixs,iiys,iix,iiy,iixlast,iiylast
-      integer iixhs,iiyhs,iixxhs,iixyhs
-      integer iicol
-      integer iigl,iigr,iigt,iigb,iigw,iigwh
-      integer iiw1,iiw2,iiw3,iiw4,iimenu
-#else
-      integer*8 igwid,igheight  ! for use with axiscale
-      integer*8 iixs,iiys,iix,iiy,iixlast,iiylast
-      integer*8 iixhs,iiyhs,iixxhs,iixyhs
-      integer*8 iicol
-      integer*8 iigl,iigr,iigt,iigb,iigw,iigwh
-      integer*8 iiw1,iiw2,iiw3,iiw4,iimenu
-#endif
-
-C Check in graphics mode.
-      IF(MMOD.ne.8) return
-
-C If libraries and monitor support greyscale then reset forground
-C to 50% grey when drawing dots.
-      greyok=.false.
-      if(nifgrey.gt.4)then
-        greyok=.true.
-      endif
-
-C Set up grid information.
-      call SETGEO
-
-C Clear current viewing box and re-establish image bounds.
-      CALL startbuffer
-
-C Setup and pass in parameters to win3d.
-      iiw1=4; iiw2=4; iiw3=3; iiw4=3; iimenu=menuchw
-      iigl=igl; iigr=igr; iigt=igt; iigb=igb; iigw=igw; iigwh=igwh
-      CALL win3d(iimenu,iiw1,iiw2,iiw3,iiw4,
-     &  iigl,iigr,iigt,iigb,iigw,iigwh)
-      igl=int(iigl); igr=int(iigr); igt=int(iigt); igb=int(iigb)
-      igw=int(iigw); igwh=int(iigwh)
-      igwid=igw; igheight=igwh
-
-C Get bounds for image.
-      if (nzg.gt.0) then
-        call bndobj(0,IER)
-      endif
-      HANG=ANG/2.0; HITH=1.0; YON=1300.0
-      CALL LENS(IER)
-
-C Determine scaling ratios for the drawing and axis.
-C Determine the 2D coords of the site extremes.
-      CALL SITE2D(SXMX,SXMN,SYMX,SYMN,ier)
-      CALL axiscale(igwid,igheight,SXMN,SXMX,SYMN,SYMX,xsc,ysc,sca,
-     &  Xadd,Yadd)
-      call linescale(iigl,Xadd,sca,iigb,Yadd,sca)
-
-C Xmax,Ymax,Zmax are the dimensions of the problem in the i, j, and 
-C k directions.
-C Debug.
-C      write(6,*) 'gact ',gact,SXMX,SXMN,SYMX,SYMN
-      ZXMN(1)=0.0; ZYMN(1)=0.0; ZZMN(1)=0.0
-      ZXMX(1)=XU(NI); ZYMX(1)=YV(NJ); ZZMX(1)=ZW(NK)
-C      write(6,*) 'gact ',gact,ZXMN(1),ZXMX(1),ZYMN(1),
-C     &  ZYMX(1),ZZMN(1),ZZMX(1)
-      
-
-C Reset to smallest font for drawing i j k labels.
-      IF(IFS.GT.0)CALL winfnt(0)
-
-C Loop through all X-Y plane grid lines.
-      if(gact.eq.'xyz'.or.gact.eq.'xyg')then
-        do 10 I=2,NI    ! I traverses along south X axis cells
-          do 20 J=2,NJ  ! J traverses along west Y axis cells
-
-C Transform first point to screen coords.
-            XPP=ZXMN(izone)+XU(i); YPP=ZYMN(izone)+YV(j)
-            ZPP=ZZMN(izone)+0.
-            CALL ORTTRN(XPP,YPP,ZPP,TEMAT,X0,Y0,Z0,IERR)
-            CALL ORTTRN(X0,Y0,Z0,ETSMAT,X1,Y1,Z1,IERR)
-            call u2pixel(X1,Y1,iixs,iiys)
-
-C Get half way point for west face cells.
-            DY=YV(j+1)-YV(j); DHY= DY*0.5
-            XPP=ZXMN(izone)+XU(i); YPP=ZYMN(izone)+YV(j)+DHY
-            ZPP=ZZMN(izone)+0.
-            CALL ORTTRN(XPP,YPP,ZPP,TEMAT,X0,Y0,Z0,IERR)
-            CALL ORTTRN(X0,Y0,Z0,ETSMAT,X1,Y1,Z1,IERR)
-            call u2pixel(X1,Y1,iixhs,iiyhs)
-
-C Get half way point for south face cells.
-            DX=XU(i+1)-XU(i); DHX= DX*0.5
-            XPP=ZXMN(izone)+XU(i)+DHX; YPP=ZYMN(izone)+YV(j)
-            ZPP=ZZMN(izone)+0.
-            CALL ORTTRN(XPP,YPP,ZPP,TEMAT,X0,Y0,Z0,IERR)
-            CALL ORTTRN(X0,Y0,Z0,ETSMAT,X1,Y1,Z1,IERR)
-            call u2pixel(X1,Y1,iixxhs,iixyhs)
-
-C Transform end point to screen coords.
-            XPP=ZXMN(izone)+XU(i); YPP=ZYMN(izone)+YV(j)
-            ZPP=ZZMN(izone)+ZW(NK)
-            CALL ORTTRN(XPP,YPP,ZPP,TEMAT,X0,Y0,Z0,IERR)
-            CALL ORTTRN(X0,Y0,Z0,ETSMAT,X1,Y1,Z1,IERR)
-            call u2pixel(X1,Y1,iix,iiy)
-
-            if(J.eq.2.and.I.eq.2)then  ! label the lower left corner
-              btemp='   '
-              write(btemp,'(a,i2.2)') 'i',i-1
-              CALL wstxpt(iixxhs,iixyhs+10,btemp)
-              btemp='   '
-              write(btemp,'(a,i2.2)') 'j',j-1
-              CALL wstxpt(iixhs-20,iiyhs+10,btemp)
-              call forceflush()
-            elseif(I.eq.2.and.J.lt.NJ)then
-
-C If more than 20 cells only do every other one.
-              btemp='   '  ! along lower Y
-              write(btemp,'(a,i2.2)') 'j',j-1
-              if(NJ.le.20)then
-                CALL wstxpt(iixhs-20,iiyhs+10,btemp)
-              else
-                im=MOD(j,2)
-                if(im.eq.1)then
-                  continue
-                else
-                  CALL wstxpt(iixhs-20,iiyhs+10,btemp)
-                  call forceflush()
-                endif
-              endif
-            elseif(J.eq.2.and.I.lt.NI)then
-              btemp='   '
-              write(btemp,'(a,i2.2)') 'i',i-1
-              if(NI.le.20)then
-                CALL wstxpt(iixxhs,iixyhs+10,btemp)
-              else
-                im=MOD(i,2)
-                if(im.eq.1)then
-                  continue
-                else
-                  CALL wstxpt(iixxhs,iixyhs+10,btemp)
-                  call forceflush()
-                endif
-              endif
-            endif
-
-C Draw dotted or solid line.
-            if (I.eq.2.or.I.eq.NI.or.J.eq.2.or.J.eq.NJ) then
-              if ((I.eq.2.and.J.eq.2).or.(I.eq.NI.and.J.eq.NJ).or.
-     &            (I.eq.2.and.J.eq.NJ).or.(I.eq.NI.and.J.eq.2)) then
-                call eline(iixs,iiys,1)  ! solid line
-                call eline(iix,iiy,0)
-                call forceflush()
-              else
-                if(greyok)then
-                  iicol=nifgrey-3
-                  call winscl('i',iicol)
-                endif
-
-C Draw the dotted line after casting to local variable.
-                call edline(iixs,iiys,iix,iiy,5)
-                if(greyok)then
-                  iicol=0
-                  call winscl('-',iicol)
-                endif
-                call forceflush()
-              endif
-            endif
- 20       continue
- 10     continue
-      endif
-
-C Loop through all Z-Y plane grid lines.
-      if(gact.eq.'xyz'.or.gact.eq.'yzg')then
-        do 30 K=2,NK    ! is along the West Z face
-          do 40 J=2,NJ  ! is along the West Y face
-
-C Transform first point to screen coords.
-            XPP=ZXMN(izone)+0.; YPP=ZYMN(izone)+YV(j)
-            ZPP=ZZMN(izone)+ZW(k)
-            CALL ORTTRN(XPP,YPP,ZPP,TEMAT,X0,Y0,Z0,IERR)
-            CALL ORTTRN(X0,Y0,Z0,ETSMAT,X1,Y1,Z1,IERR)
-            call u2pixel(X1,Y1,iixs,iiys)
-
-C Get half way point for west face cells.
-            DY=YV(j+1)-YV(j); DHY= DY*0.5
-            XPP=ZXMN(izone)+0.; YPP=ZYMN(izone)+YV(j)+DHY
-            ZPP=ZZMN(izone)+ZW(k)
-            CALL ORTTRN(XPP,YPP,ZPP,TEMAT,X0,Y0,Z0,IERR)
-            CALL ORTTRN(X0,Y0,Z0,ETSMAT,X1,Y1,Z1,IERR)
-            call u2pixel(X1,Y1,iixhs,iiyhs)
-
-            if(J.eq.NJ.and.K.lt.NK)then
-              btemp='   '  ! along the left vertical
-              write(btemp,'(a,i2.2)') 'k',k-1
-              if(NK.le.20)then
-                CALL wstxpt(iixs-20,iiys-5,btemp)
-                call forceflush()
-              else
-                im=MOD(k,2)
-                if(im.eq.1)then
-                  continue
-                else
-                  CALL wstxpt(iixs-20,iiys-5,btemp)
-                  call forceflush()
-                endif
-              endif
-            endif
-            if(gact.eq.'yzg')then
-              if(K.eq.2.and.J.lt.NJ)then
-                btemp='   '  ! along the left lower Y
-                write(btemp,'(a,i2.2)') 'j',j-1
-                if(NJ.le.20)then
-                  CALL wstxpt(iixhs-20,iiyhs+10,btemp)
-                else
-                  im=MOD(j,2)
-                  if(im.eq.1)then
-                    continue
-                  else
-                    CALL wstxpt(iixhs-20,iiyhs+10,btemp)
-                    call forceflush()
-                  endif
-                endif
-              endif
-            endif
-
-C Transform 2nd point to screen coords.
-            XPP=ZXMN(izone)+XU(NI); YPP=ZYMN(izone)+YV(j)
-            ZPP=ZZMN(izone)+ZW(k)
-            CALL ORTTRN(XPP,YPP,ZPP,TEMAT,X0,Y0,Z0,IERR)
-            CALL ORTTRN(X0,Y0,Z0,ETSMAT,X1,Y1,Z1,IERR)
-            call u2pixel(X1,Y1,iix,iiy)
-
-C Draw line to end point.
-            if (K.eq.2.or.K.eq.NK.or.J.eq.2.or.J.eq.NJ) then
-              if ((K.eq.2.and.J.eq.2).or.(K.eq.NK.and.J.eq.NJ).or.
-     &            (K.eq.2.and.J.eq.NJ).or.(K.eq.NK.and.J.eq.2)) then
-                call eline(iixs,iiys,1)
-                call eline(iix,iiy,0)
-                call forceflush()
-              else
-                if(greyok)then
-                  iicol=nifgrey-3
-                  call winscl('i',iicol)
-                endif
-                call edline(iixs,iiys,iix,iiy,4)
-                if(greyok)then
-                  iicol=0
-                  call winscl('-',iicol)
-                endif
-                call forceflush()
-              endif
-            endif
- 40       continue
- 30     continue
-      endif
-
-C Loop through all Z-X plane grid lines.
-      if(gact.eq.'xyz'.or.gact.eq.'xzg')then
-        do 50 K=2,NK    ! along South face X axis
-          do 60 I=2,NI  ! along South face Z axis
-
-C Transform first point to screen coords.
-            XPP=ZXMN(izone)+XU(I); YPP=ZYMN(izone)+0.
-            ZPP=ZZMN(izone)+ZW(k)
-            CALL ORTTRN(XPP,YPP,ZPP,TEMAT,X0,Y0,Z0,IERR)
-            CALL ORTTRN(X0,Y0,Z0,ETSMAT,X1,Y1,Z1,IERR)
-            call u2pixel(X1,Y1,iixs,iiys)
-
-C Get half way point for south face cells.
-            DX=XU(i+1)-XU(i); DHX= DX*0.5
-            XPP=ZXMN(izone)+XU(i)+DHX; YPP=ZYMN(izone)+0.
-            ZPP=ZZMN(izone)+ZW(k)
-            CALL ORTTRN(XPP,YPP,ZPP,TEMAT,X0,Y0,Z0,IERR)
-            CALL ORTTRN(X0,Y0,Z0,ETSMAT,X1,Y1,Z1,IERR)
-            call u2pixel(X1,Y1,iixxhs,iixyhs)
-
-            if(gact.eq.'xzg')then
-              if(k.eq.2.and.I.lt.NI)then
-                btemp='   '   ! labels along lower X axis
-                write(btemp,'(a,i2.2)') 'i',i-1
-                if(NI.le.20)then
-                  CALL wstxpt(iixxhs,iixyhs+10,btemp)
-                  call forceflush()
-                else
-                  im=MOD(i,2)
-                  if(im.eq.1)then
-                    continue
-                  else
-                    CALL wstxpt(iixxhs,iixyhs+10,btemp)
-                    call forceflush()
-                  endif
-                endif
-              endif
-            endif
-
-C Transform end point to screen coords.
-            XPP=ZXMN(izone)+XU(I); YPP=ZYMN(izone)+YV(NJ)
-            ZPP=ZZMN(izone)+ZW(k)
-            CALL ORTTRN(XPP,YPP,ZPP,TEMAT,X0,Y0,Z0,IERR)
-            CALL ORTTRN(X0,Y0,Z0,ETSMAT,X1,Y1,Z1,IERR)
-            call u2pixel(X1,Y1,iix,iiy)
-
-            if(gact.eq.'xzg')then
-              if(I.eq.2.and.K.lt.NK)then
-                btemp='   '   ! labels along left vertical
-                write(btemp,'(a,i2.2)') 'k',k-1
-                if(NK.le.20)then
-                  CALL wstxpt(iix-20,iiy-5,btemp)
-                  call forceflush()
-                else
-                  im=MOD(j,2)
-                  if(im.eq.1)then
-                    continue
-                  else
-                    CALL wstxpt(iix-20,iiy-5,btemp)
-                    call forceflush()
-                  endif
-                endif
-              endif
-            endif
-
-C Draw line to end point.
-            if (K.eq.2.or.K.eq.NK.or.I.eq.2.or.I.eq.NI) then
-              if ((K.eq.2.and.I.eq.2).or.(K.eq.NK.and.I.eq.NI).or.
-     &            (K.eq.2.and.I.eq.NI).or.(K.eq.NK.and.I.eq.2)) then
-                call eline(iixs,iiys,1)
-                call eline(iix,iiy,0)
-                call forceflush()
-              else
-                if(greyok)then
-                  iicol=nifgrey-3
-                  call winscl('i',iicol)
-                endif
-                call edline(iixs,iiys,iix,iiy,4)
-                if(greyok)then
-                  iicol=0
-                  call winscl('-',iicol)
-                endif
-                call forceflush()
-              endif
-            endif
- 60       continue
- 50     continue
-      endif
-
-C Restore the original font size.
-      IF(IFS.GT.0)CALL winfnt(IFS)
-      call forceflush()
-      return
-      end
-
-C Local version which does not rely on zone geometry.
-C ********************* VSB3DF *********************
-C VSB3DF - draws the solid boundaries - highlighting the chosen one.
-      SUBROUTINE VSB3DF(ISBHL,izone)
-#include "building.h"
-C #include "geometry.h"
-#include "cfd.h"
-#include "prj3dv.h"
-      
-      integer lnblnk  ! function definition
-
-      COMMON/SPAD/MMOD,LIMIT,LIMTTY
-
-      COMMON/ALL/NI,NJ,NK,NIM1,NJM1,NKM1,NIM2,NJM2,NKM2
-      COMMON/GEOM/XP(ntcelx),YP(ntcely),ZP(ntcelz),
-     1            DXEP(ntcelx),DXPW(ntcelx),DYNP(ntcely),DYPS(ntcely),
-     2            DZHP(ntcelz),DZPL(ntcelz),
-     3            SEW(ntcelx),SNS(ntcely),SHL(ntcelz),
-     4            XU(ntcelx),YV(ntcely),ZW(ntcelz)
-      COMMON/ICFNOD/ICFD,ICP
-      COMMON/Sbdary/NSB(MNZ),ISBi(MNSBZ,MNZ),ISBf(MNSBZ,MNZ),
-     &              JSBi(MNSBZ,MNZ),JSBf(MNSBZ,MNZ),
-     &              KSBi(MNSBZ,MNZ),KSBf(MNSBZ,MNZ),
-     &              ISUFLC(MNSBZ,MNZ),IWSB(MNSBZ,MNZ),SSB(MNSBZ,MNZ),
-     &              SSBHC(MNSBZ,MNZ),IVOLNSB(MNSBZ,MNZ),
-     &              ITCtype(MNSBZ,MNZ),icTREF(MNSBZ,MNZ)
-      common/KEYVOLN/VOLNAME(MNVLS,MNZ),VCsurf(MNVLS,MNZ)
-
-      character LLOCAT*4,outs*124,temp*12
-#ifdef OSI
-      integer iixs,iiys,iix,iiy
-#else
-      integer*8 iixs,iiys,iix,iiy
-#endif
-      real XPP,YPP,ZPP  ! points taking into account zone minimum
-      real XX,YY,ZZ
-
-      character VOLNAME*12, VCsurf*12
-
-C Check in graphics mode.
-      IF(MMOD.ne.8) return
-
-      if(NSB(ICFD).eq.0) return
-
-C Debug.
-      ZXMN(1)=0.0; ZYMN(1)=0.0; ZZMN(1)=0.0
-      ZXMX(1)=XU(NI); ZYMX(1)=YV(NJ); ZZMX(1)=ZW(NK)
-c      write(6,*) 'VSB3DF ',ZXMN(1),ZXMX(1),ZYMN(1),
-c     &  ZYMX(1),ZZMN(1),ZZMX(1)
-
-C Draw round solid boundaries and last character of label.
-      do 70 Isbn=1,NSB(ICFD)
-        write (outs,'(i10)') abs(IWSB(Isbn,ICFD))
-        write (LLOCAT,'(a)') outs(lnblnk(outs):lnblnk(outs))
-        K=0
-        call EGETWI(LLOCAT,K,ILOCAT,1,6,'F',
-     &    'Illegal surface orient.',IER)
-        if (ILOCAT.eq.1.or.ILOCAT.eq.2) then
-          if (ILOCAT.eq.2) then
-            MNOD=NI
-          else
-            MNOD=2
-          endif
-
-C In YZ plane.
-C Transform local coords to screen coords and draw box around boundary.
-          XPP=ZXMN(izone)+XU(MNOD); YPP=ZYMN(izone)+YV(JSBi(Isbn,ICFD))
-          ZPP=ZZMN(izone)+ZW(KSBi(Isbn,ICFD))
-          CALL ORTTRN(XPP,YPP,ZPP,TEMAT,X0,Y0,Z0,IERR)
-          CALL ORTTRN(X0,Y0,Z0,ETSMAT,X1,Y1,Z1,IERR)
-          call u2pixel(X1,Y1,iixs,iiys)
-
-          XPP=ZXMN(izone)+XU(MNOD) 
-          YPP=ZYMN(izone)+YV(JSBf(Isbn,ICFD)+1)
-          ZPP=ZZMN(izone)+ZW(KSBi(Isbn,ICFD))
-          CALL ORTTRN(XPP,YPP,ZPP,TEMAT,X0,Y0,Z0,IERR)
-          CALL ORTTRN(X0,Y0,Z0,ETSMAT,X1,Y1,Z1,IERR)
-          call u2pixel(X1,Y1,iix,iiy)
-          if (Isbn.eq.ISBHL) then
-            call edwline(iixs,iiys,iix,iiy)
-          else
-            call eswline(iixs,iiys,iix,iiy)
-          endif
-          call forceflush()
-
-          iixs=iix
-          iiys=iiy
-          XPP=ZXMN(izone)+XU(MNOD)
-          YPP=ZYMN(izone)+YV(JSBf(Isbn,ICFD)+1)
-          ZPP=ZZMN(izone)+ZW(KSBf(Isbn,ICFD)+1)
-          CALL ORTTRN(XPP,YPP,ZPP,TEMAT,X0,Y0,Z0,IERR)
-          CALL ORTTRN(X0,Y0,Z0,ETSMAT,X1,Y1,Z1,IERR)
-          call u2pixel(X1,Y1,iix,iiy)
-          if (Isbn.eq.ISBHL) then
-            call edwline(iixs,iiys,iix,iiy)
-          else
-            call eswline(iixs,iiys,iix,iiy)
-          endif
-          call forceflush()
-
-          iixs=iix
-          iiys=iiy
-          XPP=ZXMN(izone)+XU(MNOD); YPP=ZYMN(izone)+YV(JSBi(Isbn,ICFD))
-          ZPP=ZZMN(izone)+ZW(KSBf(Isbn,ICFD)+1)
-          CALL ORTTRN(XPP,YPP,ZPP,TEMAT,X0,Y0,Z0,IERR)
-          CALL ORTTRN(X0,Y0,Z0,ETSMAT,X1,Y1,Z1,IERR)
-          call u2pixel(X1,Y1,iix,iiy)
-          if (Isbn.eq.ISBHL) then
-            call edwline(iixs,iiys,iix,iiy)
-          else
-            call eswline(iixs,iiys,iix,iiy)
-          endif
-          call forceflush()
-
-          iixs=iix
-          iiys=iiy
-          XPP=ZXMN(izone)+XU(MNOD); YPP=ZYMN(izone)+YV(JSBi(Isbn,ICFD))
-          ZPP=ZZMN(izone)+ZW(KSBi(Isbn,ICFD))
-          CALL ORTTRN(XPP,YPP,ZPP,TEMAT,X0,Y0,Z0,IERR)
-          CALL ORTTRN(X0,Y0,Z0,ETSMAT,X1,Y1,Z1,IERR)
-          call u2pixel(X1,Y1,iix,iiy)
-          if (Isbn.eq.ISBHL) then
-            call edwline(iixs,iiys,iix,iiy)
-          else
-            call eswline(iixs,iiys,iix,iiy)
-          endif
-          call forceflush()
-
-C Label in center of boundary.
-          XX=ZXMN(izone)+XU(MNOD)
-          YY=ZYMN(izone)+(YV(JSBi(Isbn,ICFD))+YV(JSBf(Isbn,ICFD)))/2.
-          ZZ=ZZMN(izone)+(ZW(KSBi(Isbn,ICFD))+ZW(KSBf(Isbn,ICFD)))/2.
-          CALL ORTTRN(XX,YY,ZZ,TEMAT,X0,Y0,Z0,IERR)
-          CALL ORTTRN(X0,Y0,Z0,ETSMAT,X1,Y1,Z1,IERR)
-          call u2pixel(X1,Y1,iix,iiy)
-
-          write (temp,'(a)')VOLNAME(IVOLNSB(Isbn,ICFD),ICFD)
-     &                     (1:LNBLNK(VOLNAME(IVOLNSB(Isbn,ICFD),ICFD)))
-
-c          write (temp,'(a,i2)') 'SB',Isbn
-          CALL wstxpt(iix,iiy,temp)
-          call forceflush()
-
-        elseif (ILOCAT.eq.3.or.ILOCAT.eq.4) then
-          if (ILOCAT.eq.4) then
-            MNOD=NJ
-          else
-            MNOD=2
-          endif
-
-C In XZ plane.
-C Transform local coords to screen coords and draw box around boundary.
-          XPP=ZXMN(izone)+XU(ISBi(Isbn,ICFD)); YPP=ZYMN(izone)+YV(MNOD)
-          ZPP=ZZMN(izone)+ZW(KSBi(Isbn,ICFD))
-          CALL ORTTRN(XPP,YPP,ZPP,TEMAT,X0,Y0,Z0,IERR)
-          CALL ORTTRN(X0,Y0,Z0,ETSMAT,X1,Y1,Z1,IERR)
-          call u2pixel(X1,Y1,iixs,iiys)
-
-          XPP=ZXMN(izone)+XU(ISBf(Isbn,ICFD)+1)
-          YPP=ZYMN(izone)+YV(MNOD)
-          ZPP=ZZMN(izone)+ZW(KSBi(Isbn,ICFD))
-          CALL ORTTRN(XPP,YPP,ZPP,TEMAT,X0,Y0,Z0,IERR)
-          CALL ORTTRN(X0,Y0,Z0,ETSMAT,X1,Y1,Z1,IERR)
-          call u2pixel(X1,Y1,iix,iiy)
-          if (Isbn.eq.ISBHL) then
-            call edwline(iixs,iiys,iix,iiy)
-          else
-            call eswline(iixs,iiys,iix,iiy)
-          endif
-          call forceflush()
-
-          iixs=iix
-          iiys=iiy
-          XPP=ZXMN(izone)+XU(ISBf(Isbn,ICFD)+1)
-          YPP=ZYMN(izone)+YV(MNOD)
-          ZPP=ZZMN(izone)+ZW(KSBf(Isbn,ICFD)+1)
-          CALL ORTTRN(XPP,YPP,ZPP,TEMAT,X0,Y0,Z0,IERR)
-          CALL ORTTRN(X0,Y0,Z0,ETSMAT,X1,Y1,Z1,IERR)
-          call u2pixel(X1,Y1,iix,iiy)
-          if (Isbn.eq.ISBHL) then
-            call edwline(iixs,iiys,iix,iiy)
-          else
-            call eswline(iixs,iiys,iix,iiy)
-          endif
-          call forceflush()
-
-          iixs=iix
-          iiys=iiy
-          XPP=ZXMN(izone)+XU(ISBi(Isbn,ICFD)); YPP=ZYMN(izone)+YV(MNOD)
-          ZPP=ZZMN(izone)+ZW(KSBf(Isbn,ICFD)+1)
-          CALL ORTTRN(XPP,YPP,ZPP,TEMAT,X0,Y0,Z0,IERR)
-          CALL ORTTRN(X0,Y0,Z0,ETSMAT,X1,Y1,Z1,IERR)
-          call u2pixel(X1,Y1,iix,iiy)
-          if (Isbn.eq.ISBHL) then
-            call edwline(iixs,iiys,iix,iiy)
-          else
-            call eswline(iixs,iiys,iix,iiy)
-          endif
-          call forceflush()
-
-          iixs=iix
-          iiys=iiy
-          XPP=ZXMN(izone)+XU(ISBi(Isbn,ICFD)); YPP=ZYMN(izone)+YV(MNOD)
-          ZPP=ZZMN(izone)+ZW(KSBi(Isbn,ICFD))
-          CALL ORTTRN(XPP,YPP,ZPP,TEMAT,X0,Y0,Z0,IERR)
-          CALL ORTTRN(X0,Y0,Z0,ETSMAT,X1,Y1,Z1,IERR)
-          call u2pixel(X1,Y1,iix,iiy)
-          if (Isbn.eq.ISBHL) then
-            call edwline(iixs,iiys,iix,iiy)
-          else
-            call eswline(iixs,iiys,iix,iiy)
-          endif
-          call forceflush()
-
-C Label in center of boundary.
-          XX=ZXMN(izone)+(XU(ISBi(Isbn,ICFD))+XU(ISBf(Isbn,ICFD)))/2.
-          YY=ZYMN(izone)+YV(MNOD)
-          ZZ=ZZMN(izone)+(ZW(KSBi(Isbn,ICFD))+ZW(KSBf(Isbn,ICFD)))/2.
-          CALL ORTTRN(XX,YY,ZZ,TEMAT,X0,Y0,Z0,IERR)
-          CALL ORTTRN(X0,Y0,Z0,ETSMAT,X1,Y1,Z1,IERR)
-          call u2pixel(X1,Y1,iix,iiy)
-c          write (temp,'(a,i2)') 'SB',Isbn
-          write (temp,'(a)')VOLNAME(IVOLNSB(Isbn,ICFD),ICFD)
-     &                     (1:LNBLNK(VOLNAME(IVOLNSB(Isbn,ICFD),ICFD)))
-          CALL wstxpt(iix,iiy,temp)
-          call forceflush()
-        elseif (ILOCAT.eq.5.or.ILOCAT.eq.6) then
-          if (ILOCAT.eq.6) then
-            MNOD=NK
-          else
-            MNOD=2
-          endif
-
-C In XY plane.
-C Transform local coords to screen coords and draw box around boundary.
-          XPP=ZXMN(izone)+XU(ISBi(Isbn,ICFD)) 
-          YPP=ZYMN(izone)+YV(JSBi(Isbn,ICFD))
-          ZPP=ZZMN(izone)+ZW(MNOD)
-          CALL ORTTRN(XPP,YPP,ZPP,TEMAT,X0,Y0,Z0,IERR)
-          CALL ORTTRN(X0,Y0,Z0,ETSMAT,X1,Y1,Z1,IERR)
-          call u2pixel(X1,Y1,iixs,iiys)
-
-          XPP=ZXMN(izone)+XU(ISBf(Isbn,ICFD)+1)
-          YPP=ZYMN(izone)+YV(JSBi(Isbn,ICFD))
-          ZPP=ZZMN(izone)+ZW(MNOD)
-          CALL ORTTRN(XPP,YPP,ZPP,TEMAT,X0,Y0,Z0,IERR)
-          CALL ORTTRN(X0,Y0,Z0,ETSMAT,X1,Y1,Z1,IERR)
-          call u2pixel(X1,Y1,iix,iiy)
-          if (Isbn.eq.ISBHL) then
-            call edwline(iixs,iiys,iix,iiy)
-          else
-            call eswline(iixs,iiys,iix,iiy)
-          endif
-          call forceflush()
-
-          iixs=iix
-          iiys=iiy
-          XPP=ZXMN(izone)+XU(ISBf(Isbn,ICFD)+1)
-          YPP=ZYMN(izone)+YV(JSBf(Isbn,ICFD)+1)
-          ZPP=ZZMN(izone)+ZW(MNOD)
-          CALL ORTTRN(XPP,YPP,ZPP,TEMAT,X0,Y0,Z0,IERR)
-          CALL ORTTRN(X0,Y0,Z0,ETSMAT,X1,Y1,Z1,IERR)
-          call u2pixel(X1,Y1,iix,iiy)
-          if (Isbn.eq.ISBHL) then
-            call edwline(iixs,iiys,iix,iiy)
-          else
-            call eswline(iixs,iiys,iix,iiy)
-          endif
-          call forceflush()
-
-          iixs=iix
-          iiys=iiy
-          XPP=ZXMN(izone)+XU(ISBi(Isbn,ICFD))
-          YPP=ZYMN(izone)+YV(JSBf(Isbn,ICFD)+1)
-          ZPP=ZZMN(izone)+ZW(MNOD)
-          CALL ORTTRN(XPP,YPP,ZPP,TEMAT,X0,Y0,Z0,IERR)
-          CALL ORTTRN(X0,Y0,Z0,ETSMAT,X1,Y1,Z1,IERR)
-          call u2pixel(X1,Y1,iix,iiy)
-          if (Isbn.eq.ISBHL) then
-            call edwline(iixs,iiys,iix,iiy)
-          else
-            call eswline(iixs,iiys,iix,iiy)
-          endif
-          call forceflush()
-
-          iixs=iix
-          iiys=iiy
-          XPP=ZXMN(izone)+XU(ISBi(Isbn,ICFD))
-          YPP=ZYMN(izone)+YV(JSBi(Isbn,ICFD))
-          ZPP=ZZMN(izone)+ZW(MNOD)
-          CALL ORTTRN(XPP,YPP,ZPP,TEMAT,X0,Y0,Z0,IERR)
-          CALL ORTTRN(X0,Y0,Z0,ETSMAT,X1,Y1,Z1,IERR)
-          call u2pixel(X1,Y1,iix,iiy)
-          if (Isbn.eq.ISBHL) then
-            call edwline(iixs,iiys,iix,iiy)
-          else
-            call eswline(iixs,iiys,iix,iiy)
-          endif
-          call forceflush()
-
-C Label in center of boundary.
-          XX=ZXMN(izone)+(XU(ISBi(Isbn,ICFD))+XU(ISBf(Isbn,ICFD)))/2.
-          YY=ZYMN(izone)+(YV(JSBi(Isbn,ICFD))+YV(JSBf(Isbn,ICFD)))/2.
-          ZZ=ZZMN(izone)+ZW(MNOD)
-          CALL ORTTRN(XX,YY,ZZ,TEMAT,X0,Y0,Z0,IERR)
-          CALL ORTTRN(X0,Y0,Z0,ETSMAT,X1,Y1,Z1,IERR)
-          call u2pixel(X1,Y1,iix,iiy)
-          write (temp,'(a)')VOLNAME(IVOLNSB(Isbn,ICFD),ICFD)
-     &                     (1:LNBLNK(VOLNAME(IVOLNSB(Isbn,ICFD),ICFD)))
-c          write (temp,'(a,i2)') 'SB',Isbn
-          CALL wstxpt(iix,iiy,temp)
-          call forceflush()
-        endif
- 70   continue
-
-      return
-      end
-
 C Draw a single slice at the I axis.
 C ********************* MAKS3DF *********************
 C MAKS3DF - draw flows in 3d on screen using scaling factors of 
@@ -1942,10 +1209,8 @@ C      write(6,*) 'within MAKS3D SCmin,SCmax',SCmin,SCmax
 C Need to reset scale factors - do this by redrawing the domain.
       iz=0
 
-C Draw the domain prior to the arrows. Use local version VGRID3DF
-C which does not need to scan zone geometry file.
-      call VGRID3DF('xzg',iz) ! draw only north and south face grid
-C      call VGRID3DF('xyz',iz)
+C Draw the domain prior to the arrows.
+      call VGRID3D(0,2) ! draw only north and south face grid
 C      write(6,*) 'imgqua,NOX,NOZ,tscal,hLscal,hWscal,vLscal'
 C      write(6,*) imgqua,NOX,NOZ,tscal,hLscal,hWscal,vLscal
 C Loop through all vectors at slice I.
@@ -2080,6 +1345,12 @@ C first view.
      4              vecZbeg(ntcelx,ntcely,ntcelz),
      5              vecZend(ntcelx,ntcely,ntcelz)
 
+C Saved state of the visualisation
+      COMMON/MODVIS/IVISMOD
+      COMMON/CFDVIS/HAS_GEOM,ISHSB,ISHAO,IFACES,ISHBLK,ISHGEO,INITD
+      logical HAS_GEOM
+      character INITD*6
+
 C To support stand-alone display via DFV.
       integer ISIMDAY ! Julian day within a cfd3dasci file
       real SIMTIMEF   ! time associated with a cfd3dasci file
@@ -2122,9 +1393,9 @@ C      write(6,*) 'within MAKS3D SCmin,SCmax',SCmin,SCmax
 C Need to reset scale factors - do this by redrawing the domain.
       iz=0
 
-C Draw the domain prior to the arrows. Use local version VGRID3DF
-C which does not need to scan zone geometry file.
-      call VGRID3DF('xyz',iz)
+C Draw the domain prior to the arrows.
+      ISHSB=0; ISHAO=0; IFACES=1; ISHBLK=0; ISHGEO=0
+      call redraw(IER)
 C      write(6,*) 'imgqua,NOX,NOZ,tscal,hLscal,hWscal,vLscal'
 C      write(6,*) imgqua,NOX,NOZ,tscal,hLscal,hWscal,vLscal
 C Loop through all vectors. To the I look from right to left
@@ -2198,13 +1469,13 @@ C        write(6,*) 'IFRAME,FRACH,CFTOS,NOW',IFRAME,FRACH,CFTOS,NOW
      &    ' During',IDs,MTHNAM(IMs),', hr ',CFTOS,' to',IDf,MTHNAM(IMf),
      &    ', hr ',CFTOF,' @',NOW
       endif
-      iside=1 ! 1st line
+      iside=2 ! 2nd line
       isize=0
       ifont=1
       call viewtext(PDESCR,iside,isize,ifont)
       write (souts,'(a,F5.1,a,F5.1)') ' Velocity vectors T ',
      &  tempmin,'-T',tempmax
-      iside=2 ! 2nd line
+      iside=3 ! 3rd line
       isize=0
       ifont=1
       call viewtext(souts,iside,isize,ifont)
@@ -2237,42 +1508,5 @@ C        write(6,*) 'temp ',temp,icolindex
       return
       end
 
-C Subroutine dummy in case of GTK.
-
-      subroutine chgeye(EVX,EVY,EVZ,VX,VY,VZ,EAN,JITZNM,JITSNM,JITVNO,
-     &   JITOBS,JITSNR,JITGRD,JITORG,DIS,JITBND,JITDSP,JITHLS,JITHLZ,
-     &   JITPPSW)
-
-C Passed paramters.
-      real EVX,EVY,EVZ,VX,VY,VZ,EAN,DIS
-
-C Depending on computer type set integer size of passed parameters.
-#ifdef OSI
-      integer JITZNM,JITSNM,JITVNO,JITOBS,JITVIS,JITVOBJ,JITSNR,JITGRD
-      integer JITORG,JITBND,JITDSP,JITHLS,JITHLZ,JITPPSW
-#else
-      integer*8 JITZNM,JITSNM,JITVNO,JITOBS,JITVIS,JITVOBJ,JITSNR
-      integer*8 JITGRD,JITORG,JITBND,JITDSP,JITHLS,JITHLZ,JITPPSW
-#endif     
-      return
-      end
-
-      subroutine chgzonpik(jizgfoc,jnzg)
-#ifdef OSI
-      integer jizgfoc,jnzg  ! for use with viewtext
-#else
-      integer*8 jizgfoc,jnzg  ! for use with viewtext
-#endif
-      return
-      end
-
-      subroutine chgzonpikarray(jnznog,jnznogv)
-#ifdef OSI
-      integer jnznog,jnznogv
-#else
-      integer*8 jnznog,jnznogv
-#endif
-      return
-      end
 
 

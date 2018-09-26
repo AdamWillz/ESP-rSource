@@ -628,7 +628,7 @@ C      write(6,*)nzg,nznog(1),nznog(2),nznog(3)
       nzg=1
       nznog(1)=ICOMP
       izgfoc=ICOMP
-      CALL ADJVIEW(IER)
+      CALL redraw(IER)
 
 C Place any surface attribute mass flow symbol on the wireframe if in graphic mode.
       if(MMOD.eq.8)then
@@ -1084,7 +1084,7 @@ C LINSTY of selected surface to 2 (i.e. thick lines) and redraw.
               LINSTY(IC)=2
               nzg=1; nznog(1)=ICOMP; izgfoc=ICOMP
               MODIFYVIEW=.TRUE.; MODGEO=.TRUE.
-              CALL ADJVIEW(IER)
+              CALL redraw(IER)
 
 C Use a slightly wider editing box than the name. Take the string
 C (T14) and ensure that there are no spaces or strange characters.
@@ -1123,7 +1123,7 @@ C Reset all line widths to normal and redraw (if last surface in list).
               if (i.eq.inpick) then
                 CALL INLNST(1)
                 MODIFYVIEW=.TRUE.; MODGEO=.TRUE.
-                CALL ADJVIEW(IER)
+                CALL redraw(IER)
               endif
             elseif(IRT.eq.2.and.ISEL.EQ.0)then
 
@@ -1777,7 +1777,7 @@ C other zone.
             CALL INLNST(1)
             itsnm=0
             nzg=1; nznog(1)=IZ; izgfoc=ICOMP
-            CALL ADJVIEW(IER)
+            CALL redraw(IER)
             MODIFYVIEW=.TRUE.; MODBND=.TRUE.
 
 C Load and scan G1 for vertes in other zone and allow user to select one.
@@ -3660,7 +3660,7 @@ C Note IC is the connection at the other side of surface icom:is.
       CALL SURADJ(ICOMP,IS,IE,TMP,IZC,ISC,IC,DESCRC)
       LINSTY(IC)=2
       nzg=1; nznog(1)=ICOMP; izgfoc=ICOMP
-      CALL ADJVIEW(IER)
+      CALL redraw(IER)
 
 C If in graphic mode draw the points on top of standard drawing.
       if(MMOD.lt.8)then
@@ -3864,7 +3864,7 @@ C XO1,ZO1,XW,ZH are not used in an interactive insert.
         nzg=1
         nznog(1)=ICOMP
         izgfoc=ICOMP
-        CALL ADJVIEW(IER)
+        CALL redraw(IER)
         return
       ELSEIF(INODA.EQ.1)THEN
         write(T14,'(2a)')SSNAME(ioc),'  '
@@ -4415,7 +4415,7 @@ C and display both zones.
             nznog(1)=ICOMP
             nznog(2)=IZ
             izgfoc=ICOMP
-            CALL ADJVIEW(IER)
+            CALL redraw(IER)
             MODIFYVIEW=.TRUE.; MODBND=.TRUE.
 
             ISO=1
@@ -6234,7 +6234,7 @@ C Do a bound check on the current zone and update display.
       nzg=1
       nznog(1)=ICOMP
       izgfoc=ICOMP
-      CALL ADJVIEW(IER)
+      CALL redraw(IER)
 
 C Help text for this menu.
       helptopic='surface_vertex_menu'
@@ -6352,7 +6352,7 @@ C Distance between two vertices (based on current G1 common block).
             nzg=1
             nznog(1)=ICOMP
             izgfoc=ICOMP
-            CALL ADJVIEW(IER)
+            CALL redraw(IER)
           endif
 
         elseif(ino.eq.3)then
@@ -6428,7 +6428,7 @@ C Angle between two lines (based on current G1 common block).
           nzg=1
           nznog(1)=ICOMP
           izgfoc=ICOMP
-          CALL ADJVIEW(IER)
+          CALL redraw(IER)
 
         elseif(ino.eq.5)then
 
@@ -6662,7 +6662,7 @@ C And re-draw the zone to clean up the circles.
           call usrmsg(' ',' ','-')
           CALL INLNST(1)
           nzg=1; nznog(1)=ICOMP; izgfoc=ICOMP
-          CALL ADJVIEW(IER)
+          CALL redraw(IER)
 
         elseif(ino.eq.7)then
 
@@ -6695,7 +6695,7 @@ C Report length of line. Use method of Ward/Radiance in fvect.c
           call usrmsg(' ',' ','-')
           CALL INLNST(1)
           nzg=1; nznog(1)=ICOMP; izgfoc=ICOMP
-          CALL ADJVIEW(IER)
+          CALL redraw(IER)
 
         elseif(ino.eq.8)then
 
@@ -6921,7 +6921,7 @@ C Show the new point on the current wireframe.
             nzg=1
             nznog(1)=ICOMP
             izgfoc=ICOMP
-            CALL ADJVIEW(IER)  ! this call will clear the X Y Z
+            CALL redraw(IER)  ! this call will clear the X Y Z
           else
             goto 3
           endif
@@ -6995,7 +6995,7 @@ C Show this point on the current wireframe.
           nzg=1
           nznog(1)=ICOMP
           izgfoc=ICOMP
-          CALL ADJVIEW(IER)  ! this call will clear the X Y Z
+          CALL redraw(IER)  ! this call will clear the X Y Z
         endif
         call usrmsg(' ',' ','-')
 
@@ -7045,7 +7045,7 @@ C Update the geometry file.
             call usrmsg(' ',' ','-')
             CALL INLNST(1)
             nzg=1; nznog(1)=ICOMP; izgfoc=ICOMP
-            CALL ADJVIEW(IER)
+            CALL redraw(IER)
 
 C Check to see if this new vertex should be included in any existing edges.
             writeagain=.false.
@@ -7151,7 +7151,7 @@ C Tidy up the wireframe image.
               MODIFYVIEW=.true.
               CALL INLNST(1)
               nzg=1; nznog(1)=ICOMP; izgfoc=ICOMP
-              CALL ADJVIEW(IER)
+              CALL redraw(IER)
               goto 92
             endif
           endif  ! of NTV less than MTV
@@ -7726,7 +7726,7 @@ C Do a bound check on the current zone and update display.
       nzg=1
       nznog(1)=ICOMP
       izgfoc=ICOMP
-      CALL ADJVIEW(IER)
+      CALL redraw(IER)
 
 C Help text for this menu.
       helptopic='surface_edge_list'
@@ -7887,7 +7887,7 @@ C Reverse the ordering, redraw image and return.
           MODIFYVIEW=.TRUE.
           CALL INLNST(1)
           nzg=1; nznog(1)=ICOMP; izgfoc=ICOMP
-          CALL ADJVIEW(IER)
+          CALL redraw(IER)
           goto 92
         endif
         if(IRT.eq.6)then
@@ -8005,7 +8005,7 @@ C Ask user if they want to update the vertex with the new values.
                   MODIFYVIEW=.TRUE.
                   CALL INLNST(1)
                   nzg=1; nznog(1)=ICOMP; izgfoc=ICOMP
-                  CALL ADJVIEW(IER)
+                  CALL redraw(IER)
                   goto 92
                 endif
               endif
@@ -8031,7 +8031,7 @@ C Update the image.
         MODIFYVIEW=.TRUE.
         CALL INLNST(1)
         nzg=1; nznog(1)=ICOMP; izgfoc=ICOMP
-        CALL ADJVIEW(IER)
+        CALL redraw(IER)
 
 C Show these points as small circles...
         call edisp(iuout,' proposed points are shown as dots....')
@@ -8108,7 +8108,7 @@ C Update the image.
         MODIFYVIEW=.TRUE.
         CALL INLNST(1)
         nzg=1; nznog(1)=ICOMP; izgfoc=ICOMP
-        CALL ADJVIEW(IER)
+        CALL redraw(IER)
       ELSEIF(IVERT.EQ.(MVERT-6))THEN
 
 C Add/insert a surface.
@@ -8614,7 +8614,7 @@ C Track users confirmation of new surface.
             MODIFYVIEW=.TRUE.
             CALL INLNST(1)
             nzg=1; nznog(1)=ICOMP; izgfoc=ICOMP
-            CALL ADJVIEW(IER)
+            CALL redraw(IER)
             GOTO 30
           elseif(INVT.eq.-3)then
             return
@@ -8644,7 +8644,7 @@ C Update the image.
         call usrmsg(' ',' ','-')
         CALL INLNST(1)
         nzg=1; nznog(1)=ICOMP; izgfoc=ICOMP
-        CALL ADJVIEW(IER)
+        CALL redraw(IER)
       ELSEIF(IVERT.EQ.(MVERT-7))THEN
 
 C If there are enough items allow paging control via EKPAGE.
@@ -8665,7 +8665,7 @@ C a thick line.
         CALL SURADJ(ICOMP,IFOC,IE,TMP,IZC,ISC,IC,DESCRC)
         if(IC.gt.0)LINSTY(IC)=2
         nzg=1; nznog(1)=ICOMP; izgfoc=ICOMP
-        CALL ADJVIEW(IER)
+        CALL redraw(IER)
 
    93   helptopic='surface_edge_order'
         call gethelptext(helpinsub,helptopic,nbhelp)
@@ -9165,7 +9165,6 @@ C Link back to start vertex
       endif
       return
       end
-
  
 C ******************** EZIPIN 
 C EZIPIN reads zip format geometry data from a text file into standard
@@ -10077,7 +10076,7 @@ C in a different colour for each type (to match colours listed above).
         CALL INLNST(1)
         itsnm=0
         nzg=1; nznog(1)=ICOMP; izgfoc=ICOMP
-        CALL ADJVIEW(IER)
+        CALL redraw(IER)
         do 778 I=1,NZSUR(icomp)
           ioc=IZSTOCN(icomp,i)
           if(ioc.eq.0)then

@@ -297,7 +297,7 @@ C (Re)Set all surfaces to standard line width.
         izgfoc=0
         if(MMOD.eq.8)then
           CALL INLNST(1)
-          CALL ADJVIEW(IER)
+          CALL redraw(IER)
         endif
       endif
 
@@ -2199,7 +2199,7 @@ C Force redraw of zones, highlighting anchor list.
           kk=lstanchr(ifoc,jj)
           if(kk.ne.0)LINSTY(kk)=2
   45    continue
-        CALL ADJVIEW(IER)
+        CALL redraw(IER)
       endif
 
 C Initial menu entry setup.
@@ -2410,7 +2410,7 @@ C Force redraw of zones, highlighting anchor list.
             kk=lstanchr(ifoc,jj)
             if(kk.ne.0)LINSTY(kk)=2
  145      continue
-          CALL ADJVIEW(IER)
+          CALL redraw(IER)
         endif
         dok=.false.
         call askok('Edit anchor name or type?',' ',ok,dok,nbhelp)

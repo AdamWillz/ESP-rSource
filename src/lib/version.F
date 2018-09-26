@@ -245,7 +245,7 @@ C Return out ESP-r versioning information.
       implicit none
       
 C PASSED VARIABLES 
-      character cVnum*36             ! holds release number
+      character cVnum*38             ! holds release number
 
 C LOCAL VARIABLES
 C declare variables describing version and build information

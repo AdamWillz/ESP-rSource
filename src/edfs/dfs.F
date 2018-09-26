@@ -106,7 +106,11 @@ C For number of openings NOPEN
      &             ICNACT(MCFND,MNZ),IVOLN(MCFND,MNZ)
 
 C Saved state of the visualisation
-      COMMON/CFDVIS/ISHSB,ISHAO,IFACES,ISHBLK
+      COMMON/MODVIS/IVISMOD
+      COMMON/CFDVIS/HAS_GEOM,ISHSB,ISHAO,IFACES,ISHBLK,ISHGEO,
+     &              INITD
+      logical HAS_GEOM
+      character INITD*6
 
       CHARACTER*24 ITEM(11)
       CHARACTER inf*144,LCFD*72,DFCFD*72,Lflpar*72
@@ -117,7 +121,7 @@ C Saved state of the visualisation
       CHARACTER*72 LVEC,LBIT,t72,vecfil
       character*72 DECMPDBFL,DICONDBFL
 
-      character cVnum*36      ! returned from ESPrVersionNum
+      character cVnum*38      ! returned from ESPrVersionNum
       character pagestitle*62 ! for banner title via epages call
 
       LOGICAL INCALU,INCALV,INCALW,INCALK,INCALD,INCALT
@@ -248,6 +252,7 @@ C Initialise coordinates for eye point, view point and angle of view.
       EYEM(1)=-100.; EYEM(2)=-100.; EYEM(3)=100.
       VIEWM(1)=10.; VIEWM(2)=10.; VIEWM(3)=10.
       ANG=40.
+      IVISMOD=2
 
 C General image option flags.
       ITDSP=0; ITBND=1; ITEPT=0
@@ -408,21 +413,13 @@ C Only one zone possible so set IZ to 1.
       ENDIF
       IF((XST).AND.IER.EQ.0)THEN
         INPOK=.TRUE.
-
-C plot grid.
-        CALL INICNT
-        CALL GRID(ier)
-        call VGRID3D('---','xyz',iz)
-        call VSB3D(0)
-        call VAO3D(0)
-        call VSBL3D(0)
       ELSE
         INPOK=.FALSE.
       ENDIF
 
 C Initialise gridding parameters
-      CALL INICNT
-      CALL GRID(ier)
+      HAS_GEOM=.FALSE.
+      ISHSB=-1; ISHAO=-1; IFACES=1; ISHBLK=-1; ISHGEO=0
 
 C Let the user pick a menu item.
    10 INO=-4
@@ -443,35 +440,8 @@ C Use askabout to instanciate the initial help messages (2nd parameter is one).
       call askabout('dfs ',1)
 
 C Plot grid
-      IF(MMOD.EQ.8)THEN
-        if(abs(IFACES).eq.1)then
-          call VGRID3D('---','xyz',iz)
-        elseif(abs(IFACES).eq.2)then
-          call VGRID3D('---','xzg',iz)
-        elseif(abs(IFACES).eq.3)then
-          call VGRID3D('---','yzg',iz)
-        elseif(abs(IFACES).eq.4)then
-          call VGRID3D('---','xyg',iz)
-        endif
-        if (ISHSB.eq.1) then
-          call VSB3D(0)
-        endif
-        if (ISHAO.eq.1) then
-          do 765 iaop=1,NOPEN(IZ)
-            call VAO3D(iaop)
-  765     continue
-c Comment the above 3 lines and un-comment the line below
-c to remove bold lines around openings
-c        call VAO3D(0))        
-        endif
-        CALL VSBL3D(0)
-      
-        WRITE(etext,'(2A)')'Model: ',
-     &    TITLE(IZ)(1:lnblnk(TITLE(IZ)))
-        iside=1
-        isize=1
-        ifont=1
-        call viewtext(etext,iside,isize,ifont)
+      IF(MMOD.EQ.8.and.INPOK)THEN
+        call redraw(ier)
       ENDIF
 
       CALL EMENU(' dfs',ITEM,NITMS,INO)
@@ -878,21 +848,6 @@ C Only one zone possible so set IZ to 1.
         ENDIF
         IF(IER.EQ.0)THEN
           INPOK=.TRUE.
-
-C plot grid.
-c          CALL INICNT
-c          CALL GRID(ier)
-c          call VGRID3D('---','xyz',iz)
-c          call VSB3D(0)
-c          call VAO3D(0)
-c          IF(MMOD.EQ.8)THEN
-c          WRITE(etext,'(2A)')'Model: ',
-c     &        TITLE(IZ)(1:lnblnk(TITLE(IZ)))
-c            iside=1
-c            isize=1
-c            ifont=1
-c            call viewtext(etext,iside,isize,ifont)
-c          ENDIF
         ELSE
           INPOK=.FALSE.
         ENDIF

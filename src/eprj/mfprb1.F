@@ -607,7 +607,7 @@ C a 3D file which they can return to an add more position info.
 
             if(MMOD.eq.8)then
 C Draw the wireframe.
-              MODBND=.TRUE.; MODLEN=.TRUE.
+              MODIFYVIEW=.TRUE.; MODBND=.TRUE.; MODLEN=.TRUE.
               ITSNM=1
               ITVNO=1
               nzg=NCOMP
@@ -617,7 +617,7 @@ C Draw the wireframe.
                 ENDDO
                 CALL INLNST(1)
                 izgfoc=0
-                CALL ADJVIEW(IER)
+                CALL redraw(IER)
               endif
             endif
 
@@ -664,7 +664,7 @@ C request position via ...
             if(MMOD.eq.8)then
 
 C Draw the wireframe and then overlay the flow network.
-              MODBND=.TRUE.; MODLEN=.TRUE.
+              MODIFYVIEW=.TRUE.; MODBND=.TRUE.; MODLEN=.TRUE.
               ITSNM=1
               ITVNO=1
               nzg=NCOMP
@@ -674,7 +674,7 @@ C Draw the wireframe and then overlay the flow network.
                 ENDDO
                 CALL INLNST(1)
                 izgfoc=0
-                CALL ADJVIEW(IER)
+                CALL redraw(IER)
               endif
               call MFWFDRAW('r')  ! Draw flow network.
             endif
@@ -919,7 +919,7 @@ C Get associated zone volume and height if type 0 or 1.
           IF(OK)THEN
 
 C Redraw the bluiding in the graphic screen.
-            MODBND=.TRUE.; MODLEN=.TRUE.
+            MODIFYVIEW=.TRUE.; MODBND=.TRUE.; MODLEN=.TRUE.
             ITDSP=1; ITBND=1; ITEPT=0; ITZNM=0
             ITSNM=1; ITVNO=1; ITORG=0; ITSNR=1
             ITGRD=1; GRDIS=0.0; ITPPSW=0
@@ -932,7 +932,7 @@ C Redraw the bluiding in the graphic screen.
 C (Re)Set all surfaces to standard line width.
               CALL INLNST(1)
               izgfoc=0
-              CALL ADJVIEW(IER)
+              CALL redraw(IER)
             endif
 
             write(outs,'(a,a)')'Which zone is associated with ',
@@ -1031,8 +1031,7 @@ C Allow the user to determine the surface associated with this node.
           CALL PHELPD('wind-pressure surface',nbhelp,'-',0,0,IER)
 
 C Redraw the building in the graphic screen.
-          MODBND=.TRUE.
-          MODLEN=.TRUE.
+          MODIFYVIEW=.TRUE.; MODBND=.TRUE.; MODLEN=.TRUE.
           ITDSP=1; ITBND=1; ITEPT=0; ITZNM=0
           ITSNM=1; ITVNO=1; ITORG=0; ITSNR=1
           ITGRD=1; GRDIS=0.0; ITPPSW=0
@@ -1045,7 +1044,7 @@ C Redraw the building in the graphic screen.
 C (Re)Set all surfaces to standard line width.
             CALL INLNST(1)
             izgfoc=0
-            CALL ADJVIEW(IER)
+            CALL redraw(IER)
           endif
           WRITE(OUTS,'(A)') 
      &'Select the zone containing the surface. '
@@ -1064,7 +1063,7 @@ C General image option flags.
           CALL INLNST(1)
           ITZNM=0; ITSNM=0; ITORG=1; ITSNR=1; ITGRD=1; ITVNO=1
           nzg=1; nznog(1)=IZ; izgfoc=IZ
-          CALL ADJVIEW(IER)
+          CALL redraw(IER)
 
           ISO=1
           WRITE(OUTS,'(A)')
@@ -2063,7 +2062,7 @@ C << might want to save current values for later recovery >>
       nzg=1
       nznog(1)=ISZONE
       izgfoc=ISZONE
-      CALL ADJVIEW(IER)
+      CALL redraw(IER)
       MODIFYVIEW=.TRUE.
       MODBND=.TRUE.
 
@@ -2366,7 +2365,7 @@ C Redraw the affected zones in the graphic screen.
               nzg=2
               nznog(1)=IC1(ICN)
               nznog(2)=IC2(ICN)
-              CALL ADJVIEW(IER)
+              CALL redraw(IER)
 
 C (Re)Set all surfaces to standard line width.
               CALL INLNST(1)

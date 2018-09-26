@@ -1060,6 +1060,7 @@ C ELISTCFC: Controls display and editing of CFC layer commons.
 C If ACTION = 'M' then include editing if ACTION = '-' only
 C allow choice.
       SUBROUTINE ELISTCFC(iwhich,chgdb,ACTION,icfcarrayindex,IER)
+      use CFC_Module
 #include "building.h"
 #include "esprdbfile.h"
 #include "material.h"
@@ -2202,6 +2203,7 @@ C ************* EDONECFC
 C EDONECFC: Edits a CFC layer in the common block at array index index.
 C mod is returned as true if data has changed.
       SUBROUTINE EDONECFC(index,mod,IER)
+      use CFC_Module
 #include "building.h"
 #include "esprdbfile.h"
 #include "material.h"
@@ -2918,6 +2920,7 @@ C opaque or transparent and if the latter include the optical property
 C id string.
 
       SUBROUTINE EDMLDB(ITRC,chgdb,IER,ISEL)
+      use CFC_Module, Only: ITMCFCDB
 #include "building.h"
 #include "model.h"
 #include "geometry.h"
@@ -3479,9 +3482,9 @@ C Update linked MLC including the name of the original MLC.
             matsymindex(NMLC)=IWHICH
           else
             if(lnblnk(T32).le.28)then
-              WRITE(T32,'(2A)') T32OTH(1:lnblnk(T32OTH)),'_inv  '
+              WRITE(T32,'(2A)') T32OTH(1:lnblnk(T32OTH)),'_inv'
             elseif(lnblnk(T12).gt.29.and.lnblnk(T32).le.30)then
-              WRITE(T32,'(2A)') T32OTH(1:lnblnk(T32OTH)),'_i  '
+              WRITE(T32,'(2A)') T32OTH(1:lnblnk(T32OTH)),'_i'
             endif
             write(outs,'(3a)') '(original name ',
      &        T32OTH(1:lnblnk(T32OTH)),')'
@@ -3701,6 +3704,7 @@ C EDMLDB2: Controls display and editing of MLC (v2) commons.
 C If ACTION = 'M' then include editing if ACTION = '-' only
 C allow choice.
       SUBROUTINE EDMLDB2(chgdb,ACTION,isel,IER)
+      use CFC_Module, Only: ITMCFCDB
 #include "epara.h"
 #include "building.h"
 #include "model.h"
@@ -4938,6 +4942,7 @@ C
 C Add note about CFC modifications...
 
       SUBROUTINE EDWALL(ITRC,IFOC,moddb,jump,IER)
+      use CFC_Module
 #include "building.h"
 #include "model.h"
 

@@ -127,6 +127,9 @@ C ECO specific commons
 
       COMMON/EIAhigh/NbComp,NbMat,IMatID(MMLC,ME),ImatDbID(0:MMAT-1),
      &               LCIATag
+
+C 3D visualisation mode.
+      COMMON/MODVIS/IVISMOD
       
 C Significant figure reporting limit (NSIGFIG).
       common/SFIG/NSIGFIG
@@ -166,7 +169,7 @@ C      CHARACTER tab*1
       CHARACTER*12 CompoNam,LayerNam,MatNameco
       CHARACTER*72 MatDesc,MatCat,LayerDes
 
-      character cVnum*36      ! returned from ESPrVersionNum
+      character cVnum*38      ! returned from ESPrVersionNum
       character pagestitle*62 ! for banner title via epages call
 
       integer iglib   ! if 1 then X11, if 2 then GTK, if 3 then text only.
@@ -282,6 +285,7 @@ C Initialise coordinates for eye point, view point and angle of view.
       VIEWM(2)=10.
       VIEWM(3)=10.
       ANG=40.
+      IVISMOD=1
 
 C General image option flags.
       ITDSP=0
@@ -445,7 +449,7 @@ C (Re)Set all surfaces to std line width.
             VIEWM(3)=VIEWMI(3)
             ANG=ANGI
           endif
-          CALL ADJVIEW(IER)
+          CALL redraw(IER)
 
 C Open core of databases.
           call module_opendb(ier)
@@ -1056,6 +1060,11 @@ C Dummy subroutine needed to compile (called from library code).
 
       SUBROUTINE BASESIMP_INPUTS(ICOMP,IER)
       integer icomp,ier
+      return
+      end
+
+      SUBROUTINE CFDVIEW(IER)
+      IER=0
       return
       end
 

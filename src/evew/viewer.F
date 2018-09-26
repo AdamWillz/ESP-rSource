@@ -29,7 +29,7 @@ C Name of current application
       character outs*124,inf*144,path*72,LCMDFL*144,fs*1
       character outs248*248
 
-      character cVnum*36      ! returned from ESPrVersionNum
+      character cVnum*38      ! returned from ESPrVersionNum
       character pagestitle*62 ! for banner title via epages call
 
 #ifdef OSI
@@ -191,7 +191,7 @@ C init =0 INITIALISE INPUT, 1 ADD MORE DATA.
       end
 
 
-      subroutine chgazi(icazi)
+      subroutine chgazi(icazi,ifrlk)
 #include "viewer.h"
       COMMON/OUTIN/IUOUT,IUIN
       PI = 4.0 * ATAN(1.0)
@@ -217,7 +217,7 @@ C init =0 INITIALISE INPUT, 1 ADD MORE DATA.
       return
       end
 
-      subroutine chgelev(icelev)
+      subroutine chgelev(icelev,ifrlk)
 #include "viewer.h"
       COMMON/OUTIN/IUOUT,IUIN
       PI = 4.0 * ATAN(1.0)
@@ -345,6 +345,11 @@ C ***** dummy routine for c code active descriptions buttons.
 C Dummy routines from common3dv.F
       SUBROUTINE ADJVIEW(IER)
       integer ier
+      ier=0
+      return
+      end
+
+      subroutine redraw(IER)
       ier=0
       return
       end

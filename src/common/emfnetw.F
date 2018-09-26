@@ -2033,6 +2033,8 @@ C      IF(NCMP.EQ.0) GOTO 999
 C Connections data
 C << check if NDNAM(NDSCNN(ICNN,1)) and NDNAM(NDSCNN(ICNN,2))
 C << are used. Probably does not have to be written.
+C According to EMFREAD: 
+C << ? NDSCNN has been depreciated in favour of nfsup() & iasocc(). >>
       WRITE(IFPRB,1060,ERR=999)
  1060 FORMAT(' +Node         dHght   -Node         dHght',
      &'   via Component')
@@ -2041,8 +2043,9 @@ C Implied do loop in the write statement for connections.
       WRITE(IFPRB,1070,IOSTAT=IOS,ERR=999)
      &     (NDNAM(NODPS(ICNN)),HGTPS(ICNN),
      &      NDNAM(NODNE(ICNN)),HGTNE(ICNN),
-     &       CMNAM(ITPCON(ICNN)),
-     &      NDNAM(NDSCNN(ICNN,1)),NDNAM(NDSCNN(ICNN,2)),
+     &      CMNAM(ITPCON(ICNN)),
+     &      NDNAM(NDSCNN(ICNN,1))(1:lnblnk(NDNAM(NDSCNN(ICNN,1)))),
+     &      NDNAM(NDSCNN(ICNN,2))(1:lnblnk(NDNAM(NDSCNN(ICNN,2)))),
      &      ICNN=1,NCNN)
  1070 FORMAT(1X,A12,F7.3,3X,A12,F7.3,3X,A12,3X,A12,1X,A12)
 

@@ -484,6 +484,7 @@ C ****************** CONINF
 C CONINF provides a description of the constructions in a zone based
 C on common blocks. If isur=0 then all, otherwise for one surface. 
       SUBROUTINE CONINF(ICOMP,ISUR,ITRU)
+      use CFC_Module, ONLY : cfcver, ITMCFCDB, cfcname, cfcitmindex
 #include "building.h"
 #include "geometry.h"
 #include "esprdbfile.h"

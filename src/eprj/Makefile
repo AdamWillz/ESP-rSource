@@ -25,7 +25,7 @@ default: $(PROG)
 %.o : %.f90
 	$(MCC) $(FFLAGS) -c $<
 
-MODULE_OBJECTS = h3kmodule.o startup.o aim2_module.o aim2_inputs.o
+MODULE_OBJECTS = h3kmodule.o startup.o aim2_module.o aim2_inputs.o CFC_Module.o
 
 OBJECTS = prj.o anlytc.o arrow.o ascii_mat.o basesimp.o \
 	  basesimp_inputs.o blcond.o bnlthp.o bpfcom.o bpfcontrl.o bscoeff.o bscoeff_extended.o \
@@ -49,7 +49,8 @@ OBJECTS = prj.o anlytc.o arrow.o ascii_mat.o basesimp.o \
 	  PltDummy.o
 
 MODULES = aim2.mod aim2_calcdata.mod aim2_h2k_dummy.mod aim2_inputdata.mod aim2_inputs.mod \
-	  aim2_inputs_inputdata.mod start_up.mod parse_command_line.mod h3kmodule.mod
+	  aim2_inputs_inputdata.mod start_up.mod parse_command_line.mod h3kmodule.mod \
+      CFC_Module.mod
 
 ifeq ($(FMIarg),enableFMI)
 	FMI_OBJECTS = FMIcom.o FMIprj.o
@@ -95,6 +96,9 @@ CDBExplore.F:
 c2fdum.F:
 	rm -f c2fdum.F
 	ln -s $(COMdir)/c2fdum.F .
+CFC_Module.f90:
+	rm -f CFC_Module.f90
+	ln -s $(BLDdir)/CFC_Module.f90 .
 cfdat.F:
 	rm -f cfdat.F
 	ln -s $(DFSdir)/cfdat.F .
@@ -304,7 +308,7 @@ clean:
 	hvacinput.F item.F mcdbscn.F mfcdat.F mfelst.F mfnmsc.F mfrlst.F MultiYear_climate.F mvalid.F \
 	net2pdf.F newnet.F nwkrewr.F plelevvc.F pltcfg.F psychro.F rcdblist.F rwipv.F rwroam.F \
 	rwsbem.F senrwl.F sort.F spmisc.F stndrds.F startup.F tdfile.F  \
-	readTrnsys.F PltDummy.F qrun.F h3kmodule.f90 FMIcom.F
+	readTrnsys.F PltDummy.F qrun.F h3kmodule.f90 FMIcom.F CFC_Module.f90 cfc_module.mod
 
 distclean: clean
 

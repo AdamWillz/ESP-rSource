@@ -144,7 +144,7 @@ C ******* Default views formation.
 
       LOGICAL XST,OK,DOK
       logical addview   ! mark we are working a new view
-      logical redraw
+      logical do_redraw
       logical short     ! for shorter format
       logical okfore,okaft ! for near zero cuts
 
@@ -184,7 +184,7 @@ C Addview = true then save editing as a new view, if false
 C then it is an update to an existing view.
       ITA2 = IFIL+7
       vewdone=.false.
-      redraw =.true.
+      do_redraw =.true.
       addview=.false.
       trvewsh='new'
       ier=0
@@ -654,10 +654,10 @@ C Perspective view.
 
 C Check if graphics are active.
       if (MMOD.ne.8) then
-        redraw=.false.
+        do_redraw=.false.
       endif
 
-      if(redraw)then
+      if(do_redraw)then
 
 C Draw the problem in plan/elevation with viewcone.
         if(ITPPSW.eq.0)then
@@ -671,11 +671,11 @@ C Draw the problem in plan/elevation with viewcone.
           call VCONE('E')
         elseif(ITPPSW.eq.3)then
           MODIFYVIEW=.TRUE.
-          CALL ADJVIEW(IER)
+          CALL redraw(IER)
           MODLEN=.FALSE.
           MODIFYVIEW=.FALSE.
         endif
-        redraw =.false.
+        do_redraw =.false.
       endif
 
 C Help text for main menu.
@@ -693,7 +693,7 @@ C Adapt title to reflect the current view name.
 
 C Present list of views.
         vewdone=.false.
-        redraw =.true.
+        do_redraw =.true.
         MODLEN=.true.
         MODIFYVIEW=.TRUE.
         goto 142
@@ -713,11 +713,11 @@ C Present list of views.
         MODLEN=.TRUE.
         MODBND=.TRUE.
         CALL BNDOBJ(1,IER)
-        redraw =.true.
+        do_redraw =.true.
       elseif(INO.EQ.3)then
         CALL EASKABCD(' View choices: ',' ','plan',
      &    'south elevation','east elevation','perspective?',IW,nbhelp)
-        if(IW-1.ne.ITPPSW)redraw =.true.
+        if(IW-1.ne.ITPPSW)do_redraw =.true.
         ITPPSW=IW-1
 
       elseif(INO.EQ.5)THEN
@@ -775,7 +775,7 @@ C the site origin we need to add in offsets.
             CALL ASKOK(outs,'Is this view ok?',OK,dok,nbhelp)
             IF(OK)then
               rvpx=ex; rvpy=ey
-              vewdone=.false.; redraw =.true.
+              vewdone=.false.; do_redraw =.true.
               MODLEN=.true.; MODIFYVIEW=.TRUE.
               rvpz=VIEWM(3)
             endif
@@ -798,7 +798,7 @@ C the site origin we need to add in offsets.
               call ang3vtx(OXMN,OYMN,OZMN,EYEM(1),EYEM(2),EYEM(3),OXMX,
      &             OYMX,OZMX,eang)
               azimuth=az; elevtn=el
-              vewdone=.false.; redraw =.true.
+              vewdone=.false.; do_redraw =.true.
               MODLEN=.true.; MODIFYVIEW=.TRUE.
             endif
           else
@@ -819,7 +819,7 @@ C the site origin we need to add in offsets.
           CALL EGETWR(HOLD,K,rvpy,-999.,999.,'W','Y cord',IER)
           CALL EGETWR(HOLD,K,rvpz,0.,999.,'W','eye Z cord',IER)
           if(ier.ne.0)goto 55
-          vewdone=.false.; redraw =.true.
+          vewdone=.false.; do_redraw =.true.
           iupdown=0; isym=14
           call etplot(rvpx,rvpy,iupdown,isym)
           call forceflush()
@@ -834,7 +834,7 @@ C the site origin we need to add in offsets.
               call ln2az(EYEM(1),EYEM(2),EYEM(3),VIEWM(1),VIEWM(2),
      &          VIEWM(3),az,el)
               azimuth=az; elevtn=el
-              vewdone=.false.; redraw =.true.
+              vewdone=.false.; do_redraw =.true.
               MODLEN=.true.; MODIFYVIEW=.TRUE.
               call usrmsg('Altering the eyepoint may require using the',
      &        'wireframe control to set the viewed point. ','W')
@@ -867,7 +867,7 @@ C Update the viewing azimuth and elevation.
               call  AZ2UV(azimuth,elevtn,vdx,vdy,vdz)
               call ang3vtx(OXMN,OYMN,OZMN,EYEM(1),EYEM(2),EYEM(3),OXMX,
      &             OYMX,OZMX,eang)
-              vewdone=.false.; redraw =.true.
+              vewdone=.false.; do_redraw =.true.
               MODLEN=.TRUE.; MODIFYVIEW=.TRUE.
             endif
           else
@@ -888,7 +888,7 @@ C Update the viewing azimuth and elevation.
           call AZ2UV(azimuth,elevtn,vdx,vdy,vdz)
           call ang3vtx(OXMN,OYMN,OZMN,EYEM(1),EYEM(2),EYEM(3),OXMX,
      &             OYMX,OZMX,eang)
-          vewdone=.false.; redraw =.true.
+          vewdone=.false.; do_redraw =.true.
         endif
 
       elseif(INO.EQ.9.or.INO.EQ.10)then
@@ -916,7 +916,7 @@ C View angle horizontal and vertical.
             MODLEN=.TRUE.; MODIFYVIEW=.TRUE.
           endif
         endif
-        vewdone=.false.; redraw =.true.
+        vewdone=.false.; do_redraw =.true.
 
       elseif(INO.EQ.11)then
 
@@ -970,7 +970,7 @@ C horiz axis...
           call linescale(iigl,Xadd,sca,iigb,Yadd,sca)
         elseif(ITPPSW.eq.3)then
         endif
-        vewdone=.false.; redraw =.true.
+        vewdone=.false.; do_redraw =.true.
 
       elseif(INO.EQ.14)then
 
@@ -1015,7 +1015,7 @@ C vertical axis...
           call linescale(iigl,Xadd,sca,iigb,Yadd,sca)
         elseif(ITPPSW.eq.3)then
         endif
-        vewdone=.false.; redraw =.true.
+        vewdone=.false.; do_redraw =.true.
 
       elseif(INO.EQ.16)then
 

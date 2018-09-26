@@ -79,6 +79,9 @@ C Project journal on/off, unit number, cmd, file name.
 C Significant figure reporting limit (NSIGFIG).
       common/SFIG/NSIGFIG
 
+C 3D visualisation mode.
+      COMMON/MODVIS/IVISMOD
+
 C Radiance processor cores.
       integer radcores
       common/radcor/radcores
@@ -100,7 +103,7 @@ C Name of current application
       character brw*4   ! to signal whether browsing model
       character smode*1 ! simscene mode 'i' interactive '-' silent
 
-      character cVnum*36      ! returned from ESPrVersionNum
+      character cVnum*38      ! returned from ESPrVersionNum
       character pagestitle*62 ! for banner title via epages call
 
       DIMENSION ITEM(24)
@@ -273,6 +276,7 @@ C Initial coords for eyepoint, viewing point, angle of view.
       EYEM(1)=-100.0; EYEM(2)=-100.0; EYEM(3)=100.0
       VIEWM(1)=10.0; VIEWM(2)=10.0; VIEWM(3)=10.0
       ANG=40.0
+      IVISMOD=1
 
 C General image option flags.
       ITDSP=0; ITBND=1; ITEPT=0
@@ -672,7 +676,7 @@ C redraw the model image.
 C (Re)Set all surfaces to std line width.
         CALL INLNST(1)
         izgfoc=0
-        CALL ADJVIEW(IER)
+        CALL redraw(IER)
 
 C At this point we know the new model bounds. Reset the ground disk
 C diameter and centre.
@@ -1258,7 +1262,7 @@ C (Re)Set all surfaces to std line width.
           VIEWM(1)=VIEWMI(1); VIEWM(2)=VIEWMI(2); VIEWM(3)=VIEWMI(3)
           ANG=ANGI
         endif
-        CALL ADJVIEW(IER)
+        CALL redraw(IER)
 
 C At this point we know the model bounds. Set the ground disk
 C diameter and centre.
@@ -1512,3 +1516,7 @@ C Dummy routine (needed for call back from c).
       return
       end
 
+      SUBROUTINE CFDVIEW(IER)
+      IER=0
+      return
+      end

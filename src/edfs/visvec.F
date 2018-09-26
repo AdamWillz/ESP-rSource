@@ -318,8 +318,7 @@ C      write(6,*) 'within MAKS3D SCmin,SCmax',SCmin,SCmax
       colmult=(real(ncset)/trange)
 
 C Need to reset scale factors - do this by redrawing the domain.
-      iz=0
-      call VGRID3D('---','xyz',iz)
+      call VGRID3D(0,1)
 C Loop through all vectors.
       do 10 I=2,NIM1
         do 101 J=2,NJM1

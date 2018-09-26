@@ -371,7 +371,7 @@ C redraw the model image.
 C (Re)Set all surfaces to standard line width.
             CALL INLNST(1)
             izgfoc=0
-            CALL ADJVIEW(IER)
+            CALL redraw(IER)
           endif
 
 C Re-draw the configuration buttons.
@@ -1557,6 +1557,9 @@ C Commons related to tmc files (to support copy function).
       COMMON/ICFNOD/ICFD,ICP
       INTEGER NCFDND,ICFDND,NCONF,ICFD,ICP
 
+C 3D visualisation mode.
+      COMMON/MODVIS/IVISMOD
+
 C Zone casual gain control data.
       character cgcdesc*64
       common/CGCIND/cgcdesc(MCOM)
@@ -1705,7 +1708,7 @@ C redraw the model image.
 C (Re)Set all surfaces to standard line width.
           CALL INLNST(1)
           izgfoc=0
-          CALL ADJVIEW(IER)
+          CALL redraw(IER)
         endif
         if(MMOD.eq.8)then
           call cfgtogg(icfg_type,icfgz,icfgn,icfgc,icfgdfn,
@@ -3546,6 +3549,7 @@ C CFD.
 
         IUF=IFIL+1
         call cfdcomp(ic,iuf,ier)
+        IVISMOD=1
         MODIFYVIEW=.TRUE.
 
 C If browsing do not offer inclusion option.

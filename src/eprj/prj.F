@@ -155,6 +155,9 @@ C IDST tool commands
       COMMON/BIDIRFL/bidirfile,bidirname(MSTMC)
       COMMON/Vld20/Vldtng
 
+C 3D visualisation mode.
+      COMMON/MODVIS/IVISMOD
+
 C Name of current application
       common/APPNAME/cAppName
       character cAppName*12
@@ -212,8 +215,8 @@ C Returned parameters from silentread or silentxmlread.
       logical silent  ! for dependency checking on transform or rotate
       logical QUIET   ! to force silent rebuild of zone constructions
 
-      character cVnum*36      ! returned from ESPrVersionNum
-      character pagestitle*62 ! for banner title via epages call
+      character cVnum*38      ! returned from ESPrVersionNum
+      character pagestitle*68 ! for banner title via epages call
       character subpath*84
       character sfile*144
       character odir*84
@@ -366,6 +369,7 @@ C Initialise coordinates for eye point, view point and angle of view.
       VIEWM(2)=10.
       VIEWM(3)=10.
       ANG=40.
+      IVISMOD=1
 
 C General image option flags.
       ITDSP=0
@@ -967,20 +971,6 @@ C Provide site information, update wireframe control with
 C current number of zones if a model has been loaded.
       if(LCMDFL(1:2).ne.'  '.and.LCMDFL(1:4).ne.'UNKN')then
         if(ier.eq.0)then
-          if(MMOD.EQ.8)then
-            numberofzones=ncomp
-            call updwire(numberofzones)  ! pass local integer
-            call cfgtogg(icfg_type,icfgz,icfgn,icfgc,icfgdfn,
-     &                             iicfgz,iicfgn,iicfgc,iicfgdfn)
-            call opencfg(icfg_type,icfgz,icfgn,icfgc,icfgdfn,
-     &                             iicfgz,iicfgn,iicfgc,iicfgdfn)
-            WRITE(etext,'(2A)')'Model: ',
-     &        modeltitle(1:lnblnk(modeltitle))
-            iside=1
-            isize=1
-            ifont=1
-            call viewtext(etext,iside,isize,ifont)
-          endif
           CFGOK=.TRUE.
 
 C Uncomment next line to echo site info when model is scanned.
@@ -1062,32 +1052,7 @@ C has been specified update view info to this.
                 ANG=ANGI
               endif
 
-C Pass information to C library code if running in graphic mode.
-              CALL ADJVIEW(IER)
-              if(MMOD.EQ.8)then
-                call cfgtogg(icfg_type,icfgz,icfgn,icfgc,icfgdfn,
-     &                             iicfgz,iicfgn,iicfgc,iicfgdfn)
-                call opencfg(icfg_type,icfgz,icfgn,icfgc,icfgdfn,
-     &                             iicfgz,iicfgn,iicfgc,iicfgdfn)
-                WRITE(etext,'(2A)')'Model: ',
-     &            modeltitle(1:lnblnk(modeltitle))
-                iside=1
-                isize=1
-                ifont=1
-                call viewtext(etext,iside,isize,ifont)
-              endif
-            endif
-            if(MMOD.EQ.8)then
-              call cfgtogg(icfg_type,icfgz,icfgn,icfgc,icfgdfn,
-     &                             iicfgz,iicfgn,iicfgc,iicfgdfn)
-              call opencfg(icfg_type,icfgz,icfgn,icfgc,icfgdfn,
-     &                             iicfgz,iicfgn,iicfgc,iicfgdfn)
-              WRITE(etext,'(2A)')'Model: ',
-     &          modeltitle(1:lnblnk(modeltitle))
-              iside=1
-              isize=1
-              ifont=1
-              call viewtext(etext,iside,isize,ifont)
+              call redraw(IER)
             endif
           else
             itru=iuout
@@ -1194,7 +1159,7 @@ C to draw the model.
 C (Re)Set all surfaces to standard line width.
             CALL INLNST(1)
             izgfoc=0
-            CALL ADJVIEW(IER)
+            CALL redraw(IER)
           endif
 
 C Re-draw the configuration buttons.

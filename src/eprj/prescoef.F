@@ -587,7 +587,7 @@ C Manual input of cordinates.
           nzg=1
           nznog(1)=IC
           izgfoc=IC
-          CALL ADJVIEW(IER)
+          CALL redraw(IER)
  256      CALL EASKSUR(IC,ISO,'-','with respect to which external ',
      &               'surface do you want to define coordinates? ',IER)
           call ZSID(IC,ISO,ZSDES,ZSDESC,ZSDESS) 
@@ -605,7 +605,7 @@ C selected to a thick line.
           nznog(1)=IC
           izgfoc=IC
           izgfoc=IC
-          CALL ADJVIEW(IER)
+          CALL redraw(IER)
 
 C Ask for x offset.
           DX1=1.0
@@ -716,7 +716,7 @@ C  transparent surface of the zone
                 nzg=1
                 nznog(1)=IZU
                 izgfoc=IZU
-                CALL ADJVIEW(IER)
+                CALL redraw(IER)
 
 C Find maximum and minimum vertex coordinates of transparent surface
                 xdebi=x(JVN(IZW,1))

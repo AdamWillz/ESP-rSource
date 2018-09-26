@@ -617,7 +617,7 @@ C Redraw the wireframe and the grid.
         itsnm=1
         CALL INLNST(1)
         nzg=1; nznog(1)=izone; izgfoc=izone
-        CALL ADJVIEW(IER)
+        CALL redraw(IER)
       endif
 
 C Draw the grid on the surface.

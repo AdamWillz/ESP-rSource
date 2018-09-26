@@ -69,8 +69,8 @@ C Name of current application
       character outs*124,outs248*248
       character path*72,fs*1
       character tab*1
-      character cVnum*36      ! returned from ESPrVersionNum
-      character pagestitle*64 ! for banner title via epages call
+      character cVnum*38      ! returned from ESPrVersionNum
+      character pagestitle*68 ! for banner title via epages call
       character buffer*124    ! for listing summary of components
 
       integer iglib   ! if 1 then X11, if 2 then GTK, if 3 then text only.
@@ -658,11 +658,16 @@ C Dummy routines from common3dv.F
       return
       end
 
-      subroutine chgazi(icazi)
+      subroutine redraw(IER)
+      ier=0
       return
       end
 
-      subroutine chgelev(icelev)
+      subroutine chgazi(icazi,ifrlk)
+      return
+      end
+
+      subroutine chgelev(icelev,ifrlk)
       return
       end
 

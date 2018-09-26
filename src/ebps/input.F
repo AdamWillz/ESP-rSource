@@ -168,6 +168,7 @@ C                         use the inside surface node temperature
       
       USE AIM2_InputData, ONLY: iAIM2, LAIM2
       USE AIM2, ONLY: AIM2_READIN
+      use CFC_Module , ONLY: cfcver
       
       IMPLICIT NONE
 
@@ -1142,7 +1143,6 @@ C Simulator parameters.
 C Toggle for extreme silent running (endless) mode.
       logical endless,issilient
       common/endlessmode/endless,issilient
-
 
       CHARACTER*72 LMOIST,LMSTR
       character outs*124,CXSTR*78,spflnam*72

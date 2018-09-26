@@ -90,6 +90,9 @@ C Project journal on/off, unit number, cmd, file name.
 C Defaults.
       character*96 DFCFG,DFCTL,DEFRLB,DAPROB,DAFRES,DPNF
       COMMON/DEFLT2/DFCFG,DFCTL,DEFRLB,DAFRES,DAPROB,DPNF
+
+C 3D visualisation mode.
+      COMMON/MODVIS/IVISMOD
       
 C Significant figure reporting limit (NSIGFIG).
       common/SFIG/NSIGFIG
@@ -117,7 +120,7 @@ C Name of current application
       character journcmd*20,jfile*72,uname*24
       character inz*16,inzone*16,fs*1,cjfile*72
 
-      character cVnum*36      ! returned from ESPrVersionNum
+      character cVnum*38      ! returned from ESPrVersionNum
       character pagestitle*62 ! for banner title via epages call
       character ppath*72,filen*72
 
@@ -229,6 +232,7 @@ C Initial coords for eyepoint, viewing point, angle of view.
       VIEWM(2)=10.
       VIEWM(3)=10.
       ANG=40.
+      IVISMOD=1
 
 C General image option flags.
       ITDSP=1
@@ -935,7 +939,7 @@ C Determine geometry bounds and force it to be drawn.
       MODIFYVIEW=.TRUE.
       MODLEN=.TRUE.
       izgfoc=ICOMP
-      CALL ADJVIEW(IER)
+      CALL redraw(IER)
       if(ncub(ICOMP).gt.0)then
         CALL ESCZONE(ICOMP)
         CALL DRWSEN(ICOMP,ier)
@@ -1434,6 +1438,11 @@ C ***** Dummy display of images.
       character*1 ACTION
       integer isel,ier
       ier=0
+      return
+      end
+
+      SUBROUTINE CFDVIEW(IER)
+      IER=0
       return
       end
 

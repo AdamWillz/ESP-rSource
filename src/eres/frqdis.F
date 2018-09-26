@@ -895,10 +895,12 @@ C corresponding to graphical result display.
       integer iside,isize,ifont     ! passed to viewtext
       integer iigl,iigr,iigt,iigb,iigw,iigwh
       integer iiw1,iiw2,iiw3,iiw4,iimenu
+      integer ilf,igfw,igfh,ild,igdw,igdh
 #else
       integer*8 iside,isize,ifont     ! passed to viewtext
       integer*8 iigl,iigr,iigt,iigb,iigw,iigwh
       integer*8 iiw1,iiw2,iiw3,iiw4,iimenu
+      integer*8 ilf,igfw,igfh,ild,igdw,igdh
 #endif
 
 C Generate a descriptive string for the time period to be displayed
@@ -907,17 +909,18 @@ C pixel references for calls to viewtext. Use winclr to erase the
 C text dialogue box that would normally be displayed.
       if(act.eq.'g')then
         IF(MMOD.EQ.8)THEN
-          iglib = igraphiclib()  ! find out if X11 or GTK or text support only.
-          if(iglib.eq.1)then
-            call winclr
-            call feedbox(menuchw,2,igfw,igfh)
-            call opengdisp(menuchw,LIMTTY,2,igdw,igdh)
-          endif
 
 C Reduce the white space on the right so the label percent is not
 C so separated from the axis.
           iiw1=12; iiw2=12; iiw3=5; iiw4=3; iimenu=menuchw
           iigl=igl; iigr=igr; iigt=igt; iigb=igb; iigw=igw; iigwh=igwh
+          ilf=2; ild=LIMTTY
+          iglib = igraphiclib()  ! find out if X11 or GTK or text support only.
+          if(iglib.eq.1)then
+            call winclr
+            call feedbox(iimenu,ilf,igfw,igfh)
+            call opengdisp(iimenu,ild,ilf,igdw,igdh)
+          endif
           CALL win3d(iimenu,iiw1,iiw2,iiw3,iiw4,
      &      iigl,iigr,iigt,iigb,iigw,iigwh)
           igl=int(iigl); igr=int(iigr); igt=int(iigt); igb=int(iigb)

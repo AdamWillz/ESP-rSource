@@ -215,6 +215,7 @@ extern chgelev_();    /* in esrucom/common3dv.F */
 extern chgeye_();     /* in esrucom/common3dv.F */
 extern chgsun_();     /* in esrucom/common3dv.F */
 extern chgzonpik_();  /* in esrucom/common3dv.F */
+extern redraw_();    /* in esrucom/common3dv.F */
 extern chgzonpikarray_();
 extern proftxdump_();
 extern nwkslctc_();
@@ -2801,7 +2802,7 @@ void dosymbox(box dobox,int asklen,long int* sav_font,long int* use_font,int* b_
   int bottom, left;	/* pixel at lower left of box (supplied) */
 /*   long int iupx,iupy;	position of << future >> popup */
   long int  s_font, u_font;	/* font in current use, font to use within box */
-  long int elevchange,azichange;	/* current value to pass to fortran. */
+  long int elevchange,azichange,ifrlk;	/* current value to pass to fortran. */
   long int axt,ayt; /* centre for azim +- symbols  */
   long int sym,sz;      /* symbol and symbol size      */
 
@@ -2842,19 +2843,23 @@ void dosymbox(box dobox,int asklen,long int* sav_font,long int* use_font,int* b_
     if (strncmp(topic, "aziplus", 7) == 0) {
       Timer(200);
       azichange = -10;	/* visual anitclockwise */
-      chgazi_(&azichange);  /* Deal with user selection of azimuth increment  */
+      ifrlk=0;
+      chgazi_(&azichange,&ifrlk);  /* Deal with user selection of azimuth increment  */
     } else if (strncmp(topic, "aziminus", 8) == 0) {
       Timer(200);
       azichange = 10;	/* visual clockwise */
-      chgazi_(&azichange);  /* Deal with user selection of azimuth decrement  */
+      ifrlk=0;
+      chgazi_(&azichange,&ifrlk);  /* Deal with user selection of azimuth decrement  */
     } else if (strncmp(topic, "elevplus", 8) == 0) {
       Timer(200);
       elevchange = 5;
-      chgelev_(&elevchange);	/* call fortran with elevation increment */
+      ifrlk=0;
+      chgelev_(&elevchange,&ifrlk);	/* call fortran with elevation increment */
     } else if (strncmp(topic, "elevminus", 9) == 0) {
       Timer(200);
       elevchange = -5;
-      chgelev_(&elevchange);	/* call fortran with elevation decrement */
+      ifrlk=0;
+      chgelev_(&elevchange,&ifrlk);	/* call fortran with elevation decrement */
     }
 
     if (s_font != u_font) winfnt_(&u_font);
@@ -7063,6 +7068,7 @@ int		len_title;
   static int blen = 0;
   char	keypressed,menuentry;
   long int saved_font, use_font, changed_font, label_font;
+  int bottom,left;   /* ll of capture box */
   int   mob_height, mob_width,mib_height,mib_width,xb,yb,x,y,i,iy,pflg,lt1,iw,index,lineheight;
   int   u_height, u_width;      /* size of the under pixmap */
   int   menu_height;   /* pixel height for text of menu */
@@ -7072,6 +7078,13 @@ int		len_title;
   int	no_valid_event,config_altered,iaux,butid;
   int   oldi,notted;    /* remember last motion hilight and if an item yet hilighted */
   unsigned int start_height,start_width;
+
+  elevplus_left = disp.b_right - (f_width * 30);
+  elevminus_left = disp.b_right - (f_width * 33);
+  elev_left = disp.b_right - (f_width * 44);
+  aziplus_left = disp.b_right - (f_width * 48);
+  aziminus_left = disp.b_right - (f_width * 51);
+  azi_left = disp.b_right - (f_width * 60);
 
   if(m_lines == 0)return;	/* don't bother if no menu */
   iw = (int) *iwth;  /* character width to display */
@@ -7309,7 +7322,29 @@ int		len_title;
    	    break;
           }
         } else {
-/* debug  fprintf(stderr,"track_edit_str nothing in buf \n"); */
+          if (azi_avail >=1) {
+            if (ks==XK_Left || ks==XK_KP_Left) { /* left arrow pressed */
+              no_valid_event = FALSE;
+              saved_font = current_font; bottom = disp.b_top; left = aziminus_left;
+              dosymbox(aziminus,2,&saved_font,&small_fnt,&bottom,&left,"aziminus",'!');
+            break;
+            } else if (ks==XK_Right || ks==XK_KP_Right) { /* right arrow pressed */
+              no_valid_event = FALSE;
+              saved_font = current_font; bottom = disp.b_top; left = aziplus_left;
+              dosymbox(aziplus,2,&saved_font,&small_fnt,&bottom,&left,"aziplus",'!');
+            break;
+            } else if (ks==XK_Up || ks==XK_KP_Up) { /* up arrow pressed */
+              no_valid_event = FALSE;
+              saved_font = current_font; bottom = disp.b_top; left = elevplus_left;
+              dosymbox(elevplus,2,&saved_font,&small_fnt,&bottom,&left,"elevplus",'!');
+            break;
+            } else if (ks==XK_Down || ks==XK_KP_Down) { /* down arrow pressed */
+              no_valid_event = FALSE;
+              saved_font = current_font; bottom = disp.b_top; left = elevminus_left;
+              dosymbox(elevminus,2,&saved_font,&small_fnt,&bottom,&left,"elevminus",'!');
+            break;
+            }
+          }
         }
         break;
     }
@@ -7368,6 +7403,9 @@ int aux_menu(event)  XEvent *event; {
   long int active=0;
   float dx=0.0;
   float dy=0.0;
+  long int idx=0;
+  long int idy=0;
+  long int ifrlk=0;
 
 /* update left position of boxes along horizontal bar */
    saved_font = menu_fnt;
@@ -7815,25 +7853,21 @@ point*/
 /* selected azimuth +  control */
         saved_font = current_font; bottom = disp.b_top; left = aziplus_left;
         dosymbox(aziplus,2,&saved_font,&small_fnt,&bottom,&left,"aziplus",'!');
-        refreshenv_();  // to esure that current domains are re-drawn
       } else if (azi_avail >=1 && xboxinside(aziminus,x,y)) {
 
 /* selected azimuth -  control */
         saved_font = current_font; bottom = disp.b_top; left = aziminus_left;
         dosymbox(aziminus,2,&saved_font,&small_fnt,&bottom,&left,"aziminus",'!');
-        refreshenv_();  // to esure that current domains are re-drawn
       } else if (azi_avail >=1 && xboxinside(elevplus,x,y)) {
 
 /* selected elev +  control */
         saved_font = current_font; bottom = disp.b_top; left = elevplus_left;
         dosymbox(elevplus,2,&saved_font,&small_fnt,&bottom,&left,"elevplus",'!');
-        refreshenv_();  // to esure that current domains are re-drawn
       } else if (azi_avail >=1 && xboxinside(elevminus,x,y)) {
 
 /* selected elev -  control */
         saved_font = current_font; bottom = disp.b_top; left = elevminus_left;
         dosymbox(elevminus,2,&saved_font,&small_fnt,&bottom,&left,"elevminus",'!');
-        refreshenv_();  // to esure that current domains are re-drawn
       } else if (setup_avail == 1 && xboxinside(setup,x,y)) {
 
 /* selected setup display */
@@ -7973,7 +8007,40 @@ point*/
         if (saved_font != disp_fnt) winfnt_(&saved_font);  /* restore std font */
       } else if (xboxinside(viewbx,x,y)){
 
-/* inside graphics display - note this and return */
+/* inside graphics display */
+/* if view controls are present, enable freelook until mouse is released */
+        if (azi_avail >=1) {
+          x_old=x;
+          y_old=y;
+          no_valid_event = TRUE;
+          while ( no_valid_event) {
+            XNextEvent(theDisp,event);
+            switch (event->type) {
+              case MotionNotify: /* while mouse is moving track position  */
+                x = event->xmotion.x; y = event->xmotion.y;
+                idx=x-x_old; idy=y-y_old;
+                ifrlk=1;
+                if (abs(idx)>10) {
+                  chgazi_(&idx,&ifrlk);
+                  x_old=x;
+                }
+                if (abs(idy)>10) {
+                  chgelev_(&idy,&ifrlk);
+                  y_old=y;
+                }
+                break;
+              case ButtonRelease:   /* button released so jump out of loop  */
+                idx=0;
+                ifrlk=0;
+                chgazi_(&idx,&ifrlk);
+                no_valid_event = FALSE;
+                break;
+              default:
+                no_valid_event = TRUE;
+                break;
+            }
+          }
+        }
         but_rlse=5;
       }
     return (but_rlse);

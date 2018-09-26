@@ -312,14 +312,14 @@ if [ "$xml_support" = "yes" ] || [ "$xml_support" = "prompt" ]; then
       xml_libs_found="no"
       if [ "$mode" = "silent" ]; then
          echo " "
-         echo " Warning: libxml2 Library not found in /usr/include"
+         echo " Warning: libxml2 headers not found in /usr/include"
          echo " or /usr/local/include - xml output support disabled."
       fi
    else
     xml_libs_found="yes"
     LIBXML2_INCLUDE="-I/usr/include -I/usr/include/libxml2 -I/usr/local/include/libxml2 -I/usr/include/libxslt -I/local/include/libxslt"
     echo " "
-    echo " xml libraries found."
+    echo " xml headers found."
     # xml support may optionally include support for xslt & exslt
     # (following code tested only with GNU ld).
     if [ "${architecture:0:6}" = "CYGWIN" ]; then
@@ -350,8 +350,8 @@ if [ "$SQLite_support" = "yes" ]; then
           SQLite_support="no"; 
           if [ "$mode" = "silent" ]; then
              echo " ";
-             echo " Warning: Library libsqlite3 not found in";
-             echo " /usr/lib. SQLite support disabled.";
+             echo " Warning: Library libsqlite3 not found.";
+             echo " SQLite support disabled.";
           fi
           ;;
      *  ) SQLite_libs_found="yes";
@@ -1508,7 +1508,7 @@ echo "       character cArchitecture*32  ! Machine architecture"        >> ${SRC
 echo "       character cOperSystem*32    ! Operating system"            >> ${SRCdir}/include/build_info.h
 echo "       character cOSversion*32     ! Operating system version"    >> ${SRCdir}/include/build_info.h
 echo "       character cHost*256         ! Host name"                   >> ${SRCdir}/include/build_info.h
-echo "       character cRelease_Num*26   ! Release version"             >> ${SRCdir}/include/build_info.h
+echo "       character cRelease_Num*28   ! Release version"             >> ${SRCdir}/include/build_info.h
 echo "       character cSource*32        ! Repository version"          >> ${SRCdir}/include/build_info.h
 echo "       character cBranch*48        ! Branch name"                 >> ${SRCdir}/include/build_info.h
 echo "       character cRevision*32      ! Revision number"             >> ${SRCdir}/include/build_info.h

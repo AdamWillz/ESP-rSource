@@ -1017,7 +1017,7 @@ C IMULT is the number of metrics being saved (1 per record).
       endif
       IDRSZE=NJM1*NKM1*IMULT
 
-C Write domain size and start and finish time step increment.
+C Write domain size.
       WRITE(ICFLIB,REC=IREC,IOSTAT=ISTAT,ERR=1000) IDRSZE,NIM2,NJM2,NKM2
 
 C Debug.

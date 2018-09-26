@@ -44,6 +44,8 @@ C IER=0 OK, IER=1 problem.
 C DRAIR is the air gap layer resistance for 3 orientations.
 
       SUBROUTINE ERMLDB(ITRC,ITRU,IER)
+      use CFC_Module , ONLY: cfcver, ITMCFCDB, MGIT_CFC, cfcitmindex,
+     & CFC_layer_flipped
 #include "building.h"
 #include "esprdbfile.h"
 #include "material.h"
@@ -671,6 +673,8 @@ C IER=0 OK, IER=1 problem.
 C DRAIR is the air gap layer resistance for 3 orientations.
 
       SUBROUTINE ERMLDB2(ITRC,ITRU,IER)
+      use CFC_Module , ONLY: cfcver, ITMCFCDB, MGIT_CFC, cfcitmindex,
+     & CFC_layer_flipped
 #include "building.h"
 #include "esprdbfile.h"
 #include "material.h"
@@ -1505,6 +1509,8 @@ C fails it trys against cfcdoc. If no match is found a
 C warning is given and matarrayindex is returned as zero.
 
       subroutine parsecfcdesc(cfclikelyidx, NAM,cfcarrayindex)
+      use CFC_Module, Only: cfcdbitems, cfcname, cfcitmindex,
+     & cfcdoc
 #include "building.h"
 #include "esprdbfile.h"
 #include "material.h"
@@ -1611,6 +1617,8 @@ C *************** ETMLDB
 C ETMLDB provides reporting on current description of a construction
 C based on contents of material.h. Should work for mlcver 0 and 1.
       SUBROUTINE ETMLDB(ITRC,ITRU,IFOC,ier)
+      use CFC_Module , ONLY: cfcver, ITMCFCDB, cfcdbcon, cfcdbden,
+     & cfcdbsht, CFCshdtp, cfcname, cfcdoc, cfcitmindex
 #include "building.h"
 #include "esprdbfile.h"
 #include "material.h"
@@ -2296,6 +2304,8 @@ C writes the layer line with material name and documentation separate by
 C a : but truncates the total length to 72 characters. A future variant might 
 C relax this limitation so as not to truncate the material documentation.
       SUBROUTINE EMKAMLD(ITRU,IER)
+      use CFC_Module, Only: cfcver, ITMCFCDB, cfcname, cfcdoc,
+     & CFC_layer_flipped
 #include "building.h"
 #include "esprdbfile.h"
 #include "material.h"
@@ -2502,6 +2512,7 @@ C one of the [g] or [h] material types in which case the name
 C is written out.
 
       SUBROUTINE EMKAMLD2(ITRU,IER)
+      use CFC_Module, Only: cfcver, ITMCFCDB, CFC_layer_flipped
 #include "building.h"
 #include "esprdbfile.h"
 #include "material.h"

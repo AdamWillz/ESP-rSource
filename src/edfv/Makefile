@@ -21,7 +21,7 @@ default: $(PROG)
 MODULE_OBJECTS = startup.o 
 
 OBJECTS = cfdv.o arrow.o c2fdum.o cfdat.o cfdrw.o cfgrid.o cgd.o \
-	e3dviews.o plot.o visgrd.o visual.o visvec.o 
+	common3dv.o e3dviews.o plot.o visgrd.o visual.o visvec.o 
 
 MODULES = start_up.mod parse_command_line.mod 
 
@@ -46,6 +46,9 @@ cfgrid.F:
 cgd.F:
 	rm -f cgd.F
 	ln -s $(DFSdir)/cgd.F .
+common3dv.F:
+	rm -f common3dv.F
+	ln -s $(COMdir)/common3dv.F .
 e3dviews.F:
 	rm -f e3dviews.F
 	ln -s $(COMdir)/e3dviews.F .
@@ -77,7 +80,7 @@ install:
 clean:
 	rm -f core $(PROG) $(PROG).exe $(MODULE_OBJECTS) $(OBJECTS) $(MODULES) \
 	arrow.F c2fdum.F cfdat.F cfdrw.F cfgrid.F cgd.F e3dviews.F \
-	plot.F startup.F visgrd.F visual.F visvec.F
+	common3dv.F plot.F startup.F visgrd.F visual.F visvec.F
 
 distclean: clean
 

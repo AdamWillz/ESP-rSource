@@ -4927,22 +4927,22 @@ C      write(6,*) 'catie_r ',vmin,vmax,val,vald
       END
 
 C Dummy subroutines needed by libNonGTK:
-C  ADJVIEW: Adjusts the viewing transforms & boundaries if necessary.
-      SUBROUTINE ADJVIEW(IER)
+C  REDRAW: Draws the 3D model view.
+      SUBROUTINE redraw(IER)
       integer ier
       return
       end
 
 C CHGAZI called from C code in esp-r.c or esru_x.c with an increment or 
 C decrement to the viewing azimuth (icazi). This is a dummy. 
-      subroutine chgazi(icazi)
+      subroutine chgazi(icazi,ifrlk)
       integer icazi
       return
       end
 
 C CHGELEV is called from C code in esp-r.c or esru_x.c with an increment or 
 C decrement to the viewing elevation (icelev). This is a dummy. 
-      subroutine chgelev(icelev)
+      subroutine chgelev(icelev,ifrlk)
       integer icelev
       return
       end

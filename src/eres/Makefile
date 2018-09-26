@@ -11,7 +11,6 @@ COMdir = $(SRCdir)/common
 DFSdir = $(SRCdir)/edfs
 MFSdir = $(SRCdir)/emfs
 PRJdir = $(SRCdir)/eprj
-BLDdir = $(SRCdir)/ebld
 CETCdir = $(SRCdir)/cetc
 PROG = res$(EXE)
 REPdir = $(SRCdir)/cetc/h3kreports
@@ -23,7 +22,7 @@ default: $(PROG)
 %.o : %.f90
 	$(MCC) $(FFLAGS) -c $<
 
-MODULE_OBJECTS = h3kmodule.o startup.o aim2_module.o
+MODULE_OBJECTS = h3kmodule.o startup.o aim2_module.o CFC_Module.o
 
 OBJECTS = res.o arrow.o ascii_mat.o c2fdum.o castyp.o cfdat.o cfgrid.o cfutil.o cgd.o \
 	  comfort.o convect2.o ctread.o design.o dmdrep.o dossupport.o e3dviews.o \
@@ -40,7 +39,7 @@ OBJECTS = res.o arrow.o ascii_mat.o c2fdum.o castyp.o cfdat.o cfgrid.o cfutil.o 
 	  FMIcom.o
 
 MODULES = aim2.mod aim2_calcdata.mod aim2_h2k_dummy.mod aim2_inputdata.mod start_up.mod \
-	parse_command_line.mod h3kmodule.mod
+	parse_command_line.mod h3kmodule.mod CFC_Module.mod
 
 $(PROG): $(MODULE_OBJECTS) $(OBJECTS)
 	$(MFC) $(LD_FLAGS) -o $(PROG) $(FFLAGS) $(MODULE_OBJECTS) $(OBJECTS) $(ULIBS)
@@ -63,6 +62,9 @@ CDBCommon.F:
 c2fdum.F:
 	rm -f c2fdum.F
 	ln -s $(COMdir)/c2fdum.F .
+CFC_Module.f90:
+	rm -f CFC_Module.f90
+	ln -s $(BLDdir)/CFC_Module.f90 .
 cfdat.F:
 	rm -f cfdat.F
 	ln -s $(DFSdir)/cfdat.F .
@@ -201,8 +203,7 @@ clean:
 	egeometry.F emfnetw.F enetmisc.F enetrewr.F eroper.F esru_misc.F \
 	esystem.F filelist.F fanger.F initalc.F item.F mfcdat.F mfutil.F nwkrewr.F pltcfg.F \
 	psychro.F readTrnsys.F rwipv.F rwsbem.F sort.F spmatl.F spmisc.F startup.F tdfile.F \
-	visgrd.F visual.F visvec.F h3kmodule.f90 \
-	FMIcom.F
+	visgrd.F visual.F visvec.F h3kmodule.f90 FMIcom.F CFC_Module.f90 cfc_module.mod
 
 distclean: clean
 
