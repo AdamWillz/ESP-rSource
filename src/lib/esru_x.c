@@ -6661,11 +6661,11 @@ void vrtaxisdd_(ymn,ymx,offl,offb,offt,yadd,sca,mode,dddy,nny,side,msg,mlen)
 
 /* ************** HORAXSdd *********************** */
 /*
- Construct and draw a horizontal axis via WW where: XMN,XMX are the data
+ Construct and draw a horizontal axis where: XMN,XMX are the data
  minimum & maximum values, offL & offB are the pixel coords of the
  left start of the axis.  SCA is the scaling factor and Xadd is a data
  offset to adjust plotting for various data ranges. mode defines how
- left starting point is adjusted. ddx is data interval, nx number
+ left starting point is adjusted. ddx is data interval, nnx number
  of decimal places to use.
 */
 

@@ -840,6 +840,10 @@ C 'simulation toggles' menu.
                                    !- is hour-centered (default) or half-hour centered.
                                    !- 0 = hour-centered; 1 = half-hour centered.
 
+      
+      common/EVCOOL/iflgevapC(mcom) !only modifies wet bulb temp (more precisely: the indoor air humidity ratio)
+      integer iflgevapC             ! when equals 1, it makes the indoor wet bulb temp = outdoor wet bulb temperature    
+      
       dimension SALT(7),IVALS(5),IVAL(MCOM),HCALT(15),IHCVAL(15)
 
 
@@ -994,10 +998,15 @@ C Make up strings for the current set of toggles.
       elseif(iExt_longwave_flg.eq.5)then
         ITEMG(31)=   'x Ext. longwave rad >>  Swinbank-bldng'
       endif
-      ITEMG(32)=    '  ________________________________      '      
-      ITEMG(33)=    '? help                                  '
-      ITEMG(34)=    '- exit to simul menu                    '
-      NITMS=34
+      if (iflgevapC(icomp).eq. 0 ) then
+        ITEMG(32)=  'y Outdoor TWB = Indoor TWB: Disabled '
+      elseif (iflgevapC(icomp).eq. 1 ) then
+        ITEMG(32)=  'y Outdoor TWB = Indoor TWB: Enabled'
+      endif      
+      ITEMG(33)=    '  ________________________________      '      
+      ITEMG(34)=    '? help                                  '
+      ITEMG(35)=    '- exit to simul menu                    '
+      NITMS=35
 
 C Help text for this menu.
       helptopic='sim_toggles_menu'
@@ -1386,6 +1395,31 @@ C Determine how sky temperatures are calculated.
      &    ' 1) Clarke, 2) Cole, 3) Czeplak & Kasten, 4) Swinbank-clear, 
      &5) Swinbank-bldng',
      &    0,'F',5,'F',0,'ext lngwave method',IER,nbhelp)  
+
+      elseif(INO.eq.32)then
+
+C Make indoor wet bulb temperature = outdoor wet bulb (for direct evaporative cooling).
+        helptopic='wet bulb indoor=outdoor set'
+        call gethelptext(helpinsub,helptopic,nbhelp)
+
+        INPIC=NCOMP
+        CALL EPICKS(INPIC,IVAL,' ',
+     &    ' Select evaporative cooling zones:',
+     &    12,NCOMP,zname,' zone list',IER,nbhelp)
+        if(inpic.eq.0)goto 92
+        call tstamp('>','SIM: edit flag for TWBout=TWBin')
+        do 88 ixx=1,inpic
+          if(ival(ixx).ne.0)then
+            iflgevapC(IVAL(ixx))=1 
+          endif
+ 88    continue
+
+
+        call easki(iflgevapC(icomp),
+     &    ' Default 0. Setting flag to 1 makes indoor wet bulb equal ',
+     &    ' equal to the outdoor for direct evaporative cooling models',
+     &    0,'F',1,'F',0,'Twet bulb options',IER,nbhelp)  
+
 
       elseif(INO.eq.(NITMS-1))then
 

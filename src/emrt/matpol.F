@@ -233,9 +233,6 @@ C Decode the polygon structure into AMA
   150 CONTINUE
 
 C Write out the polygon structure.
-C << OSX does not like writing via record number to what it thinks is'
-C << is a sequential access file at line 244.
-
       NAMA = NA+NAP+4
       NRFPOL = NAMA/20
       IF (MOD(NAMA,20) .GT. 0)  NRFPOL = NRFPOL + 1

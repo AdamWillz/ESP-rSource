@@ -24,6 +24,7 @@ C MOMNRD - area weighted MRT
 C MOMRTS - area weighted MRT
 C MORESL - area weighted resultant temperature
 C SENMRT - MRT at a sensor (using explicit view factors)
+C SENOPT - operative temperature at a sensor
 
 C ******************** MODEWP ********************
 C MODEWP computes the dew point temperature given dry bulb
@@ -177,8 +178,7 @@ C Sum product of opaque surface temperatures and areas.
       END
 
 C ******************** SENMRT ********************
-C SENMRT computes the resultant temperature from opaque
-C surface, window temperature information.
+C SENMRT computes 1 days mean radiant temperature data at a sensor.
 C IOPT - specific temperature differences:
 C        1: -Y (back)   - +Y (front)
 C        2: +X (right)  - -X (left)
@@ -299,3 +299,149 @@ C      write(6,*) (GVAL(I),I=1,NTS)
 
       return
       end
+
+C ******************** SENOPT ********************
+
+C SENOPT computes 1 days operative temperature data at an MRT sensor. If
+C there is a CFD domain in the zone, local air temperature and air
+C velocity will be used. Returns values via GVAL in common GET2. 
+
+      SUBROUTINE SENOPT(IDAY,IZONE,IMRT,ISET)
+#include "building.h"
+#include "geometry.h"
+#include "net_flow.h"
+#include "cfd.h"
+      COMMON/OUTIN/IUOUT,IUIN
+      COMMON/SIMPIK/ISIM,ISTADD,ID1,IM1,ID2,IM2,ISDS,ISDF,NTS,ISAVE
+      COMMON/GET2/XDUM(MTS),XDUM1(MTS),GVAL(MTS)
+      COMMON/cfdfil/LCFD(MCOM),IFCFD(MCOM)
+      CHARACTER LCFD*72
+
+C Directives for GOCFDGET (more efficient than RDCFDAT).
+      COMMON/MFPICK/NMFGET,IMFGETNO(MFRS,8)
+      COMMON/MFGET/FLOWVALS(MFRS),MFRECVR(MCNN+2+MCONTM)
+      COMMON/MFPK2/NMFLST,IMFLIST(MFCNLST,MFCNEL+1)
+      DIMENSION ZTMS(MS),YDUM(MS),TSO(MS)
+
+      common/CFDSV/IRECPC,ICFDSV,IEQSV(5+MCTM)
+      COMMON/ICFNOD/ICFD,ICP
+
+      logical ok,perok,rdok
+      character outs*124
+
+      IF(ISAVE.LT.2 .OR. ISAVE.GT.4)THEN
+        call edisp(iuout,' SENOPT: Save option does not allow access.')
+        goto 999
+      ENDIF
+
+C Check if there is CFD in this zone.
+      if (IFCFD(IZONE).gt.0) then
+        call OPCFD('c',ok,IER)
+        if (.not.ok.or.IER.ne.0) goto 924
+      
+C Read header data and set common block data.
+        call RCFDLIBH(IZONE,IER)
+        if (IER.ne.0) goto 924
+
+
+C If old CFD results version, read CFD file to get axis vertices to
+C initialise CFD - building domain transformation matrices.
+        if (ICFDSV.eq.1.or.ICFDSV.eq.2) then
+          CALL RCFDVRTS(IZONE,IER)
+          if (IER.ne.0) goto 924
+        endif
+        CALL INIT_CFDTRANS(IER)
+        if (IER.ne.0) goto 924
+C Find CFD point closest to MRT sensor.              
+        CALL GRIDGEO
+        PI = 4.0 * ATAN(1.0)
+        R=PI/180.
+        SA=SIN(CANG(IMRT)*R)
+        CA=COS(CANG(IMRT)*R)
+        DX=(DXC(IMRT)/2.)*CA-(DYC(IMRT)/2.)*SA
+        DY=(DXC(IMRT)/2.)*SA+(DYC(IMRT)/2.)*CA
+        CALL CFDTRANS(2,XOC(IMRT)+DX,YOC(IMRT)+DY,
+     &                  ZOC(IMRT)+DZC(IMRT)/2,XC,YC,ZC,IER)
+        CALL FDCFDPT(XC,YC,ZC,IIX,IIY,IIZ,IER)
+        if (IER.ne.0) goto 924
+        IXCEL=IIX-1
+        IYCEL=IIY-1
+        IZCEL=IIZ-1
+        ok=.true.
+        goto 925
+  924   write(outs,'(a,a,i1,a,i2,a)')' SENOPT: Error setting up CFD ',
+     &  'results for operative temperature calculations at MRT sensor ',
+     &  IMRT,' in zone ',IZONE,'.'
+        call edisp(iuout,outs)
+        call edisp(iuout,' CFD will not be used.')
+        ok=.false.
+  925   CONTINUE
+      endif
+
+C Get MRT in GVAL.
+      CALL SENMRT(IDAY,IZONE,IMRT,ISET,0)
+
+      N=24*NTS
+      do JC1=1,N
+
+C Check if there are CFD results available for this time step.
+        if (ok) then
+          CALL GETIFRM(IDAY,JC1,IFRAME,IER)
+          if (IER.ne.0) then
+            write(outs,'(a,i3.3,a,i2.2,a,i2.2)')
+     &        ' SENOPT: CFD results not avialable for day ',IDAY,
+     &        ' timestep ',JC1,' in zone ',IZONE
+            CALL EDISP(IUOUT,outs)
+            IER=0
+            perok=.false.
+          else
+            perok=.true.
+          endif
+        else
+          perok=.false.
+        endif
+
+C Set up directives for GOCFDGET - retrieve velocity and temperature.
+        if (perok) then
+          CALL MOFLOWSU() ! clear commons
+          NMFGET=2
+          IMFGETNO(1,1)=18
+          IMFGETNO(1,3)=ICFD
+          IMFGETNO(1,4)=1
+          IMFGETNO(2,1)=19
+          IMFGETNO(2,3)=ICFD
+          IMFGETNO(2,4)=1
+          IMFLIST(1,1)=IXCEL
+          IMFLIST(1,2)=IYCEL
+          IMFLIST(1,3)=IZCEL
+          CALL GOCFDGET(IFRAME,0,0,0,IER)
+          if (IER.ne.0) then
+            IER=0
+            rdok=.false.
+          else
+            rdok=.true.
+          endif
+        else
+          rdok=.false.          
+        endif
+
+        if (rdok) then ! use CFD results
+          WWVEL=FLOWVALS(1)
+          TAIR=FLOWVALS(2)          
+        else ! assume well mixed zone air and air velocoty < 0.1 m/s
+          WWVEL=0.09
+          CALL GZTMS
+     &      (IDAY,IZONE,ISET,JC1,ZTMS,TSO,TAIR,TMCON,A1,A2,A5,RH)
+        endif
+
+C Calculate operative temperature.
+        if (WWVEL.le.0.1) then
+          OpT=0.5*GVAL(JC1)+0.5*TAIR
+        else
+          OpT=(TAIR*SQRT(10.0*WWVEL)+IMRT)/(1+SQRT(10.0*WWVEL))
+        endif
+        GVAL(JC1)=OpT
+      enddo
+
+  999 RETURN
+      END

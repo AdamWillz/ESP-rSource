@@ -1022,6 +1022,88 @@ C This code ensures that EXDIR and EXDIF are zero if EXRAD is zero.
              EXDIF(I) = 0.
           endif
         ENDIF
+
+cx ag@20181019 insert h3k output here
+        if (IE(ICOMP,I).NE.0) then
+C         Not an external construction, no output, here.
+
+        else
+C.........Switch for zone name output here
+          if (ReportBoolConfig("use_zonenames")) then
+            write (cZone_Chars,'(A)') zname(icomp)(1:lnzname(icomp))
+          else
+C...........Pad zone index to 'XX'
+            if ( icomp .gt. 9 ) then
+              write (cZone_Chars,'(A,I2)') 'zone_',icomp
+            else
+              write (cZone_Chars,'(A,I1)') 'zone_0',icomp
+            endif
+          endif ! use_zonenames
+
+C.........Switch for surface name output here
+          if (ReportBoolConfig ("use_surfacenames")) then
+            write (cSurf_Chars,'(A)')
+     &         sname(icomp,I)(1:lnsname(icomp,I))
+          else
+C...........Pad surface index to 'XX'
+            if ( I .gt. 9 ) then
+              write (cSurf_Chars,'(A,I2)') 'surface_',I
+            else
+              write (cSurf_Chars,'(A,I1)') 'surface_0',I
+            endif
+          endif ! use_surfacenames
+
+          call AddToReport(
+     &      rvSolarIncidentDirect%identifier,
+     &      SRADDO(I),
+     &      cZone_Chars,
+     &      cSurf_Chars)
+
+          call AddToReport(
+     &      rvSolarIncidentDiff%identifier,
+     &      SRADF(I),
+     &      cZone_Chars,
+     &      cSurf_Chars)
+
+          call AddToReport(
+     &      rvShadingFractionDirect%identifier,
+     &      EXSHAD(I),
+     &      cZone_Chars,
+     &      cSurf_Chars)
+
+          call AddToReport(
+     &      rvShadingFractionDiffuse%identifier,
+     &      EXSHADF(I),
+     &      cZone_Chars,
+     &      cSurf_Chars)
+
+          call AddToReport(
+     &      rvSolarIncidentDirectShaded%identifier,
+     &      EXDIR(I),
+     &      cZone_Chars,
+     &      cSurf_Chars)
+
+          call AddToReport(
+     &      rvSolarIncidentDiffShaded%identifier,
+     &      EXDIF(I),
+     &      cZone_Chars,
+     &      cSurf_Chars)
+
+          if ((SRADDO(I)+SRADF(I)).gt.0.) then
+            SolIncAreaFrac=SNA(ICOMP,I)*(EXDIF(I)+EXDIR(I))/
+     &                                       (SRADDO(I)+SRADF(I))
+          else
+            SolIncAreaFrac=0.
+          endif
+
+            call AddToReport(
+     &        rvSolarShadeFrac%identifier,
+     &        SolIncAreaFrac,
+     &        cZone_Chars,
+     &        cSurf_Chars)
+
+        endif ! external?
+
    6  CONTINUE
 
 C ----------------CALCULATE QTMCA FOR TMC

@@ -27,7 +27,12 @@ C  VSB3D - draws the solid boundaries - highlighting the chosen one.
 C  VAO3D - draws the air openings - highlighting the chosen one.
 C  INIT_CFDTRANS - initialises data structures for CFD <-> geometry
 C                  domain transformations.
+C  INIT_CFDTRANS_NOGEOM - as above, but works without gemoetry.
 C  CFDTRANS - does CFD <-> geometry domain transformations.
+C  V1CEL3D - highlights 1 CFD grid cell with bold lines, and its
+C            projections on all 6 faces with normal lines.
+C  CFDVIEW - essentially the equivalent of ADJVIEW (common3dv.F), but
+C            for CFD domains.
 
 C ********************* CGD *********************
 C CGD - domain grid visualization.
@@ -523,23 +528,31 @@ C Store the scaling parameters used in drawing the axes.
 
 C ********************* VGRID3D *********************
 C VGRID3D - draws the CFD domain gridding in 3d.
-C   iz = 0 then do not draw zone geometry.
-C   iz > 0 then draw geometry for zone iz.
+C   izin = 0 then do not draw zone geometry.
+C   izin > 0 then draw geometry for zone iz in bold lines
+C   izin < 0 then draw geometry for zone ICP in normal lines,
+C            highlighting surface izin in bold lines.
+C Note: izin can be set to a large negative number (greater than number
+C of surfaces) to draw geometry in normal lines only.
+C   ig = 0 then do not graw any grid.
 C   ig = 1 then draw all face grids.
 C   ig = 2 then draw only north and south face grid.
 C   ig = 3 then draw only east and west face grid.
 C   ig = 4 then draw only top and bottom face grid.
-      SUBROUTINE VGRID3D(iz,ig)
+      SUBROUTINE VGRID3D(izin,ig)
 #include "building.h"
 #include "geometry.h"
 #include "prj3dv.h"
 #include "cfd.h"
 
-      integer iz,ig
+      integer iz,izin,ig
 
       COMMON/SPAD/MMOD,LIMIT,LIMTTY
       integer ifs,itfs,imfs
       COMMON/GFONT/IFS,ITFS,IMFS
+
+C Only used if iz<0
+      COMMON/ICFNOD/ICFD,ICP
 
       integer menuchw,igl,igr,igt,igb,igw,igwh
       COMMON/VIEWPX/menuchw,igl,igr,igt,igb,igw,igwh
@@ -620,6 +633,13 @@ C Determine the 2D coords of the site extremes.
       CALL axiscale(igwid,igheight,SXMN,SXMX,SYMN,SYMX,xsc,ysc,sca,
      &  Xadd,Yadd)
       call linescale(iigl,Xadd,sca,iigb,Yadd,sca)
+
+      if (izin.lt.0) then
+        iz=ICP
+        isurhlt=-izin
+      else
+        iz=izin
+      endif
 
 C Debug.
 C      write(6,*) 'iz ig ',iz,ig
@@ -948,7 +968,15 @@ C Count the edges in case enhanced edge drawing required.
             iedge=iedge+1
             CALL ORTTRN(BX(IP1),BY(IP1),BZ(IP1),ETSMAT,AAX,AAY,AAZ,IERR)
             call u2pixel(AAX,AAY,iix,iiy)
-            call edwline(iixlast,iiylast,iix,iiy)
+            if (izin.lt.0) then
+              if (I.eq.isurhlt) then
+                call edwline(iixlast,iiylast,iix,iiy)
+              else
+                call eswline(iixlast,iiylast,iix,iiy)
+              endif
+            else
+              call edwline(iixlast,iiylast,iix,iiy)
+            endif
             call forceflush()
 
 C Repeat until next point is the first, remember position.
@@ -961,7 +989,15 @@ C Complete the polygon.
             iedge=iedge+1
             CALL  ORTTRN(BX(IP),BY(IP),BZ(IP),ETSMAT,AAX,AAY,AAZ,IERR)
             call u2pixel(AAX,AAY,iix,iiy)
-            call edwline(iixlast,iiylast,iix,iiy)
+            if (izin.lt.0) then
+              if (I.eq.isurhlt) then
+                call edwline(iixlast,iiylast,iix,iiy)
+              else
+                call eswline(iixlast,iiylast,iix,iiy)
+              endif
+            else
+              call edwline(iixlast,iiylast,iix,iiy)
+            endif
             call forceflush()
   300     CONTINUE
           call forceflush()
@@ -2268,8 +2304,15 @@ C for CFD visualisation.
       CHARACTER*72 TITLE,CFTRFL,LPHI
 
       character ETEXT*82,tmpstr*6
+#ifdef OSI
+      integer iside,isize,ifont     ! passed to viewtext
+#else
+      integer*8 iside,isize,ifont     ! passed to viewtext
+#endif
 
 C Check initialisation.
+C INITD is a 6 character integer string composed of ICFD and ICP, each
+C spanning 3 characters and padded with 0s.
       write(tmpstr,'(2I3.3)')ICFD,ICP
       if (INITD.ne.tmpstr) then
         write(6,*)'initialising'
@@ -2288,16 +2331,30 @@ C Check initialisation.
         write(INITD,'(2I3.3)')ICFD,ICP
       endif
 
-      write(6,*)HAS_GEOM,ISHSB,ISHAO,IFACES,ISHBLK,ISHGEO
+c      write(6,*)HAS_GEOM,ISHSB,ISHAO,IFACES,ISHBLK,ISHGEO
 
 C Draw grid.
-      if(ISHGEO.eq.1)then
+C ISHGEO = 1: Draw zone geometry in bold lines.
+C ISHGEO = 0: Do not draw zone geometry.
+C ISHGEO < 0: Draw zone geometry in normal lines, highlighting surface
+C             ISHGEO in bold lines.
+C IFACES = 0: Do not draw the CFD grid.
+C IFACES = 1: Draw CFD grid in all 3 dimensions in dotted lines.
+C IFACES = 2: Draw CFD grid in u direction (north-south) only.
+C IFACES = 3: Draw CFD grid in v direction (east-west) only.
+C IFACES = 4: Draw CFD grid in w direction (high-low) only.
+      if (ISHGEO.eq.1) then
         call VGRID3D(ICP,IFACES)
-      else
+      elseif (ISHGEO.lt.0) then
+        call VGRID3D(ISHGEO,IFACES)
+      else        
         call VGRID3D(0,IFACES)
       endif
 
 C Draw solid boundaries if needed.
+C ISHSB = 0: Do not draw BCs.
+C ISHSB < 0: Draw all BCs in normal lines.
+C ISHSB > 0: Draw BCs, highlighting number ISHSB in bold lines.
       if (ISHSB.lt.0) then 
         call VSB3D(0)
       elseif (ISHSB.gt.0) then
@@ -2305,6 +2362,9 @@ C Draw solid boundaries if needed.
       endif
 
 C Draw air flow openings if needed.
+C ISHAO = 0: Do not draw BCs.
+C ISHAO < 0: Draw all BCs in normal lines.
+C ISHAO > 0: Draw BCs, highlighting number ISHAO in bold lines.
       if (ISHAO.lt.0) then
         call VAO3D(0) 
       elseif (ISHAO.gt.0) then
@@ -2312,6 +2372,9 @@ C Draw air flow openings if needed.
       endif
 
 C Draw blockages if needed.
+C ISHBLK = 0: Do not draw BCs.
+C ISHBLK < 0: Draw all BCs in normal lines.
+C ISHBLK > 0: Draw BCs, highlighting number ISHBLK in bold lines.
       if (ISHBLK.lt.0) then
         call VSBL3D(0)
       elseif (ISHBLK.gt.0) then

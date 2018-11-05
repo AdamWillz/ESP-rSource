@@ -64,7 +64,7 @@ C Variable thermo-physical properties.
       PARAMETER (MDATA=12)     !- Defining data items.
 
 C Special materials.
-      PARAMETER (MSPMNOD=600)   !- Special materials.
+      PARAMETER (MSPMNOD=200)   !- Special materials.
       PARAMETER (MSPMDAT=21)   !- Defining data items.
       PARAMETER (MSPMRES=12)   !- Output data items
       PARAMETER (MSPMSPLM=150) !- Spline data items
@@ -121,8 +121,9 @@ C      PARAMETER (MNRS=2**MNFA) !- Result sets (set to 100 for sensitivity analy
       PARAMETER (MIPVM=12)      !- IPV metrics.
       PARAMETER (MZS=80)        !- Number of items to report in res (biggest of MCOM or MS).
       PARAMETER (MZRL=MS+12)    !- Fields in a zone results library record. It should
-                                !  be largest of (40 for file names or MCON+12 for zones
-                                !  or MS+12 or MGP * 5). See reslib.F for logic.
+                                !  be largest of (36 for file names or MCON+12 for zones
+                                !  if MCOM>MS or MS+12 if MS>MCOM or MGP * 5). For building_small.h
+                                !  use MS+12. See reslib.F for logic.
 C Mathematical model.
       PARAMETER (MEQ=MS+1)      !- Equations.
       PARAMETER (MTR=MS+4)      !- Equation terms.

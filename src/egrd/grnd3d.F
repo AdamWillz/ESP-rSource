@@ -342,6 +342,7 @@ C Save ground gridding configuration into a file.
 C Read ground gridding configuration from a file
       ELSEIF(INO.EQ.12)THEN
         CALL READGM
+        CALL redraw(IER)
       ELSEIF(INO.EQ.(MITEM-2))THEN
 
 C Support facilities.
@@ -1720,6 +1721,23 @@ C *********************************************************************
       integer*8 iigl,iigr,iigt,iigb,iigw,iigwh
       integer*8 iiw1,iiw2,iiw3,iiw4,iimenu
 #endif
+
+C If viewpoint or bounds different then initialise viewing paramters.
+      IF(MODLEN)THEN
+        HANG=ANG/2.0
+        DIS = (VIEWM(1)-EYEM(1))**2 + (VIEWM(2)-EYEM(2))**2 +
+     &        (VIEWM(3)-EYEM(3))**2
+        IF(DIS.GE.SMALL)THEN
+          HITH=1.0
+          YON=1300.0
+        ELSE
+          CALL USRMSG(' ',
+     &     ' The eye position and viewed position are too close!','W')
+          RETURN
+        ENDIF
+        CALL LENS(IER)
+        MODLEN=.FALSE.
+      ENDIF
 
       THKX=0.
       DO 10 IX=1,NDXG

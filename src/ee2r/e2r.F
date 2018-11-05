@@ -1520,3 +1520,7 @@ C Dummy routine (needed for call back from c).
       IER=0
       return
       end
+      
+      SUBROUTINE GRAAPH(IDRW1,IDRW2)
+      return
+      end

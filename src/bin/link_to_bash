@@ -25,7 +25,7 @@ echo enet " is now pointing to "$1/enet
 rm -f $HOME/bin/eco; ln -s $1/eco $HOME/bin/eco
 echo eco " is now pointing to "$1/eco
 rm -f $HOME/bin/mrt; ln -s $1/mrt $HOME/bin/mrt
-echo espvwf " is now pointing to "$1/espvwf
+echo mrt " is now pointing to "$1/mrt
 rm -f $HOME/bin/grd; ln -s $1/grd $HOME/bin/grd
 echo grd " is now pointing to "$1/grd
 rm -f $HOME/bin/ish; ln -s $1/ish $HOME/bin/ish

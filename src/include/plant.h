@@ -24,8 +24,7 @@ C Maximum number of plant network matrix coefficients (<= MPCOM * MPCOE)
 C Maximum number of data per component inter-connection (held by CONVAR)
       PARAMETER (MCONVR=4)
 C Maximum number plant component additional output variables
-C See plantdb.h, here MXAOUT is defined, probably should have same value?!
-      PARAMETER (MPCRES=20)
+      PARAMETER (MPCRES=15)
 C Maximum number of plant component CDATA
       PARAMETER (MMISCD=5)
 C Maximum number of nodes per plant component (=ESPpdb:MAXNOD)
@@ -41,15 +40,15 @@ C Maximum number of sections in transport delay simulation
       PARAMETER (MDLY=100)
 CHOWEND
 C Maximum number of plant matrix coefficients for a component model
-      PARAMETER (MPCOE=50)
-C Maximum number of plant components in overall system 50 -> 105 for "setz"
-      PARAMETER (MPCOM=105)
-C Maximum number of plant component inter-connections 75 -> 120 for "setz"
-      PARAMETER (MPCON=120)
+      PARAMETER (MPCOE=100)
+C Maximum number of plant components in overall system
+      PARAMETER (MPCOM=200)
+C Maximum number of plant component inter-connections
+      PARAMETER (MPCON=250)
 C Maximum number of plant component inter-connections per plant node
       PARAMETER (MPCONC=4)
-C Maximum number of plant nodes in overall system 100 -> 140 for "setz"
-      PARAMETER (MPNODE=140)
+C Maximum number of plant nodes in overall system
+      PARAMETER (MPNODE=500)
 C Maximum number of plant component state variable types
       PARAMETER (MPVAR=4)
 C Record length of plant results binary file.

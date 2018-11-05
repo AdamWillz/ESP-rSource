@@ -188,7 +188,7 @@ C Match mass flow controller type.
         if(ICLCTP.gt.0.and.ICLCTP.le.7)then
           WRITE(outs,*) ' CFFVAR: mass flow control function ',ICFP
           call edisp(iuout,outs)
-          WRITE(outs,*) 
+          WRITE(outs,'(a,i4,a,i4,a,i2)') 
      &      ' CFFVAR: invalid mass flow sensed external condition ',
      &      ICLCTP,' day type ',IDTYPP,' period ',IPERP
           call edisp(iuout,outs)

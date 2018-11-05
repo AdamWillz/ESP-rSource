@@ -100,7 +100,7 @@ C   oriented) sharing an edge. Used to detect parent/child. Zero denotes
 C   this does not apply.
 C imatshr(MCON,MV) for each edge, the connection of surface (similarly
 C   oriented) which has the same material. Zero denotes this does not
-C   apply. Used to enhance wire frame drawings of discritized zones (e.g.
+C   apply. Used to enhance wire frame drawings of discretised zones (e.g.
 C   where a surface such as a floor has been subdivided)
 C ibridgeshr(MCON,MV) is:
 C   zero is not a thermal bridge, one is roof-wall,
@@ -118,14 +118,15 @@ C   eight is jamb at window or door
      &          iedgshr(MCON,MV),imatshr(MCON,MV),ibridgeshr(MCON,MV)
 
 C G9 holds information on children of a surface and its parent.
-      integer nbchild   ! how many children (up to 24) for each connection
-      integer nbgchild  ! how many grand children (up to 24) for each connection
+      integer,PARAMETER :: MCHILD=24
+      integer nbchild   ! how many children (up to MCHILD) for each connection
+      integer nbgchild  ! how many grand children (up to MCHILD) for each connection
       integer ichild    ! list of children for each connection
       integer igchild   ! list of grand children for each connection
       integer iparent   ! parent surface connection (zero is no parent)
       integer igparent  ! grandparent surface connection (zero is no grandparent)
-      common/G9/nbchild(MCON),nbgchild(MCON),ichild(MCON,24),
-     &          igchild(MCON,24),iparent(MCON),igparent(MCON)
+      common/G9/nbchild(MCON),nbgchild(MCON),ichild(MCON,MCHILD),
+     &          igchild(MCON,MCHILD),iparent(MCON),igparent(MCON)
 
 C Global coordinates for whole model (connection based).
       real VCOORD    ! X,Y & Z coordinates of vertices in all zones.
@@ -279,15 +280,8 @@ C                the surface index in that zone (e.g. as IC2 and IE2).
 
       character SSUSE*12     ! two attributes of the usage of the surface
 
-C DOOR,CLOSED  DOOR,UNDERCUT  DOOR,OPEN  DOOR,BIDIR
-C FRAME,CLOSED FRAME,CRACK    FRAME,OPEN
-C WINDOW,CLOSED WINDOW,CRACK  WINDOW,OPEN  WINDOW,SASH  WINDOW,BIDIR
-C GRILL,SOURCE  GRILL,EXTRACT
-C FICT,CLOSED  FICT,CRACK  FICT,OPEN  FICT,BIDIREC
-C BLIND,FIXED  BLIND,MOVE (??explicit blinds)
-C FIXTURE,IES  FIXTURE,-
-C otherwise  -,- )
-C see geometry.F for a full explanation). Not found in older geometry files
+C See GEOREAD in egeometry.F for a description of possible values. Not found in older geometry files.
+
       character SSPARENT*12 ! the name of the parent surface or '-'
       COMMON/G6/SSNAME(MCON),SSOTF(MCON),SSMLCN(MCON),SSVFC(MCON),
      &          SSOTHER(MCON,3),SSPARENT(MCON),SSUSE(MCON,2)

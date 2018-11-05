@@ -344,7 +344,7 @@ C day)
         IF(IPRECD.NE.ITDEDOY)THEN
           IF(IPRECT.EQ.1)THEN
             IPRECD=IPRECD+1
-          ELSEIF(FPTLA.LE.(1./REAL(24*NTSPH)))THEN
+          ELSEIF(FPTLA.LE.(1./24.))THEN
             IPRECD=IPRECD+1
           ENDIF
         ENDIF

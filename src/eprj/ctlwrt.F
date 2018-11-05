@@ -538,7 +538,7 @@ C Complex fenestration control information.
         WRITE(IUNIT,'(I5,A)',IOSTAT=ios,ERR=1)nCFCctldaytypes(II),
      &  ' # No. day types'
         NN=nCFCctldaytypes(II)
-        IF(NN.EQ.0)NN=3
+        IF(NN.EQ.0)NN=nbdaytype
 
         DO 209 J=1,NN
           JJ=J

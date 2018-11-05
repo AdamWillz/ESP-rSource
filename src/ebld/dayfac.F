@@ -175,10 +175,10 @@ C and high WIDTH, HIGH:
                   IF(closeg.OR.closeh.OR.closei)THEN
                     CONTINUE
                   ELSE
-                    WRITE(ITU,812)ICOMP,J
+                    WRITE(ITU,812)zname(icomp),J
                   ENDIF                    
                 ELSE
-                  WRITE(ITU,812)ICOMP,J
+                  WRITE(ITU,812)zname(icomp),J
                 ENDIF
               ELSE
                 WRITE(ITU,812) zname(icomp),J

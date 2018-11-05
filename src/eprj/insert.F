@@ -343,6 +343,15 @@ C they are included in ibases list. If so decrement ibases value.
           if(is.eq.ibases(icomp,8)) ibases(icomp,8)=ibases(icomp,8)-1
           if(is.eq.ibases(icomp,9)) ibases(icomp,9)=ibases(icomp,9)-1
           if(is.eq.ibases(icomp,10))ibases(icomp,10)=ibases(icomp,10)-1
+          if(is.eq.ibases(icomp,11))ibases(icomp,11)=ibases(icomp,11)-1
+          if(is.eq.ibases(icomp,12))ibases(icomp,12)=ibases(icomp,12)-1
+          if(is.eq.ibases(icomp,13))ibases(icomp,13)=ibases(icomp,13)-1
+          if(is.eq.ibases(icomp,14))ibases(icomp,14)=ibases(icomp,14)-1
+          if(is.eq.ibases(icomp,15))ibases(icomp,15)=ibases(icomp,15)-1
+          if(is.eq.ibases(icomp,16))ibases(icomp,16)=ibases(icomp,16)-1
+          if(is.eq.ibases(icomp,17))ibases(icomp,17)=ibases(icomp,17)-1
+          if(is.eq.ibases(icomp,18))ibases(icomp,18)=ibases(icomp,18)-1
+          if(is.eq.ibases(icomp,19))ibases(icomp,19)=ibases(icomp,19)-1
   68    continue
 
 C Loop through each of the surfaces greater than IWHICH and copy their

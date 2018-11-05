@@ -9,6 +9,7 @@ C 8 air gaps MGP and 16 layers ME 7.2012 updated
 C 82 zone 150 surface version 02.2017 updated
 C 120 edges per polygon version 08.2017 updated
 C 200 surfaces per zone 500 vertex per zone 10.2017 updated
+C 250 surface per zone 92 zone 10.2018 updated
 
 C Type declarations.
       integer MCOM,MCON,MTV,MV,ME,MGP,MN,MP,MDY,MT,MA,MC,MBP,MTMS
@@ -25,10 +26,10 @@ C Type declarations.
       integer MCFC,MSPMRES,MBL,MSPMSPLM
 
 C Geometry.
-      PARAMETER (MCOM=90)      !- Zones.
-      PARAMETER (MS=200)       !- Surfaces/zone (set MNSBZ in cfd.h to at least 2*MS).
+      PARAMETER (MCOM=92)      !- Zones.
+      PARAMETER (MS=230)       !- Surfaces/zone (set MNSBZ in cfd.h to at least 2*MS).
       PARAMETER (MCON=5200)    !- Surfaces in model.
-      PARAMETER (MTV=450)      !- Vertices/zone.
+      PARAMETER (MTV=500)      !- Vertices/zone.
       PARAMETER (MV=120)       !- Vertices/surface.
       PARAMETER (MST=MS)       !- Used with view factors.
       PARAMETER (MSM=MS+6)     !- Used with view factors.
@@ -65,7 +66,7 @@ C Variable thermo-physical properties.
       PARAMETER (MDATA=12)     !- Defining data items.
 
 C Special materials.
-      PARAMETER (MSPMNOD=600)   !- Special materials.
+      PARAMETER (MSPMNOD=200)   !- Special materials.
       PARAMETER (MSPMDAT=21)   !- Defining data items.
       PARAMETER (MSPMRES=12)   !- Output data items
       PARAMETER (MSPMSPLM=150) !- Spline data items
@@ -122,8 +123,10 @@ C      PARAMETER (MNRS=2**MNFA)  !- Result sets (set to 100 for sensitivity anal
       PARAMETER (MIPVM=12)      !- IPV metrics.
       PARAMETER (MZS=240)       !- Number of items to report in res (biggest of MCOM or MS).
       PARAMETER (MZRL=MS+12)    !- Fields in a zone results library record. It should
-                                !  be largest of (36 for file names or MCON for zones
-                                !  or MS + 12 or MGP * 5). See reslib.F for logic.
+                                !  be largest of (36 for file names or MCON+12 for zones
+                                !  if MCOM>MS or MS+12 if MS>MCOM or MGP*5). For building_large.h
+                                !  use MS+12. See reslib.F for logic.
+
 C Mathematical model.
       PARAMETER (MEQ=MS+1)      !- Equations.
       PARAMETER (MTR=MS+4)      !- Equation terms.

@@ -548,6 +548,8 @@ C *********************************************************************
       COMMON/GR3D44/NCVSF(MS),NCVV(MS,MCVS),ICVV(MS,MCVS,MCVV)
       COMMON/GR3D80/NNDS,NCNV,IR,ND1
       COMMON/GR3D81/ISNDS(MS),ISNDE(MEZ),ISNDC(MCZ)
+      common/GR3D100/BLDG3D,ZONE3D(MCOM)
+      LOGICAL BLDG3D,ZONE3D ! BLDG3D appears to not be used.
       COMMON/GR3D108/L3DCVS(MCOM),L3DCNC(MCOM),L3DNDC(MCOM),L3DTAQ(MCOM)
       COMMON/GR3D110/ICVS,ICNC,INDC,INDD,ITAQ,ITLW,ILWV,ITF3
 
@@ -749,6 +751,9 @@ C Create the surface connections.
       CALL ERPFREE(IFMAT,ISTAT)
 
       MATDBOK=.FALSE.
+
+      ZONE3D(IZ)=.TRUE.
+
       RETURN
       END
 

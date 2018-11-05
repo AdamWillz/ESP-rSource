@@ -333,7 +333,7 @@ C Initial assumption is no SHOCC files.
       LCNN='UNKNOWN'
       CTLDOC='no overall project control notes (yet)'
       GTGEOM='UNKNOWN'
-      GTNAME='flat_booring'
+      GTNAME='flat_boring'
       lipvdatf='UNKNOWN'
       bdmds='UNKNOWN'
       dmdsdesc='no dispersed demands notes (yet)'
@@ -4085,7 +4085,7 @@ C If MOD has been passed as a M then return -2 to indicate further processing
         VERTS(M+2)='* attribute many    '
       ELSE
         VERT(M+2) ='                    '
-        VERTS(M+2)='                        '
+        VERTS(M+2)='                    '
       ENDIF
       VERT(M+3)   ='? help              '
       VERTS(M+3)  ='? help              '
@@ -4239,7 +4239,9 @@ C current menu line index. Build up text strings for the menu.
    
           if(icc.gt.0)then
             lnn=lnblnk(SSNAME(icc))
+            if(lnn.lt.8) lnn=8
             lnsmlcn=lnblnk(SSMLCN(icc))
+            if(lnsmlcn.lt.10) lnsmlcn=10
             lnoth=lnblnk(SSOTHER(icc,1))
             if((lnn+lnsmlcn+lnoth).lt.36)then
               if(ISCNLIST(icc).eq.0)then
@@ -4569,31 +4571,28 @@ C *********************************************************************
       NUMCH=lnblnk(FILENM)
       IF(NUMCH.LE.0.OR.NUMCH.GE.72)THEN
         IF(ICOMP.GT.0.AND.ICOMP.LE.NCOMP)THEN
-          WRITE(FILENM,'(A,A4)')zname(ICOMP)(1:lnzname(ICOMP)),EXT
+          WRITE(FILENM,'(A9,A,A4)')'../zones/',
+     &      zname(ICOMP)(1:lnzname(ICOMP)),EXT
         ELSEIF(ICOMP.EQ.-1)THEN
-          WRITE(FILENM,'(A6,A4)')'ground',EXT
+          WRITE(FILENM,'(A15,A4)')'../zones/ground',EXT
         ELSE
           FILENM='file_name'
         ENDIF
       ENDIF
       CALL FINDFIL(FILENM,XST)
-      IF(XST)THEN
-        IF(ICOMP.GT.0.AND.ICOMP.LE.NCOMP)THEN
-          WRITE(DFILE,'(A,A4)')zname(ICOMP)(1:lnzname(ICOMP)),EXT
-        ELSEIF(ICOMP.EQ.-1)THEN
-          WRITE(DFILE,'(A6,A4)')'ground',EXT
-        ELSE
-          DFILE='file_name'
-        ENDIF
-        WRITE(MSG1,'(3a)')'  Enter the zone ',
-     &               FLTYP(1:lnblnk(FLTYP)),' file name'
-        CALL EASKS(FILENM,MSG1,' ',72,DFILE,
-     &                   FLTYP(1:lnblnk(FLTYP)),IER,NHLP)
+      IF(ICOMP.GT.0.AND.ICOMP.LE.NCOMP)THEN
+        WRITE(DFILE,'(A9,A,A4)')'../zones/',
+     &    zname(ICOMP)(1:lnzname(ICOMP)),EXT
+      ELSEIF(ICOMP.EQ.-1)THEN
+        WRITE(DFILE,'(A15,A4)')'../zones/ground',EXT
       ELSE
-        WRITE(TEXT,'(1X,3A)')FLTYP(1:lnblnk(FLTYP)),
-     &        ' file created as ',FILENM(1:lnblnk(FILENM))
-        CALL EDISP(IUOUT,TEXT)
+        DFILE='file_name'
       ENDIF
+      if(FILENM(1:7).eq.'UNKNOWN'.or.FILENM(1:2).eq.'  ')FILENM=DFILE
+      WRITE(MSG1,'(3a)')'  Enter the zone ',
+     &  FLTYP(1:lnblnk(FLTYP)),' file name'
+      CALL EASKS(FILENM,MSG1,' ',72,DFILE,
+     &  FLTYP(1:lnblnk(FLTYP)),IER,NHLP)
       RETURN
       END
 

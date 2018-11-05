@@ -556,6 +556,8 @@ C Setup and pass in parameters to win3d.
      &      iigl,iigr,iigt,iigb,iigw,iigwh)
           igl=int(iigl); igr=int(iigr); igt=int(iigt); igb=int(iigb)
           igw=int(iigw); igwh=int(iigwh)
+          call opencpw
+          call opensetup
           if(IFS.ne.IMFS)call winfnt(IFS)
           call startbuffer()
 
@@ -580,11 +582,11 @@ C Reset the graphic context prior to leaving. Currently commented out
 C (to match the initial menuchw comment out above).
 C        if(MMOD.EQ.8)then
 C          if(iappw.gt.0.and.iappw.lt.100)then
-C            menuchw = MAX0(int(29*iappw*0.01),12)
+C            menuchw = MAX0(int(28*iappw*0.01),12)
 C            LIMTTY= MAX0(int(6*iappw*0.01),4)
 C            LIMIT = MAX0(int(6*iappw*0.01),4)
 C          else
-C            menuchw = 29
+C            menuchw = 28
 C            LIMTTY=6
 C            LIMIT =6
 C          endif
@@ -1368,6 +1370,8 @@ C Setup and pass in parameters to win3d.
           igl=int(iigl); igr=int(iigr); igt=int(iigt); igb=int(iigb)
           igw=int(iigw); igwh=int(iigwh)
           if(IFS.ne.IMFS)call winfnt(IFS)
+          call opencpw
+          call opensetup
           call startbuffer()
 
 C Debug.

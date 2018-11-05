@@ -93,14 +93,6 @@ C geometry.h provides commons G0/G2/c20/precz.
 #include "espriou.h"
 C espriou.h provides currentfile, defdbfl exemfl.
 #include "prj3dv.h"
-
-C IEEE callback (Solaris)
-#ifdef SUN
-#ifdef F90
-      external SIGFPE_bps      
-      integer SIGFPE_bps      
-#endif
-#endif
       
       integer lnblnk  ! function definition
 
@@ -238,6 +230,7 @@ C ifcfg  - system configuration file
       IOPTDB=IFIL+7   ! set unit numbers for optical db.
       iuj=ifil+10
       icfcdb=ifil+11  ! set unit number for CFClayers db
+      write(LCFCDB,'(a)') DCFCDB(1:lnblnk(DCFCDB))
       cfgok=.false.
       lname='SHDTRN'
       zn='UNKNOWN'
@@ -286,22 +279,6 @@ C Image option flags.
       itgrd=1; grdis=0.0
       itppsw=0
       ifs=1; itfs=1; imfs=1
-
-C If your compiler does not support floating-point arithmetic
-C according to ANSI/IEEE Std 754-1985 comment out the following code.
-
-C Initialize mode, status, and signal handling for IEEE arithmetic.
-C See also: f77_ieee_environment(3F) f77_floatingpoint(3F)
-C           Note that in case of Sun FORTRAN, IEEEE exceptions arise
-C           only if: Sun-3 f77 with -f68881 or -ffpa option
-C                or: Sun-4 f77.
-#ifdef SUN
-#ifdef F90
-      ieeer=ieee_handler('set','common',SIGFPE_ABORT)
-      ieeer=ieee_handler('set','common',SIGFPE_bps)
-      if(ieeer.ne.0) write(iuout,*) ' IEEE_handler not set !'
-#endif
-#endif
 
 C Initialise terminal and flags.
       mmod=modl
@@ -2056,21 +2033,8 @@ C Dummy routines.
       IER=0
       return
       end
-
-C In support of floating point exceptions.
-#ifdef SUN
-#ifdef F90
-      integer function SIGFPE_bps(sig,code,context)
-      integer sig,code,context(5)
-      character label*16
-      if(loc(code).eq.208) label = 'invalid'
-      if(loc(code).eq.200) label = 'division by zero'
-      if(loc(code).eq.212) label = 'overflow'
-      if(loc(code).eq.204) label = 'underflow'
-      if(loc(code).eq.196) label = 'inexact'
-      write(6,*) 'Exception code ',loc(code),label,'at ',context(4)
-      SIGFPE_bps = loc(code)
+      
+      SUBROUTINE GRAAPH(IDRW1,IDRW2)
+      return
       end
-#endif
-#endif
 

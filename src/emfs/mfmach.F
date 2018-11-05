@@ -2692,11 +2692,20 @@ C equations or invert a matrix.
       DIMENSION        INDX(N)
 
       PARAMETER       (SMALL=1.0E-15)
-      PARAMETER       (NMAX=100)
+
+C NMAX should be the same as MNOD in net_flow.h
+      PARAMETER       (NMAX=299)
       DOUBLE PRECISION VV(NMAX),AAMAX,SUM,DUM
       logical close
+      character msg*72
 
-      IF(N.GT.NMAX) STOP ' LUDCMP: local array VV too small !'
+      IF(N.GT.NMAX)then
+        write(msg,*) 'LUDCMP VV n of ',N,' >',NMAX
+        call edisp(iuout,msg)
+        call epwait
+        call epagend
+        STOP ' LUDCMP: local array VV too small !'
+      ENDIF
 
       D=1.0
 

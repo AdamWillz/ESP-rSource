@@ -85,9 +85,10 @@ C Name of current application
       
       character cAppName*12
 
+      character ITEM*26
       dimension ITEM(22)
       character CLMLOC*30
-      character ITEM*26,LASCI*96,outs*124,outs248*248
+      character LASCI*96,outs*124,outs248*248
       character PERST1*14,PERST2*40,PERST3*40,LCMDFL*144
       character inf*144,ascif*96,pascif*96,llasci*144
       character pact*16,aut*12,paction*16
@@ -207,14 +208,14 @@ c Initialise output device, assume minimal trace, set reduced
 C size of window display.
       MMOD=MODL
       if(iappw.eq.0.and.iappx.eq.0.and.iappy.eq.0)then
-        iappw=570
+        iappw=600
         iappx=80
         iappy=80
       else
         if(iappx.le.0)iappx=80
         if(iappy.le.0)iappy=80
         if(iappw.le.200)then
-          iappwi=int(570*iappw*0.01)
+          iappwi=int(600*iappw*0.01)
           iappw=iappwi
         elseif(iappw.gt.200)then
           continue
@@ -227,11 +228,11 @@ C Set pixels high to iappw and pixels wide to factor in monitor size.
 
 C Set initial menu width and text feedback number of lines.
       if(iappw.gt.0.and.iappw.lt.100)then
-        menuchw = MAX0(int(29*iappw*0.01),18)
+        menuchw = MAX0(int(28*iappw*0.01),18)
         LIMTTY= MAX0(int(8*iappw*0.01),4)
         LIMIT = MAX0(int(8*iappw*0.01),4)
       else
-        menuchw = 29
+        menuchw = 28
         LIMTTY=8
         LIMIT =8
       endif
@@ -592,11 +593,11 @@ C Graphic analysis. Enlarge graphics area if small.
             iglib = igraphiclib()  ! find out if X11 or GTK or text support only.
             if(iglib.eq.1)then
               if(iappw.gt.0.and.iappw.lt.100)then
-                menuchw = MAX0(int(29*iappw*0.01),10)
+                menuchw = MAX0(int(28*iappw*0.01),10)
                 LIMTTY= MAX0(int(6*iappw*0.01),4)
                 LIMIT = MAX0(int(6*iappw*0.01),4)
               else
-                menuchw = 29
+                menuchw = 28
                 LIMTTY=6
                 LIMIT =6
               endif
@@ -612,6 +613,8 @@ C Setup and pass in parameters to win3d.
      &          iigl,iigr,iigt,iigb,iigw,iigwh)
               igl=int(iigl); igr=int(iigr);igt=int(iigt);igb=int(iigb)
               igw=int(iigw); igwh=int(iigwh)
+              call opencpw
+              call opensetup
             elseif(iglib.eq.2)then
               continue
             endif
@@ -632,11 +635,11 @@ C Psychrometric analysis. Enlarge graphics area if small.
             iglib = igraphiclib()  ! find out if X11 or GTK or text support only.
             if(iglib.eq.1)then
               if(iappw.gt.0.and.iappw.lt.100)then
-                menuchw = MAX0(int(29*iappw*0.01),10)
+                menuchw = MAX0(int(28*iappw*0.01),10)
                 LIMTTY= MAX0(int(6*iappw*0.01),4)
                 LIMIT = MAX0(int(6*iappw*0.01),4)
               else
-                menuchw = 29
+                menuchw = 28
                 LIMTTY=6
                 LIMIT =6
               endif
@@ -652,6 +655,8 @@ C Setup and pass in parameters to win3d.
      &          iigl,iigr,iigt,iigb,iigw,iigwh)
               igl=int(iigl);igr=int(iigr);igt=int(iigt);igb=int(iigb)
               igw=int(iigw);igwh=int(iigwh)
+              call opencpw
+              call opensetup
             elseif(iglib.eq.2)then
               continue
             endif
@@ -1203,6 +1208,8 @@ C Setup and pass in parameters to win3d.
      &      iigl,iigr,iigt,iigb,iigw,iigwh)
           igl=int(iigl); igr=int(iigr); igt=int(iigt); igb=int(iigb)
           igw=int(iigw); igwh=int(iigwh)
+          call opencpw
+          call opensetup
        elseif(iglib.eq.2)then
           continue
         endif

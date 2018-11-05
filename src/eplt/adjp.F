@@ -66,6 +66,7 @@ C    temperatures, PCNTMF, if defined to exist
      &           IPC2(MPCON),IPN2(MPCON),PCONDR(MPCON),PCONSD(MPCON,2)
       COMMON/C11/NCONT,IPCC(MPCOM),INDCP(MPCOM),CNTDAT(MPCOM,3)
       COMMON/C12PS/NPCDAT(MPCOM,9),IPOFS1(MCOEFG),IPOFS2(MCOEFG,MPVAR)
+      COMMON/C14/UGRDTP(12,MGRDP),NGRDP
  
       COMMON/FVALC/TFC(MCOM,MS,MN),QFC(MCOM)
       COMMON/FVALS/TFS(MCOM,MS),QFS(MCOM)
@@ -194,7 +195,7 @@ C Now check direction of flow
             CONVAR(IPCON,3)=0.
           END IF
         END IF
- 
+
    10 CONTINUE
  
 C Now set up containment conditions for each plant component, where
@@ -269,6 +270,10 @@ C Collect containment temperature
      &                                      iBC_interp,
      &                                      cContext)
                   
+C Allows monthly ground containment temp for DH plant components                 
+        ELSEIF(INDCP(ICONT).EQ.5) THEN
+      	  CALL EDAYR(IDYP,ID,IM) ! Identify month
+	  PCNTMF(IPC)=UGRDTP(IM,CNTDAT(ICONT,1))
          
 C New containment types go here!
         ELSE

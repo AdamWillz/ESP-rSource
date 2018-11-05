@@ -107,7 +107,7 @@ C For help messages
       IF(SRFOK.AND.INDXS(IS).EQ.1)THEN
         ITEM(3)='  status  : lumped'
       ELSEIF(SRFOK.AND.INDXS(IS).EQ.3)THEN
-        ITEM(3)='  status  : discritized'
+        ITEM(3)='  status  : discretised'
       ELSE
         ITEM(3)='  status  : '
       ENDIF
@@ -993,7 +993,7 @@ C For help messages
       ITEM(10)='  ----------------------------'
       ITEM(11)='5 all edges not defined      '
       ITEM(12)='6 all edges lumped           '
-      ITEM(13)='7 all edges discritized      '
+      ITEM(13)='7 all edges discretised      '
       ITEM(14)='  ----------------------------'
       ITEM(15)='l list edges                 '
       ITEM(16)='? help                       '

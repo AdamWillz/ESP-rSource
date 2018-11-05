@@ -192,6 +192,10 @@ C Primitives on IFIL+13, mlc on IFIL+14, optics on IFIL +15.
       IFMAT = IFIL+26
       IFMUL = IFIL+27
 
+C CFClayers on channel IFIL+12.
+      icfcdb = ifil + 12
+      write(LCFCDB,'(a)') DCFCDB(1:lnblnk(DCFCDB))
+
 C ECO initialiastion <<hard coded for the atrium ofd the EOS example
 C to be revised >>
 C      BCFNAME = 'EOS.bcf'
@@ -978,6 +982,10 @@ C Dummy subroutine needed to compile (called from library code).
 
       SUBROUTINE CFDVIEW(IER)
       IER=0
+      return
+      end
+
+      SUBROUTINE GRAAPH(IDRW1,IDRW2)
       return
       end
 

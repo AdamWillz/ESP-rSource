@@ -167,7 +167,9 @@ C IGET = 50 Local PPD - delta T head/ foot
 C IGET = 51 Local PPD - floor T
 C IGET = 52 Local PPD - floor/ ceiling radiant T asymmetry
 C IGET = 53 Local PPD - wall/ wall radiant T asymmetry
-C Assume other local comfort gets will occupy slots up to and including 59.
+C Assume other local comfort gets will occupy slots up to and including 58.
+
+C IGET = 59 Operative temperature
 
 C IGET = 60 Energy demands
 C IGET = 61 Zone energy balances (Integr: (IGET,4)=1; Snapshot: (IGET,4)=2)
@@ -446,6 +448,7 @@ C above.
       COMMON/C3/IC1(MCON),IE1(MCON),ICT(MCON),IC2(MCON),IE2(MCON)
       integer IZSTOCN
       COMMON/C24/IZSTOCN(MCOM,MS)
+      COMMON/C1/NCOMP,NCON
 
 C IGETFLG - flags for menu set up:
 C IOCUPF current state of occupancy filter (0=none; 1=filtering on).
@@ -474,6 +477,9 @@ C          ilflag = 2 do not include # header lines in file.
       integer ireportunit ! zero is default one is W two is kW three Joules
       common/repunit/ireportunit
 
+      COMMON/cfdfil/LCFD(MCOM),IFCFD(MCOM)
+      CHARACTER LCFD*72
+
 C Pre calculated data (filtered).
       common/MMAFDAT/IFILT,RDFMAX(MCOM,3,MZRL),RDFMIN(MCOM,3,MZRL),
      &    RDFAVE(MCOM,3,MZRL),RDTFMAX(MCOM,3,MZRL),RDTFMIN(MCOM,3,MZRL)
@@ -487,6 +493,7 @@ C MRT Sensors via geometry.h.
       CHARACTER ITEM(36)*24, MTITLE*22, values*20
       CHARACTER ITEMS(19)*23
       CHARACTER ITEMC(29)*24
+      CHARACTER ITEMT(13)*27
       character xfile*144,tg*1,delim*1
       character SUFFIX*8
       character ll1*12,ll2*12,ll3*12
@@ -522,6 +529,8 @@ C Note: 60 is the maximum number of items associated with an anchor point.
       logical dmdsok,xst,is_open
 
       common/CFDSV/IRECPC,ICFDSV,IEQSV(5+MCTM)
+
+      integer IZNOCFD(MCOM),NZNOCFD
 
 C For help messages
       character helpinsub*24   ! subroutine name
@@ -1085,14 +1094,25 @@ C Temperatures sub-menu.
         idnoc=0
         helptopic='res_temperature_metrics'
         call gethelptext(helpinsub,helptopic,nbhelp)
-        call MENUATOL('Select a temperature metric.',
-     &    ' Temperature choices:','a Zone db T',
-     &    'b Zone db T - ambient db T','c Zone db T - other zone db T',
-     &    'd Zone control point T','e Zone Resultant T',
-     &    'f Mean Radiant T (area wtd)','g Mean Radiant T (at sensor)',
-     &    'h Dew point T ','i Surf inside face T',
-     &    'j Surf T - dewpoint T','k Surf outside face T',
-     &    'l Surf node T',inoc,idnoc,nbhelp)
+        ITEMT(1) ='Zone db T                  '
+        ITEMT(2) ='Zone db T - ambient db T   '
+        ITEMT(3) ='Zone db T - other zone db T'
+        ITEMT(4) ='Zone control point T       '
+        ITEMT(5) ='Zone Resultant T           '
+        ITEMT(6) ='Mean Radiant T (area wtd)  '
+        ITEMT(7) ='Mean Radiant T (at sensor) '
+        ITEMT(8) ='Dew point T                '
+        ITEMT(9) ='Surf inside face T         '
+        ITEMT(10)='Surf T - dewpoint T        '
+        ITEMT(11)='Surf outside face T        '
+        ITEMT(12)='Surf node T                '
+        ITEMT(13)='Operative T (at sensor)    '
+        IX=1
+        CALL EPICKS(IX,IVALS,'Select a temperature metric.',
+     &    ' Temperature metrics:',27,13,ITEMT,'temp metrics',IER,nbhelp)
+
+        if(IX.eq.0)goto 1
+        inoc=IVALS(1)
         if(inoc.eq.0)goto 1
         call usrmsg('  ','  ','-')
         NGET=NGET+1
@@ -1305,6 +1325,24 @@ C IGET = 14  Zone dew point.
               SLABEL(NGET)='Surf node temp hours (degC.hr)'
               LNSLABEL(NGET)=30
             endif
+          endif
+        elseif(inoc.eq.13)then
+
+C IGET = 59, operative temperature
+          MRTLIST=.true.
+          IGETNO(NGET,1)=59
+          IGETNO(NGET,6)=1; IGETNO(NGET,7)=8
+          IGETNO(NGET,8)=1; IGETNO(NGET,9)=20
+          SUFFIX=' OpT'
+          if(IROC.eq.0)then
+            SLABEL(NGET)='Operative Temperature (degC)'
+            LNSLABEL(NGET)=28
+          elseif(IROC.eq.1)then
+            SLABEL(NGET)='Operative Tmp change(degC/hr)'
+            LNSLABEL(NGET)=29
+          elseif(IROC.eq.-1)then
+            SLABEL(NGET)='Operative Tmp hours (degC.hr)'
+            LNSLABEL(NGET)=29
           endif
         endif
 
@@ -3936,6 +3974,42 @@ C Copy current zone selection.
             MRTLIST=.false.
           endif
 
+C For operative temperature, if zones do not have CFD domains, ask user
+C to confirm.
+          if (IGETNO(NGET,1).eq.59 .and. IER.eq.0) then
+            NZNOCFD=0
+            do I=1,NZ
+              if (IFCFD(NZNO(I)).eq.0) then
+                NZNOCFD=NZNOCFD+1
+                IZNOCFD(NZNOCFD)=NZNO(I)
+              endif
+            enddo
+            if (NZNOCFD.gt.0) then
+              if (NZNOCFD.eq.1)then
+                write(outs,'(a,i2.2)')
+     &            ' CFD domains not detected in zone ',IZNOCFD(1)              
+              elseif (NZNOCFD.eq.NCOMP) then
+                write(outs,'(a)')
+     &            ' CFD domains not detected in any zones'
+              else
+                write(outs,'(a,i2.2)')
+     &            ' CFD domains not detected in zones ',IZNOCFD(1)
+                do I=2,NZNOCFD
+                  write(outs,'(2a,i2.2)')outs(1:lnblnk(outs)),', ',
+     &              IZNOCFD(I)
+                enddo
+              endif
+              CALL EDISP(IUOUT,outs)
+              dok=.false.
+              ok=dok
+              helptopic='res_opT_noCFD'
+              call gethelptext(helpinsub,helptopic,nbhelp)
+              CALL ASKOK('Local values of air parameters not available.'
+     &          ,'Continue anyway? (see help)',ok,dok,nbhelp)
+              if (.not.ok) IER=1
+            endif
+          endif
+
         elseif (AGRLIST) then
 
 C If we have asked for an aggregate of heating or cooling or lighting
@@ -5244,8 +5318,12 @@ C IGETNO(KGET,1) = 54 Local PD: draught
           if (iflag.eq.-2) PD=102.
           GC(J2)=PD
  1309   CONTINUE
-        CALL XTVAL1(GC,ISTART,IEND,KGET)
-        
+        CALL XTVAL1(GC,ISTART,IEND,KGET)        
+      elseif(IGETNO(KGET,1).eq.59)then
+
+C IGETNO(KGET,1) = 59 Operative temperature
+        CALL SENOPT(IDAY,IGETNO(KGET,2),IGETNO(KGET,3),IGETNO(KGET,5))
+        CALL XTVAL1(GVAL,ISTART,IEND,KGET)
       elseif(IGETNO(KGET,1).eq.80)then
 
 C IGETNO(KGET,1) = 80 Zone observed db temperature

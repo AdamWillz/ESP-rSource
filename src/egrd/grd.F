@@ -162,7 +162,7 @@ C Initial coords for eyepoint, viewing point, angle of view.
       VIEWM(2)=10.
       VIEWM(3)=10.
       ANG=40.
-      IVISMOD=1
+      IVISMOD=3
 
 C General image option flags.
       ITDSP=1

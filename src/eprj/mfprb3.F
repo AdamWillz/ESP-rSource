@@ -1608,6 +1608,7 @@ C 0.9m along normal vector.
 
 C Cases to ignore.
         if(SSUSE(loop,1)(1:1).eq.'-'.or.
+     &     SSUSE(loop,1)(1:4).eq.'WALL'.or.
      &     SSUSE(loop,1)(1:5).eq.'FLOOR'.or.
      &     SSUSE(loop,1)(1:5).eq.'FURNI'.or.
      &     SSUSE(loop,1)(1:7).eq.'ITEQUIP'.or.
@@ -2919,7 +2920,7 @@ C Reality checks here...
           elseif(SSUSE(loop,2)(1:4).eq.'SASH')then
 
 C Window sash - 2 common orifice component, (type 40) IVALCM(10) MF040I
-C Ror first, assume width = window width,
+C For first, assume width = window width,
 C height = 0.125* window height, at highest horizontal edge
 C For second, assume width = window width,
 C height = 0.125* window height, at lowest horizontal edge

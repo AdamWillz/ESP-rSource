@@ -201,14 +201,6 @@ C and dllmesg tells the details of the error.
       character*72 cBpsVersion, cPrjPath, cPrjName, cCfgPath,
      &           cCfgFile, cLogFile
 
-C IEEE callback (Solaris)
-#ifdef SUN
-#ifdef F90
-      external SIGFPE_bps
-      integer SIGFPE_bps
-#endif
-#endif
-
       common/outin/iuout,iuin
       common/shout/icout
       common/filep/ifil
@@ -575,19 +567,6 @@ C uncertainty analysis routines)
 C If your compiler does not support floating-point arithmetic
 C according to ANSI/IEEE Std 754-1985 comment out the following code.
 
-C Initialize mode, status, and signal handling for IEEE arithmetic.
-C See also: f77_ieee_environment(3F) f77_floatingpoint(3F)
-C           Note that in case of Sun FORTRAN, IEEEE exceptions arise
-C           only if: Sun-3 f77 with -f68881 or -ffpa option
-C                or: Sun-4 f77.
-#ifdef SUN
-#ifdef F90
-      ieeer=ieee_handler('set','common',SIGFPE_ABORT)
-      ieeer=ieee_handler('set','common',SIGFPE_bps)
-      if(ieeer.ne.0) write(iuout,*) ' IEEE_handler not set !'
-#endif
-#endif
-
 C Initialise output device: -10 forces user selection.
       MMOD=MODL
       if(iappw.eq.0.and.iappx.eq.0.and.iappy.eq.0)then
@@ -771,6 +750,7 @@ C Unit for materials db in case control -99 is invoked.
 
 C Unit for CFClayers db in case control -99 is invoked.
       icfcdb=ifil+6
+      write(LCFCDB,'(a)') DCFCDB(1:lnblnk(DCFCDB))
 
 C Initialise results averaging flag: 0 means
 C results will be averaged.

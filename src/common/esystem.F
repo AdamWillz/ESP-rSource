@@ -254,6 +254,7 @@ C IFPNF is the unit for the plant network file.
 C LPNF (72 char) plant network file name.
       COMMON/C23/IFPNF,LPNF
       INTEGER :: IFPNF
+      COMMON/C23a/BPF
 
 C IZSTOCN - for each zone:surface a pointer to connection index.
       INTEGER :: IZSTOCN
@@ -531,6 +532,12 @@ C iSlr_half_hr_flg value = 0 :hour-centered; =1 : half-hour centered.
       common/CWEC_SOL/iSlr_half_hr_flg
       integer iSlr_half_hr_flg,idty
 
+C The flag iflgevapC(mcom) can be set in the .cfg file or within bps in the 
+C 'simulation toggles' menu.
+      common/EVCOOL/iflgevapC(mcom) !only modifies wet bulb temp (more precisely: the indoor air humidity ratio)
+      integer iflgevapC             ! when equals 1, it makes the indoor wet bulb temp = outdoor wet bulb temperature        
+      integer iZntempFlg,itempFlg
+      
 C Radiance processor cores.
       integer radcores
       common/radcor/radcores
@@ -569,7 +576,7 @@ C Simulation parameters
       logical foundmould,foundsbem
       CHARACTER loutstr*248,OUTSTR*124,OUTS*124,text*124,t117*117,h*72
       CHARACTER LCFD*72
-      CHARACTER*72 LAPROB,LPNF
+      CHARACTER*72 LAPROB,LPNF,BPF
       character lworking*144
       CHARACTER*72 L3DCVS,L3DCNC,L3DNDC,L3DTAQ,LMOIST,LGrdSt
       CHARACTER WORD*20,WORD2*20,NODID*12,CXSTR*78
@@ -686,6 +693,12 @@ C Initialize simulation toggle flags
 C Set flag indicating that solar radiation data is hour-centered (default)
 C Variable will be reset if 'slr_half_hr' included in .cfg
       iSlr_half_hr_flg = 0
+
+C Set flag for indoor wet bulb temperature to default (no evaporative cooling)
+C Variable will be reset if 'iflgevapC(icomp)' included in .cfg
+      do 88 icomp = 1,ncomp
+        iflgevapC(icomp) = 0
+ 88   continue
 
 C Initialize flag for quick run simulation (default is 'no')    
       iQuick_run = 0 
@@ -1521,7 +1534,16 @@ C then get the name of the file and test for its existence.
 C Solar radiation (half hour data) flag.
         call egetwi(loutstr,k,iSlr_half_hr_flg,0,1,'W',
      &    'solar half-hour flag',IER)
+     
+      elseif(WORD(1:11).eq.'*Twb_evCool')then
 
+C Get flag integer (should be 1) and then the zone number
+        call egetwi(loutstr,k,itempFlg,0,1,'W',
+     &    'Twet bulb flag',IER)
+        call egetwi(loutstr,k,iZntempFlg,0,999,'W',
+     &    'zone numb flag',IER)
+        iflgevapC(iZntempFlg)= itempFlg
+     
       elseif(WORD(1:18).eq.'*exclude_diff_shad')then
 
 C Solar radiation (half hour data) flag.
@@ -2248,7 +2270,7 @@ C No extended sps data found so set to global values.
             ispnstepex(iss)=ispnstep
             issaveex(iss)=issave; isavghex(iss)=isavgh
           else
-            CALL EGETWI(OUTSTR,K,isstupex(iss),1,300,'W','startup',IER)
+            CALL EGETWI(OUTSTR,K,isstupex(iss),0,300,'W','startup',IER)
             CALL EGETWI(OUTSTR,K,isbnstepex(iss),1,60,'W','bld ts',IER)
             CALL EGETWI(OUTSTR,K,ispnstepex(iss),1,100,'W','pl ts',IER)
             CALL EGETWI(OUTSTR,K,issaveex(iss),0,5,'W','save lv',IER)
@@ -2698,7 +2720,6 @@ C toggles to set water filled zones.
 C Debug.
 C              write(6,*) 'zone ',NCCODE(ICOMP),' is water filled.'
               znotair(icomp)=.TRUE.
-              zfldK=0.6; zfldD=998.2; zfldC=4190.0; zfldA=0.0
               zSWAp(icomp)=0.0; zSWAf(icomp)=0.0
             else
               znotair(icomp)=.FALSE.  ! usual assumption of air filled
@@ -3529,8 +3550,37 @@ C the plant components db, pltcfg assumes that ifpnf exists and is open.
  888  continue
       IF(INDCFG.EQ.2.OR.INDCFG.EQ.3)THEN
 
+        CALL STRIPC(IUC,OUTSTR,0,ND,1,'building name',IER)
+        IF(IER.NE.0)goto 1
+        if(OUTSTR(1:8).eq.'* Ground'.or.OUTSTR(1:8).eq.'* GROUND')then
+3440    CALL STRIPC(IUC,OUTSTR,0,ND,1,'ground info',IER)
+        K=0
+        CALL EGETW(OUTSTR,K,WORD,'W','ground tags',IFLAG)
+
+C Ground monthly temperature profiles. 2nd item is the number of profiles.
+        IF(WORD(1:4).EQ.'*mgp')THEN
+
+          CALL EGETWI(OUTSTR,K,NGRDP,1,MGRDP,'F','grn prfls',IER)
+          IF(NGRDP.eq.0) goto 3440
+          DO 280 IGRDP=1,NGRDP
+            CALL EGETWRA(IUC,GVA,12,-9.,99.,'W','Gr tmp',IER)
+            DO 290 J=1,12
+              UGRDTP(J,IGRDP)=GVA(J)
+  290       CONTINUE
+
+C Reporting.
+            IF(ITRC.GE.1.AND.ITRC.LT.4)THEN
+              CALL EDISP(iuout,' ')
+              CALL EDISP(iuout,' Ground temperature profile Jan-Dec:')
+              WRITE(OUTS,'(12F6.1)')(UGRDTP(J,IGRDP),J=1,12)
+              CALL EDISP(iuout,OUTS)
+            ENDIF
+ 280      CONTINUE
+        ENDIF
+        endif
+
 C Identify plant file; skip if this is '* Plant' record.
-        CALL STRIPC(IUC,OUTSTR,0,ND,1,'* plant',IER)
+1001    CALL STRIPC(IUC,OUTSTR,0,ND,1,'* plant',IER)
         IF(IER.NE.0)then
           outs='Problem reading * PLANT line'
           if(dll)then
@@ -3544,6 +3594,9 @@ C Identify plant file; skip if this is '* Plant' record.
           endif
         endif
         LPNF=OUTSTR(1:72)
+	IF(LPNF(1:7).EQ.'*end') THEN
+          goto 1001
+	ENDIF ! GF New End
         IF(LPNF(1:7).EQ.'* Plant'.OR.LPNF(1:7).EQ.'* PLANT') THEN
           CALL STRIPC(IUC,OUTSTR,0,ND,1,'* plant',IER)
           if(IER.NE.0)then
@@ -3552,20 +3605,40 @@ C Identify plant file; skip if this is '* Plant' record.
           endif
           LPNF=OUTSTR(1:72)
 
-C If a plant only model, attempt to read the model name.
-C This could be the last line in the file so ier could
-C be set to 2.
-          IF(INDCFG.EQ.2)then
-            CALL STRIPC(IUC,OUTSTR,0,ND,1,'model name',IIER)
-            IF(IIER.eq.0)then
-              modeltitle=OUTSTR(1:72)
-            elseif(IIER.eq.2)then
-              modeltitle=OUTSTR(1:72)
-              iier=0
-            else
-              write(modeltitle,'(2a)') 'Systems model ',cfgroot
-            endif
+C Read temporal file name 
+	  CALL STRIPC(IUC,OUTSTR,0,ND,1,'boundary/model name',IER)
+          BPF=OUTSTR(1:72)
+          if(IER.NE.0)then
+            call edisp(iuout,'Problem reading * Boundary line')
+            goto 1
           endif
+          IF(BPF(1:10).EQ.'* Boundary'.OR.
+     &         BPF(1:10).EQ.'* BOUNDARY') THEN
+            CALL STRIPC(IUC,OUTSTR,0,ND,1,'* boundary',IER)
+            BPF=OUTSTR(1:72)
+            if(INDCFG.eq.2.and.BPF(1:3).eq.'../') then
+              CALL STRIPC(IUC,OUTSTR,0,ND,1,'model name',IIER)
+              IF(IIER.eq.0)then
+                modeltitle=OUTSTR(1:72)
+              elseif(IIER.eq.2)then
+                modeltitle=OUTSTR(1:72)
+                iier=0
+              else
+                write(modeltitle,'(2a)') 'Systems model ',cfgroot
+              endif
+            else
+              IF(INDCFG.EQ.2)then
+                IF(IIER.eq.0)then
+                  modeltitle=OUTSTR(1:72)
+                elseif(IIER.eq.2)then
+                  modeltitle=OUTSTR(1:72)
+                  iier=0
+                else
+                  write(modeltitle,'(2a)') 'Systems model ',cfgroot
+                endif
+              endif
+            endif
+          ENDIF
         ENDIF
 
         IFPNF=IFIL+1

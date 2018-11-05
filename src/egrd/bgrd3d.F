@@ -55,7 +55,7 @@ C *********************************************************************
       LOGICAL BLDG3D,ZONE3D
       COMMON/GR3D108/L3DCVS(MCOM),L3DCNC(MCOM),L3DNDC(MCOM),L3DTAQ(MCOM)
 
-      LOGICAL ZONOK,OK,DOK,XST
+      LOGICAL ZONOK,OK,DOK,XST,SAVEOK
 
       CHARACTER ITEM(15)*26,SZN*15
       CHARACTER*72 L3DCVS,L3DCNC,L3DNDC,L3DTAQ
@@ -74,6 +74,7 @@ C For help messages
       IUNIT=IFIL+1
       ZONOK=.FALSE.
       MODIFYVIEW=.FALSE.
+      SAVEOK=.FALSE.
 
 C General image option flags.
       ITDSP=1
@@ -199,7 +200,7 @@ C create the default 3D mesh for the current zone.
       ELSEIF(INO.EQ.8)THEN
 
 C Create ESP-r 3D mesh.
-C Check if there are un-acceptable 3D configuration informations.
+C Check if there are un-acceptable 3D gridding directives.
         CALL CHCK3D(IWRNG,IERRR)
         IF(IERRR.LE.0)THEN
           IF(IWRNG.GT.0)THEN
@@ -220,11 +221,13 @@ C Create the control volumes for the surfaces.
 C Create the control volumes, nodes, and connections for all elements 
 C in the zone.
               CALL CZCNVS(IZ,IER)
+              SAVEOK=.TRUE.
             ENDIF
           ELSE
             CALL INSPTS
             CALL CVSSRF
             CALL CZCNVS(IZ,IER)
+            SAVEOK=.TRUE.
           ENDIF
         ELSE
           CALL USRMSG(
@@ -288,6 +291,16 @@ C Help.
       ELSEIF(INO.EQ.MITEM)THEN
 
 C Return to the main multi-gridding menu.
+        IF(SAVEOK)THEN
+          dok=.true.
+          helptopic='save_recent_changes'
+          call gethelptext(helpinsub,helptopic,nbhelp)
+          CALL ASKOK(
+     &      'The system configuration should be updated for changes.',
+     &      '(if no other module is using it). Do this?',
+     &      OK,dok,nbhelp)
+          IF(OK)CALL EMKCFG('-',IER)
+        ENDIF
         RETURN
       ENDIF
       GOTO 10

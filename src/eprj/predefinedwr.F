@@ -57,9 +57,9 @@ C Predefined entity variables.
 
 C << use parameters when available >>
       dimension catname(6),cats(6)
-      dimension names(46),menus(46),itemcat(46)
+      dimension names(52),menus(52),itemcat(52)
       integer pointback(30) ! to point back to item in list
-      real bounding(46,3) ! width, depth, height
+      real bounding(52,3) ! width, depth, height
       character predef*144,fs*1
       integer loop
       logical unixok
@@ -208,8 +208,8 @@ C << use parameters when available >>
       character menus*32  ! list of menus for objects
       character itemcat*12 ! category for each object
       dimension catname(6),cats(6)
-      dimension names(46),menus(46),itemcat(46)
-      real bounding(46,3) ! width, depth, height for each    
+      dimension names(52),menus(52),itemcat(52)
+      real bounding(52,3) ! width, depth, height for each    
       integer IER         ! error return where zero is ok, 
                           ! ier=-1 file not found, ier=-2 no objects
 
@@ -245,7 +245,7 @@ C << use parameters when ready >>
         catname(loop)=' '
       enddo    
       numitems=0
-      do loop=1,46
+      do loop=1,52
         names(loop)='  '
         menus(loop)='  '
         itemcat(loop)='  '
@@ -2246,7 +2246,7 @@ C              write(6,*) outs(1:lnblnk(outs))
               lnvm=lnblnk(objvismat(ib))
               call SDELIM(outs,outsd,'C',IW)
               write(ifilg,'(4a,i3)',IOSTAT=IOS,ERR=13) 
-     &          outsd(1:lnblnk(outsd)),' ',objvismat(ib)(1:lnvm),
+     &          outsd(1:lnblnk(outsd)),tab,objvismat(ib)(1:lnvm),
      &          '  # visual block ',ib
             elseif(objvistyp(ib)(1:4).eq.'visp')then
               WRITE(outs,'(2a,F6.2,2A)',IOSTAT=ios,ERR=13) 
@@ -2254,7 +2254,7 @@ C              write(6,*) outs(1:lnblnk(outs))
               lnvm=lnblnk(objvismat(ib))
               call SDELIM(outs,outsd,'C',IW)
               write(ifilg,'(4a,i3,a)',IOSTAT=IOS,ERR=13) 
-     &          outsd(1:lnblnk(outsd)),' ',objvismat(ib)(1:lnvm),
+     &          outsd(1:lnblnk(outsd)),tab,objvismat(ib)(1:lnvm),
      &          '  # visual ',ib,' coords follow:'
 
               WRITE(outs,'(12F9.4)',IOSTAT=ios,ERR=13) 
@@ -2283,8 +2283,9 @@ C              write(6,*) outs(1:lnblnk(outs))
      &          OBJBANGOV(ib,1),objvisopaq(ib),' ',OBJVISNAME(ib)
 C              write(6,*) outs
               call SDELIM(outs,outsd,'C',IW)
+              lnvm=lnblnk(objvismat(ib))
               write(ifilg,'(4a,i3)',IOSTAT=IOS,ERR=13) 
-     &          outsd(1:lnblnk(outsd)),' ',objvismat(ib)(1:lnvm),
+     &          outsd(1:lnblnk(outsd)),tab,objvismat(ib)(1:lnvm),
      &          '  # visual ',ib
             endif
           enddo   ! ib
