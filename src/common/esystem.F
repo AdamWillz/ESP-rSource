@@ -2263,13 +2263,13 @@ C Set flag indicating if set describes a multi-year period
           bMY_period_support (iss) = bMY_sim_sps
 C          write(6,*) 'sps number items ',ND
           K=0
-          if(ND.le.6)then
+          if(ND.le.6 .OR. bMY_sim_sps)then
 
 C No extended sps data found so set to global values.
             isstupex(iss)=isstup; isbnstepex(iss)=isbnstep
             ispnstepex(iss)=ispnstep
             issaveex(iss)=issave; isavghex(iss)=isavgh
-          else
+          elseif(.not. bMY_sim_sps)then
             CALL EGETWI(OUTSTR,K,isstupex(iss),0,300,'W','startup',IER)
             CALL EGETWI(OUTSTR,K,isbnstepex(iss),1,60,'W','bld ts',IER)
             CALL EGETWI(OUTSTR,K,ispnstepex(iss),1,100,'W','pl ts',IER)

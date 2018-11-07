@@ -485,7 +485,16 @@ C of the assumed starting conditions.
       nhs=(isdf-isds+1+itcnst)*24
       inhs=0
       inhsi=0
-
+C Quick run and multi-year sims are not currently compatible
+C If the cfg has quickrun and multi-year enabled, kill the program
+      if( iQuick_run .eq. 1 .and. bMY_sim_enabled) then
+        write(outs,'(a)') 
+     &      'Error: Cannot have quick run and multi-year sim enabled.'
+        call edisp(iuout,outs)
+        call pauses(3)   ! pause for 3 seconds then abort program.
+        CALL EPAGEND
+        STOP
+      endif
 C If quick run method is requested, set the start date and end date of the
 C simulation to span all periods of interest (all of the best weeks).
         if ( iQuick_run .eq. 1 ) then
@@ -530,11 +539,13 @@ C End year: (this data is not used at present)
 
 C Set the variable bSimThisDay (introduced for quick run method)
 C if a quick run is not requested.
-      if ( iQuick_run .ne. 1 ) then
-        quickrun_markdays_loop: do iCount = iss, isf
-             bSimThisDay(iCount) = .true.
-        enddo quickrun_markdays_loop
-      endif
+C ADW Nov 7 2018: This functionality broke multi-year simulations
+C                 Now bSimThisDay is only used if iQuick_run .eq. 1
+C      if ( iQuick_run .ne. 1 ) then
+C        quickrun_markdays_loop: do iCount = iss, isf
+C             bSimThisDay(iCount) = .true.
+C        enddo quickrun_markdays_loop
+C      endif
 
 C H3Kreporting object - save the frequency of
 C building timesteps. Note: simulations with
@@ -818,9 +829,12 @@ C debug (begin)
 C           print*, 'i = ', i, 'SimthisDay = ', bSimThisDay(i)
 C debug (end)
 
-        seasonal_run_test: if ( bSimThisDay(i) ) then
-
-
+C        seasonal_run_test: if ( bSimThisDay(i) ) then
+        if( iQuick_run == 1 ) then ! There is a quick run requested
+          if( .not. bSimThisDay(i) ) then 
+            GOTO 10 ! If we are not to simulate this day, go to next day
+          endif
+        endif
 
 C Get seasonal info
         quick_run_init: if ( iQuick_run == 1 ) then
@@ -1990,7 +2004,7 @@ C GSHP system is defined.
          call GSHPSIM
        endif
 
-       endif seasonal_run_test
+C       endif seasonal_run_test
 
 C Day loop now complete.
    10 continue
