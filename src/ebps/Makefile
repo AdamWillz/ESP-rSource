@@ -775,11 +775,11 @@ FMIcom.F:
 
 
 strip:
-	strip $(PROG)
-	strip $(DLL)
+	@if [ -f $(PROG) ]; then strip $(PROG); fi
+	@if [ -f $(DLL) ]; then strip $(DLL); fi
 
 install:
-	install $(SWTCH) $(PROG) $(ESPBinDir)/$(PROG)
+	@if [ -f $(PROG) ]; then install $(SWTCH) $(PROG) $(ESPBinDir)/$(PROG); fi
 	@if [ -f $(DLL) ]; then install $(SWTCH) $(DLL) $(ESPBinDir)/$(DLL); fi
 
 clean:
@@ -826,6 +826,7 @@ clean:
 distclean: clean
 
 uninstall:
-	-rm -f $(ESPBinDir)/$(PROG)
+	@if [ -f $(PROG) ]; then -rm -f $(ESPBinDir)/$(PROG); fi
+	@if [ -f $(DLL) ]; then -rm -f $(ESPBinDir)/$(DLL); fi
 	
 .PHONY: clean install default strip uninstall distclean
