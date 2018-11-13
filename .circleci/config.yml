@@ -10,6 +10,9 @@ jobs:
           command: |
             cd ..
             git clone https://github.com/AdamWillz/ESP-rDatabases
+            cd ESP-rDatabases
+            git checkout v13_2_8
+            cd ..
             mkdir project/data/climate
             mkdir project/data/databases
             mv ESP-rDatabases/climate/ project/data
