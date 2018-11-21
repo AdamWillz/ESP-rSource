@@ -374,6 +374,7 @@ C To support writing ASCII file.
       common/EQTION3/CALLMA(MNZ),CALPOL(MCTM,MNZ),POLNAM(MCTM,MNZ),
      &               NCTM(MNZ),JHUMINDX(MNZ),URFC(MCTM)
       LOGICAL CALPOL,CALLMA
+      CHARACTER POLNAM*12
       COMMON/ALL/NI,NJ,NK,NIM1,NJM1,NKM1,NIM2,NJM2,NKM2
       COMMON/VARf/Uf(ntcelx,ntcely,ntcelz),Vf(ntcelx,ntcely,ntcelz),
      1            Wf(ntcelx,ntcely,ntcelz),
@@ -390,7 +391,6 @@ C To support writing ASCII file.
      3            SEW(ntcelx),SNS(ntcely),SHL(ntcelz),
      4            XU(ntcelx),YV(ntcely),ZW(ntcelz)
       CHARACTER LCFD*72
-      CHARACTER POLNAM*12
       character cfd3dascii*72
       character doit*248
       LOGICAL areaSSO

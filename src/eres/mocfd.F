@@ -1440,7 +1440,7 @@ C          write(6,*) IRLEN,ICFDSV,(IEQSV(J),J=1,5+MCTM)
       ELSE
         call usrmsg(' Could not find: ',LTMP,'W')
         path=lpath
-        goto 924
+        goto 11
       ENDIF
       path=lpath
 
@@ -2545,11 +2545,14 @@ C Find CFD grid cell closest to room COG.
           endif
           CALL INIT_CFDTRANS(IER)
           if (IER.eq.0) then
+
 C Find CFD plane closest to selected Z height.
             CALL GRIDGEO
             CALL CFDTRANS(2,ZCOG(ICP,1),ZCOG(ICP,2),ZCOG(ICP,3),
      &        XC,YC,ZC,IER)
             CALL FDCFDPT(XC,YC,ZC,ilayer,jlayer,klayer,IER)
+
+C Decrement ?layers, because FDCFDPT includes wall grid points.
             ilayer=ilayer-1
             jlayer=jlayer-1
             klayer=klayer-1
@@ -2568,8 +2571,7 @@ C the cell they want.
         if (MMOD.eq.8) then
 
 C If MRT sensor or COG, refresh display to avoid showing previous cell
-C highlights. Also decrement ?layer, because outputs from FDCFDPT do
-C consider additional 
+C highlights.
           if (iopt.eq.2.or.iopt.eq.3) then
             call INIT_CFDTRANS(IER)
             call VGRID3D(ICP,1)
@@ -2866,7 +2868,7 @@ C Ambient RH.
 
       RETURN
 
- 1000 call edisp(iuout,'CFD read data fault. Cannot read file.')
+ 1000 call edisp(iuout,' GOCFDGET: Cannot read CFD results libary.')
       call erpfree(iunit,istat)
       return
 

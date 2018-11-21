@@ -54,7 +54,8 @@ C  CMP50C   1 node (ISV=29) WCH thermostatic radiator valve
 C  CMP51C   1 node (ISV=29)     mechanical room thermostat
 C  CMP52C   1 node (ISV=29) WCH thermostatic radiator valve (sensor only)
 C  CMP73C   3 node (ISV=20) WCH 3-port valve
-C  CMP74C   1 node (ISV=20) WCH automatic flow control valve (EXPERIMENTAL)
+C  CMP74C   3 node (ISV=20) WCH 3-port valve w/ automatic flow control
+C                               valve (EXPERIMENTAL)
 C  CMP79C   1 node (ISV=20) WCH stochastic hot water draw
 C  CMP90C   2 node (ISV>19)     air & water temperature source
 C  CMP91C   2 node (ISV>19)     imaginary building-like plant load
@@ -636,6 +637,7 @@ C            2 Mass weighted average specific heat (J/kgK)
 C            3 UA modulus from wall to environment (W/K)
 C            4 Hydraulic diameter of pipe (m)
 C            5 Length of pipe (m)
+C            6 Cross sectional face area (m^2)
 C     BDATA: none
 C     CDATA: none
 
@@ -2936,6 +2938,13 @@ C Addition output for results analysis.
          PCAOUT(IPCOMP,1)=HFLX
          PCAOUT(IPCOMP,2)=NTU
          PCAOUT(IPCOMP,3)=EFF
+
+C Establish "containment loss" data
+        QDATA(IPCOMP)=UA*(alpha*(csvf(inod1,1)-pcntmf(ipcomp))+
+     &                (1.-alpha)*(csvp(inod1,1)-pcntmp(ipcomp)))
+	    call store_plt_gain ( IPCOMP, 0.5*QDATA(IPCOMP), iConvective)
+	    call store_plt_gain ( IPCOMP, 0.5*QDATA(IPCOMP), iRadiant)
+
 C 1st phase mass (ie. "water") balance coefficients
 
       ELSE IF(ISTATS.EQ.2) THEN
@@ -6964,7 +6973,9 @@ C           28 Nominal water return temperature for DHW
 C           29 Tout max DHW (degC)
 C           30 Tin max DHW (degC)
 C
-C     CDATA: 1 Call for heat [0 off - 1 space heat 2 - dhw] (-)
+C     CDATA: 1 ON/OFF signal for space heat (-)
+C            2 ON/OFF signal for DHW (-)
+C            3 Preference signal 0 space heat, 1 DHW
 
 C Node 1 represents the condenser heat exchanger and couples to the hydronic heating circuit.
 C The device has an internal pump and so an explicit pump model is not needed in system
@@ -7093,7 +7104,7 @@ C Electrical details for specified plant components
       DIMENSION NDMonth(12)
       DATA NDMonth/31,28,31,30,31,30,31,31,30,31,30,31/
 
-      LOGICAL CLOSE,CLOSEA,bSHrqd,bDHWrqd,
+      LOGICAL CLOSE,CLOSEA,bSHrqd,bDHWrqd,bSHpref,
      &                     bGrndSrc1,bGrndSrc2,bGrndSrc3
 
       CHARACTER OUTS*248,PCNAME*15
@@ -7130,7 +7141,21 @@ C Read ambient temperature (for temperature compensation of WCH return temp)
 
 C Set initial operation mode based on CDATA.
       call eclose(CDATA(IPCOMP,1),1.0,0.001,bSHrqd)
-      call eclose(CDATA(IPCOMP,1),2.0,0.001,bDHWrqd)
+      call eclose(CDATA(IPCOMP,2),1.0,0.001,bDHWrqd)
+      call eclose(CDATA(IPCOMP,3),0.0,0.001,bSHpref)
+
+C Check which mode is actually to be used for the case when both demands
+C are set to .true.
+      if ((bSHrqd.and.bDHWrqd)) then
+C       Both are .true.
+        if (bSHpref) then
+C         Re-set DHW to false, as SH is preferred !
+          bDHWrqd=.false.
+        else
+C         Re-set SH to false, as DHW is preferred !
+          bSHrqd=.false.
+        endif
+      endif
 
       if ((bSHrqd.or.bDHWrqd)) then
 C       Either space heat or dhw needs heat
@@ -7313,8 +7338,8 @@ C NTSBO = total no. of timesteps HP is off due to lockout
         ENDIF
 
         IF (INSO.EQ.1) THEN
+          IF (ITSBO.GT.NTSBO) INSO=0
           ITSBO=ITSBO+1
-          IF (ITSBO.GE.NTSBO) INSO=0
 cx        write(*,*)"NSINC=",NSINC,"; ITS=",ITS,"; NTSBO=",NTSBO,
 cx     &            "; ITSBO=",ITSBO,"; INSO=",INSO
           DeviceONOFF=0
@@ -7638,7 +7663,9 @@ C           29 Nominal water return temperature for DHW
 C           30 Tout max DHW (degC)
 C           31 Tin max DHW (degC)
 C
-C     CDATA: 1 Call for heat [0 off - 1 space heat 2 - dhw] (-)
+C     CDATA: 1 ON/OFF signal for space heat (-)
+C            2 ON/OFF signal for DHW (-)
+C            3 Preference signal 0 space heat, 1 DHW
 
 C Node 1 represents the condenser heat exchanger and couples to the hydronic heating circuit.
 C Node 2 represents the evaporator heat exchanger and couples to a (ground) heat source.
@@ -7759,7 +7786,7 @@ C Electrical details for specified plant components
       REAL BrinePumpRating,BrineRatedFlow,BrinePumpPower,
      &      BrinePumpPf,BrineFlow,LimFac
 
-      LOGICAL CLOSE,CLOSEA,bSHrqd,bDHWrqd
+      LOGICAL CLOSE,CLOSEA,bSHrqd,bDHWrqd,bSHpref
 
       CHARACTER OUTS*248,PCNAME*15
 
@@ -7804,7 +7831,21 @@ C Read ambient temperature (for temperature compensation of WCH return temp)
 
 C Set initial operation mode based on CDATA.
       call eclose(CDATA(IPCOMP,1),1.0,0.001,bSHrqd)
-      call eclose(CDATA(IPCOMP,1),2.0,0.001,bDHWrqd)
+      call eclose(CDATA(IPCOMP,2),1.0,0.001,bDHWrqd)
+      call eclose(CDATA(IPCOMP,3),0.0,0.001,bSHpref)
+
+C Check which mode is actually to be used for the case when both demands
+C are set to .true.
+      if ((bSHrqd.and.bDHWrqd)) then
+C       Both are .true.
+        if (bSHpref) then
+C         Re-set DHW to false, as SH is preferred !
+          bDHWrqd=.false.
+        else
+C         Re-set SH to false, as DHW is preferred !
+          bSHrqd=.false.
+        endif
+      endif
 
       if ((bSHrqd.or.bDHWrqd)) then
 C       Either space heat or dhw needs heat
@@ -7920,8 +7961,8 @@ C NTSBO = total no. of timesteps HP is off due to lockout
         ENDIF
 
         IF (INSO.EQ.1) THEN
+          IF (ITSBO.GT.NTSBO) INSO=0
           ITSBO=ITSBO+1
-          IF (ITSBO.GE.NTSBO) INSO=0
           DeviceONOFF=0
         ENDIF
 C == end lockout
@@ -9015,124 +9056,205 @@ C Trace output
 
 C ******************** CMP74C ********************
 C CMP74C generates for plant component IPCOMP with plant db code 740 ie.
-C 1 node (ISV=20) WCH automatic flow control valve.
-C matrix equation coefficients COUT (in order: self-coupling, cross-
-C coupling, and present-time coefficients) for energy balance (ISTATS=1),
-C 1st phase mass balance (ISTATS=2)
-C     adata: 1 Component total mass (kg)
+C 3 node (ISV>20) WCH 3-port valve with integrated automatic flow
+C control valve matrix equation coefficients COUT (in order:
+C self-coupling, cross-coupling, and present-time coefficients) for
+C energy balance (ISTATS=1), 1st phase mass balance (ISTATS=2),
+C or 2nd phase mass (ISTATS=3).
+C     ADATA: 1 Component total mass (kg)
 C            2 Mass weighted average specific heat (J/kgK)
-C            3 UA modulus (W/K)
-C            4 Setpoint (l/s)
-C     bdata: none
-C     cdata: none
-
-      subroutine CMP74C(ipcomp,cout,istats)
+C            3 Component UA modulus (for heat loss to environment) (W/K)
+C            4 Maximum flow setpoint (l/s)
+C
+C     BDATA: None
+C
+C     CDATA: 1 Valve position (0-1)
+C
+C This valve model has three nodes:
+C   1 - inlet
+C   2 - primary outlet
+C   3 - secondary outlet
+C Based on the valve position CDATA and the maximum flow
+C setpoint ADATA(4) the flow distribution factor a is established
+C according to
+C   a = min(CDATA, ADATA(4)/m_1)
+C
+C The input flow rate m_1 is distributed between the two nodes according
+C to the distribution factor a as follows:
+C   node 2 m_2 = a x m_1
+C   node 3 m_3 = (1-a) x m_1
+C
+      SUBROUTINE CMP74C(IPCOMP,COUT,ISTATS)
+      use h3kmodule
+      implicit none
 #include "plant.h"
 #include "building.h"
 
-      common/outin/iuout,iuin
-      common/tc/itc,icnt
-      common/trace/itcf,itrace(mtrace),izntrc(mcom),itu
-      common/simtim/ihrp,ihrf,idyp,idyf,idwp,idwf,nsinc,its
-      common/pctime/timsec
-      common/pctc/tc(mpcom)
+      COMMON/OUTIN/IUOUT,IUIN
+      COMMON/TC/ITC,ICNT
+      COMMON/TRACE/ITCF,ITRACE(MTRACE),IZNTRC(MCOM),ITU
 
-      common/pcequ/impexp,ratimp
+      COMMON/SIMTIM/IHRP,IHRF,IDYP,IDYF,IDWP,IDWF,NSINC,ITS
+      COMMON/PCTIME/TIMSEC
+      COMMON/PCTC/TC(MPCOM)
 
-      common/c9/npcomp,nci(mpcom),cdata(mpcom,mmiscd)
-      common/c10/npcon,ipc1(mpcon),ipn1(mpcon),ipct(mpcon),
-     &           ipc2(mpcon),ipn2(mpcon),pcondr(mpcon),pconsd(mpcon,2)
-      common/c12ps/npcdat(mpcom,9),ipofs1(mcoefg),ipofs2(mcoefg,mpvar)
-      common/pdbdt/adata(mpcom,madata),bdata(mpcom,mbdata)
-      common/pcval/csvf(mpnode,mpvar),csvp(mpnode,mpvar)
-      common/pcvar/pctf(mpcon),pcrf(mpcon),puaf(mpnode),pcqf(mpnode),
-     &             pcntmf(mpcom),
-     &             pctp(mpcon),pcrp(mpcon),puap(mpnode),pcqp(mpnode),
-     &             pcntmp(mpcom)
-      common/pcond/convar(mpcon,mconvr),icontp(mpcon),
-     &             icondx(mpcom,mnodec,mpconc)
+      COMMON/PCEQU/IMPEXP,RATIMP
+
+      COMMON/C9/NPCOMP,NCI(MPCOM),CDATA(MPCOM,MMISCD)
+      COMMON/C10/NPCON,IPC1(MPCON),IPN1(MPCON),IPCT(MPCON),
+     &           IPC2(MPCON),IPN2(MPCON),PCONDR(MPCON),PCONSD(MPCON,2)
+      COMMON/C12PS/NPCDAT(MPCOM,9),IPOFS1(MCOEFG),IPOFS2(MCOEFG,MPVAR)
+      COMMON/PDBDT/ADATA(MPCOM,MADATA),BDATA(MPCOM,MBDATA)
+      COMMON/PCVAL/CSVF(MPNODE,MPVAR),CSVP(MPNODE,MPVAR)
+      COMMON/PCVAR/PCTF(MPCON),PCRF(MPCON),PUAF(MPNODE),PCQF(MPNODE),
+     &             PCNTMF(MPCOM),
+     &             PCTP(MPCON),PCRP(MPCON),PUAP(MPNODE),PCQP(MPNODE),
+     &             PCNTMP(MPCOM)
+      COMMON/PCOND/CONVAR(MPCON,MCONVR),ICONTP(MPCON),
+     &             ICONDX(MPCOM,MNODEC,MPCONC)
       COMMON/PCRES/QDATA(MPCOM),PCAOUT(MPCOM,MPCRES),napdat(mpcom)
-      REAL QDATA,PCAOUT
-      INTEGER napdat
+      COMMON/PCDAT/PCDATF(MPCOM,MPCDAT),PCDATP(MPCOM,MPCDAT)
 
-      parameter (small=1.0e-15)
-      real      cout(mpcoe),Setpoint
-      logical closea
+      REAL UA,CM,C1,V_POS,SMALL,WMFR
+
+      INTEGER IMPEXP,IPCOMP
+
+      integer iuout,iuin,itc,icnt,ITCF,ITRACE,IZNTRC,ITU,IHRP,IHRF,
+     &IDYP,IDYF,IDWP,IDWF,NSINC,ITS,NPCOMP,ICONTP,ISTATS
+      integer ICONDX,ICON1,INOD1,INOD2,INOD3,IPN1,IPN2,IPC1,IPC2,NPCON,
+     &IPCT,NPCDAT,NAPDAT,NCI,IPOFS1,IPOFS2,IX1,NITMS,I
+
+      real RATIMP,TC,TIMSEC,PCONDR,PCONSD,ADATA,BDATA,CDATA,CSVF,CSVP
+      real PCTF,PCRF,PUAF,PCQF,PCNTMF,PCTP,PCRP,PUAP,PCQP,PCNTMP,CONVAR
+      real PCDATF,PCDATP,ALPHA,QDATA,PCAOUT,SHTFLD
+
+      PARAMETER (SMALL=1.0E-15)
+      REAL COUT(MPCOE)
+      LOGICAL CLOSEA
 
 C Trace output
-      if(itc.gt.0.and.nsinc.ge.itc.and.nsinc.le.itcf.and.
-     &   ITRACE(37).ne.0) write(itu,*) ' Entering subroutine CMP74C'
+      IF(ITC.GT.0.AND.NSINC.GE.ITC.AND.NSINC.LE.ITCF.AND.
+     &   ITRACE(37).NE.0) WRITE(ITU,*) ' Entering subroutine CMP74C'
 
 C Initialize pointers to inter-connection(s) ICON, and node(s) INOD
-      icon1=icondx(ipcomp,1,1)
-      inod1=npcdat(ipcomp,9)
 
-C Calculate mass flow correction.
-      Setpoint=adata(ipcomp,4)
+C 1 connection
+      ICON1=ICONDX(IPCOMP,1,1)
 
-      call eclose(convar(icon1,2),0.00,0.001,closea)
-      if (closea) then
-        fm = 1.0 ! mass flow at connection is (close to) zero, leave alone
-      else
-        if (convar(icon1,2).le.Setpoint) then
-          fm = 1.0 ! mass flow is below setpoint, simply pass through
-        else
-          fm = Setpoint/convar(icon1,2) ! correct mass flow to setpoint
-          if(fm.lt.1E-04) fm=1E-04
-        endif
-      endif
+C 3 - nodes 1) water inlet 2) primary outlet m_out1=(a X m_in) 2)
+C     secondary outlet m_out2=(1-a) x m_in
+      INOD1=NPCDAT(IPCOMP,9)
+      INOD2=NPCDAT(IPCOMP,9)+1
+      INOD3=NPCDAT(IPCOMP,9)+2
 
-C Generate coefficients for energy balance equation
-      if(istats.eq.1) then
+C Check the specified valve position
+      WMFR=PCONDR(ICON1)*CONVAR(ICON1,2)
+      V_POS=MIN(CDATA(IPCOMP,1),ADATA(IPCOMP,4)/WMFR)
+      IF (V_POS.LT.0) THEN
+        V_POS=0.
+        WRITE(IUOUT,*)
+     &   ' WARNING:CMP74C a 3-port valve control setting <0 has'
+        WRITE(IUOUT,*)
+     &   ' been detected. Resetting valve position to zero.'
+      elseif (V_POS.GT.1.) THEN
+        V_POS=1.
+        WRITE(IUOUT,*)
+     &   ' WARNING:CMP74C a 3-port valve control setting >1 has'
+        WRITE(IUOUT,*)
+     &   ' been detected. Resetting valve position to one.'
+      ENDIF
 
-C First initialize UA modulus (for calculation of containment heat loss)
-         ua=adata(ipcomp,3)
-         call eclose(PCNTMF(IPCOMP),-99.00,0.001,closea)
-         IF(closea) UA=0.
+C Generate coefficients for the energy balance equation
+      IF(ISTATS.EQ.1) THEN
+
+C First initialize UA modulus (for calculation of containment heat loss),
+C if there is no containment then zero the UA value.
+         UA=ADATA(IPCOMP,3)
+         CALL ECLOSE(PCNTMF(IPCOMP),-99.00,0.001,CLOSEA)
+         IF(CLOSEA) UA=0.
 
 C Establish heat capacity of component mass CM (J/K) and
 C fluid heat capacity rate(s) C (W/K), ie. SUM(mass flow * specific heat)
-cx ... use fm here? Not done in CMP29C() !!
-         cm=adata(ipcomp,1)*adata(ipcomp,2)
-         c1=pcondr(icon1)*convar(icon1,2)*shtfld(1,convar(icon1,1))
+         CM=ADATA(IPCOMP,1)*ADATA(IPCOMP,2)
+         C1=PCONDR(ICON1)*CONVAR(ICON1,2)*SHTFLD(3,CONVAR(ICON1,1))
+
+C Store inter-node fluid capacity rates (W/K).
+C Node 2
+         PCDATF(IPCOMP,2)=C1*V_POS
+
+C Node 3
+         PCDATF(IPCOMP,3)=C1*(1.-V_POS)
 
 C Calculate current component time-constant TC
-         tc(ipcomp)=cm/amax1(small,(c1+ua))
+         TC(IPCOMP)=CM/AMAX1(SMALL,(UA+C1))
 
 C Set up implicit/explicit weighting factor ALPHA (1 = fully implicit)
-         if(impexp.eq.1) then
-            alpha=1.
-         else if(impexp.eq.2) then
-            alpha=ratimp
-         else if(impexp.eq.3) then
-            if(timsec.gt.0.63*tc(ipcomp)) then
-               alpha=1.
-            else
-               alpha=ratimp
-            end if
-         else if(impexp.eq.4) then
-            cm=0.
-            alpha=1.
-         end if
+         IF(IMPEXP.EQ.1) THEN
+            ALPHA=1.
+         ELSE IF(IMPEXP.EQ.2) THEN
+            ALPHA=RATIMP
+         ELSE IF(IMPEXP.EQ.3) THEN
+            IF(TIMSEC.GT.0.63*TC(IPCOMP)) THEN
+               ALPHA=1.
+            ELSE
+               ALPHA=RATIMP
+            END IF
+         ELSE IF(IMPEXP.EQ.4) THEN
+            CM=0.
+            ALPHA=1.
+         END IF
 
-        call eclose(C1,0.00,0.0001,closea)
-        if(closea)alpha=1.
+cx        call eclose(C1,0.00,0.0001,closea)
+cx        if(closea)alpha=1.
 
-C Establish matrix equation self- and cross-coupling coefficients
-        cout(1)=alpha*(-c1-ua)-cm/timsec
-        cout(2)=alpha*c1
+C Establish matrix equation self-and cross-coupling coefficients
+C matrix order as follows
+C   A  B  C | X     RHS
+C   1  0  0 | 6      7
+C   2  3  0 | 0    = 8
+C   4  0  5 | 0      9
 
-C and then present-time coefficient (ie. right hand side)
-        cout(3)=((1.-alpha)*(pcrp(icon1)+puap(inod1))
-     &              -cm/timsec)*csvp(inod1,1)
-     &             +(1.-alpha)*(-pcrp(icon1))*pctp(icon1)
-     &             -alpha*ua*pcntmf(ipcomp)
-     &             -(1.-alpha)*puap(inod1)*pcntmp(ipcomp)
+C Self-coupling coefficients.
+C Inlet node 1
+         COUT(1)=ALPHA*(-C1)-CM/(3.*TIMSEC)
 
-C Store "environment" variables future values
-        puaf(inod1)=ua
-        pctf(icon1)=convar(icon1,1)
-        pcrf(icon1)=c1
+C Primary outlet 2
+         COUT(2)=ALPHA*PCDATF(IPCOMP,2)
+         COUT(3)=ALPHA*(-PCDATF(IPCOMP,2)-(UA/2.))-CM/(3.*TIMSEC)
+
+C Secondary outlet node 3
+         COUT(4)=ALPHA*PCDATF(IPCOMP,3)
+         COUT(5)=ALPHA*(-PCDATF(IPCOMP,3)-(UA/2.))-CM/(3.*TIMSEC)
+
+C Cross coupling coefficient
+C Node 1
+         COUT(6)=ALPHA*C1
+
+
+C 'Known coefficients' present-time coefficient (ie. right hand side
+C Node 1.
+         COUT(7)=(((1.-ALPHA)*(PCRP(ICON1)))
+     &-CM/(3.*TIMSEC))*CSVP(INOD1,1)
+     &-(1.-ALPHA)*(PCRP(ICON1))*PCTP(ICON1)
+
+
+C Node 2.
+         COUT(8)=(((1.-ALPHA)*(PCDATP(IPCOMP,2)+(UA/2.)))
+     &           -CM/(3.*TIMSEC))*CSVP(INOD2,1)
+     &           -(1.-ALPHA)*(PCDATP(IPCOMP,2))*CSVP(INOD1,1)
+     &           -(ALPHA)*(UA/2.)*PCNTMF(IPCOMP)
+     &           -(1.-ALPHA)*PUAP(INOD2)*PCNTMP(IPCOMP)
+
+C Node 3.
+         COUT(9)=(((1.-ALPHA)*(PCDATP(IPCOMP,3)+(UA/2.)))
+     &           -CM/(3.*TIMSEC))*CSVP(INOD3,1)
+     &           -(1.-ALPHA)*(PCDATP(IPCOMP,3))*CSVP(INOD1,1)
+     &           -(ALPHA)*(UA/2.)*PCNTMF(IPCOMP)
+     &           -(1.-ALPHA)*PUAP(INOD3)*PCNTMP(IPCOMP)
+
+C Store "environment" variables future values.
+         PUAF(INOD2)=UA/2.
+         PUAF(INOD3)=UA/2.
 
 C Establish "containment loss" data
         QDATA(IPCOMP)=UA*(alpha*(csvf(inod1,1)-pcntmf(ipcomp))+
@@ -9140,53 +9262,71 @@ C Establish "containment loss" data
 	    call store_plt_gain ( IPCOMP, 0.5*QDATA(IPCOMP), iConvective)
 	    call store_plt_gain ( IPCOMP, 0.5*QDATA(IPCOMP), iRadiant)
 
-C 1st phase mass (ie. water) balance coefficients
-      else if(istats.eq.2) then
-         cout(1)=1.
-         cout(2)=-pcondr(icon1)*fm
-         cout(3)=0.
+C 1st phase mass (ie. dry air) balance coefficients
+      ELSE IF(ISTATS.EQ.2) THEN
+         COUT(1)=1.
+         COUT(2)=-V_POS
+         COUT(3)=1.
+         COUT(4)=-(1.-V_POS)
+         COUT(5)=1.
+         COUT(6)=-PCONDR(ICON1)
+         COUT(7)=0.
+         COUT(8)=0.
+         COUT(9)=0.
+         COUT(10)=0.
 
-C 2nd phase mass (ie. none) balance coefficients
-      else if(istats.eq.3) then
-         cout(1)=1.
-         cout(2)=0
-         cout(3)=0.
-      end if
+C 2nd phase mass (ie. vapour) balance coefficients.
+      ELSE IF(ISTATS.EQ.3) THEN
+         COUT(1)=1.
+         COUT(2)=0.
+         COUT(3)=1.
+         COUT(4)=0.
+         COUT(5)=1.
+         COUT(6)=0.
+         COUT(7)=0.
+         COUT(8)=0.
+         COUT(9)=0.
+         COUT(10)=0.
+      END IF
 
-C Save additional output.
-      napdat(ipcomp)=1
-      pcaout(ipcomp,1)=fm
+C Establish additional output variables
+      NAPDAT(IPCOMP)=1
+
+C Valve position
+      PCAOUT(IPCOMP,1)=CDATA(IPCOMP,1)
 
 C Trace output
-      if(itc.gt.0.and.nsinc.ge.itc.and.nsinc.le.itcf.and.
-     &   itrace(37).ne.0) then
-         write(itu,*) ' Component      ',ipcomp,':'
-         write(itu,*) ' 1 node (ISV=20) WCH automatic valve'
-         write(itu,*) ' Matrix node(s) ',inod1
-         write(itu,*) ' Connection(s)  ',icon1
-         if(istats.eq.1) then
-            write(itu,*) ' CM     = ',cm,' (J/K)'
-            write(itu,*) ' C1     = ',c1,' (W/K)'
-            write(itu,*) ' TC     = ',TC(IPCOMP),' (s)'
-            write(itu,*) ' ALPHA  = ',alpha,' (-)'
-            write(itu,*) ' UA     = ',ua,' (W/K)'
-            write(itu,*) ' PCNTMF = ',pcntmf(ipcomp),' (C)'
-            write(itu,*) ' CDATA  = ',cdata(ipcomp,1)
-         end if
-         write(itu,*) ' Matrix coefficients for ISTATS = ',istats
-         nitms=3
-         write(itu,*) (cout(i),i=1,nitms)
-         if(itu.eq.iuout) then
-            ix1=(ipcomp/4)*4
-            if(ix1.eq.ipcomp.or.ipcomp.eq.npcomp) call epagew
-         end if
-      end if
+      IF(ITC.GT.0.AND.NSINC.GE.ITC.AND.NSINC.LE.ITCF.AND.
+     &   ITRACE(37).NE.0) THEN
+         WRITE(ITU,*) ' Component      ',IPCOMP,':'
+         WRITE(ITU,*) ' 3 node (ISV>21) WCH 3-port valve w/ flow cnt'
+         WRITE(ITU,*) ' Matrix node(s) ',INOD1,INOD2,INOD3
+         WRITE(ITU,*) ' Connection(s)  ',ICON1
+         IF(ISTATS.EQ.1) THEN
+            WRITE(ITU,*) ' CM     = ',CM,' (J/K)'
+            WRITE(ITU,*) ' C1     = ',C1,' (W/K)'
+            WRITE(ITU,*) ' V_POS  = ',V_POS,' (0-1)'
+            WRITE(ITU,*) ' TC     = ',TC(IPCOMP),' (s)'
+            WRITE(ITU,*) ' ALPHA  = ',ALPHA,' (-)'
+            WRITE(ITU,*) ' UA     = ',UA,' (W/K)'
+            WRITE(ITU,*) ' PCNTMF = ',PCNTMF(IPCOMP),' (C)'
+         END IF
+         WRITE(ITU,*) ' Matrix coefficients for ISTATS = ',ISTATS
+         NITMS=9
+         WRITE(ITU,*) (COUT(I),I=1,NITMS)
+         IF(ITU.EQ.IUOUT) THEN
+            IX1=(IPCOMP/4)*4
+            IF(IX1.EQ.IPCOMP.OR.IPCOMP.EQ.NPCOMP) call epagew
+         END IF
+      END IF
 
-      if(itc.gt.0.and.nsinc.ge.itc.and.nsinc.le.itcf.and.
-     &   ITRACE(37).ne.0) write(itu,*) ' Leaving subroutine CMP74C'
+      IF(ITC.GT.0.AND.NSINC.GE.ITC.AND.NSINC.LE.ITCF.AND.
+     &   ITRACE(37).NE.0) then
+        WRITE(ITU,*) ' Leaving subroutine CMP74C trace'
+      ENDIF
 
-      return
-      end
+      RETURN
+      END
 
 C --------------------------------- CMP79C -----------------------------------
 C CMP79C (DHWdraw) calculates an instantaneous hot water draw based on a

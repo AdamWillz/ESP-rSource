@@ -2172,11 +2172,20 @@ C Common for relative humidity control (ideal)
       COMMON/MOIST17/RHmax
       COMMON/MOIST53/Ppair(MCOM),Fpair(MCOM),Spair(MCOM)
       COMMON/MOIST54/Pfair(MCOM),Ffair(MCOM),Sfair(MCOM)
-
+      
+      common/OUTWB/GlobalOutsTWB 
+      common/EXHNGHUMR/GlobalHumRatio !to convert TWB from outdoors to humidity ratio 
+      common/OTHERHUMR/GlobalOtherHR
+      COMMON/CLIMI/QFP,QFF,TP,TF,QDP,QDF,VP,VF,DP,DF,HP,HF
+      
+      common/EVCOOL/iflgevapC(mcom) !only modifies wet bulb temp (more precisely: the indoor air humidity ratio)
+      integer iflgevapC             ! when equals 1, it makes the indoor wet bulb temp = outdoor wet bulb temperature
+               
 c Common for time step computed parameters of HVAC system
 c in common/hvac_timestep_parameters is included via hvac_parameters.h.
       character outs*124
       real ADDMOIST
+      real EVC_ADDMOIST
 
 C Moisture modelling is invoked for the current zone.
       IF(MSTROK.AND.MSTRZN(ICOMP))THEN
@@ -2369,6 +2378,54 @@ C Difference between RHS and LHS.
           CALL EDISP(ITU,OUTS)
         ENDIF     
       ENDIF
+
+C*****START**moisture addition to make indoor TWB the same as the outdoor TWB
+C To emulate evaporative cooling by doing something similar
+C as what GCTU, GCTL and ADDMOIST are doing below (below the "END" note)
+C PURPOSE: to use it in a dummy zone for simulating a direct evaporative cooling system.
+C The expectation (for now) is that the user will precalculate the outlet suppy temperature from
+C the system (using the saturation efficiency concept, and the outlet db and wb Temperatures) 
+C and use a temporal definitions file to  
+C set the indoor air temperature in the dummy zone equal to the precalcuated 
+C values (SETPTT item in tdf). This could be replaced with a controller in bcfunc in the future.
+C The part of the code below adjusts the zone wet bulb temperature to be equal 
+C to the outdoor wet bulb temperature (adiabatic cooling - constant enthalpy -> assuming
+C constant wet bulb in a similar way as for the direct evaporative cooling in EnergyPlus). 
+      if(iflgevapC(icomp).EQ.1) THEN
+      
+C Bring and print TWB from outdoors   
+        call HUMR(TF,HF,PATMOS) !first get outdoor humidity ratio
+        call TWB(TF,GlobalHumRatio,PATMOS,IOPT) !then calculate outdoor wet bulb temperature
+        call HUMRAT(TFA(ICOMP),GlobalOutsTWB,PATMOS,IOPT)
+         
+C Assuming indoor moisture content is less than the outdoor
+        if(GFA(ICOMP).lt.GlobalOtherHR)then 
+          EVC_ADDMOIST=
+     &      GlobalOtherHR*
+     &     (ZMDAF(ICOMP)+VCLF(ICOMP)*3600./real(2*NTSTEP))-RHS
+          GFA(ICOMP)=GlobalOtherHR        
+            
+C Enthalpy for final moisture content (J/kg) 
+            ENTHCT=ENTHP2(TFA(ICOMP),GFA(ICOMP))*1000.
+            
+C Enthalpy if  humidification had not been applied
+            ENTHUC=ENTHP2(TFA(ICOMP),GFA(ICOMP)
+     &             -EVC_ADDMOIST/ZMDAF(ICOMP))*1000.
+     
+C Calculate the latent addition/extraction (W)
+            ZLLDF(ICOMP)=(ENTHCT-ENTHUC)*ZMDAF(ICOMP)
+     &                                  /(3600./real(NTSTEP))
+
+C What if indoor humidity ratio is greater than the outdoor? This should not happen
+        else
+         WRITE(OUTS,'(A,I5,A)')
+     &   ' Humidity ratio for zone ',ICOMP,
+     &   ' exceeded expected values: error'
+       
+        endif        
+      endif
+
+C***** END moisture addition to make indoor TWB the same as the outdoor TWB***
 
 C If the relative humidity control is active then apply control, the
 C above value of moisture content is essentially the free floating value

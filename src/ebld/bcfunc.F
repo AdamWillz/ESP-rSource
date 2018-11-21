@@ -167,8 +167,7 @@ C node and transferred to another.
       case(9) 
         CALL BCL09
 
-C CL10 allows separate flux ON and flux OFF set points to
-C be specified for both heating and cooling.
+C CL10 is a generic two position controller.
       case(10) 
         CALL BCL10
 
@@ -394,8 +393,12 @@ C Fix sensor type for now.
       IMRTT(IC)=2
       ITSC(IC)=1
 
-C Index of control function
-      IFUNC=ABS(IBCLAW(ICF,IDTYP,IPER))
+C Index of control function associated with control law ICF.
+      if(icf.gt.0.and.idtyp.gt.0.and.iper.gt.0)then
+        IFUNC=ABS(IBCLAW(ICF,IDTYP,IPER))
+      else
+        IFUNC=0
+      endif
 
 C Summate product of internal surface temperatures (opaque
 C and transparent), and corresponding areas.
@@ -965,8 +968,8 @@ C and we don't get the setpoint.
             else
               UNMETHRS(IICOMP)=UNMETHRS(IICOMP)+(1.0/real(NTSTEP))
 C Debug.
-              write(6,'(a,f8.2,a,i3)')' heating capacity insufficient ',
-     &          UNMETHRS(IICOMP),' hours in zone ',IICOMP
+C              write(6,'(a,f8.2,a,i3)')' heating capacity insufficient ',
+C     &          UNMETHRS(IICOMP),' hours in zone ',IICOMP
             endif
           elseif ( QFUT.le.QH.and.TFUT.ge.TL)then  ! if within capacity and setpoint
             continue
@@ -3626,9 +3629,9 @@ c Convergence device.
 
 C ******************** BCL10
 
-C BCL10 allows separate flux ON and flux OFF set points to
-C be specified for both heating and cooling.  During the
-C ON periods the maximum specified flux is injected.  After
+C BCL10 is a general two position controller with separate flux ON
+C and flux OFF set points to be specified for both heating and cooling.
+C During the ON periods the maximum specified flux is injected.  After
 C the OFF condition the flux input is not reactivated until
 C ON condition is reached.
 
@@ -4967,6 +4970,7 @@ C     ST???  = FUTURE/PRESENT/START TRIAL START TIMES,
       COMMON/BTIME/BTIMEP,BTIMEF
 
       LOGICAL tsclaw,rewnd,pasone,close
+      real ocdt
       
       CHARACTER OUTS*124
 

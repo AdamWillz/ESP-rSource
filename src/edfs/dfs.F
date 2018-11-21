@@ -917,4 +917,8 @@ C Dummy subroutine needed to compile (called from library code).
       ier=0
       return
       end
+      
+      SUBROUTINE GRAAPH(IDRW1,IDRW2)
+      return
+      end
 

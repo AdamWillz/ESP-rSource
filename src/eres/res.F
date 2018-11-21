@@ -142,14 +142,6 @@ C Name of current application
       logical headingcontext ! has set or period changed so heading needs reprint
       common/libhead/libheading,headingcontext
 
-C IEEE callback (Solaris)
-#ifdef SUN
-#ifdef F90
-      external SIGFPE_bps      
-      integer SIGFPE_bps      
-#endif
-#endif
-
 #ifdef OSI
       integer iigl,iigr,iigt,iigb,iigw,iigwh
       integer iiw1,iiw2,iiw3,iiw4,iimenu
@@ -283,33 +275,17 @@ C Needed for CFD 3-D views.
       VIEWM(3)=10.
       ANG=40.
 
-C If your compiler does not support floating-point arithmetic
-C according to ANSI/IEEE Std 754-1985 comment out the following code.
-
-C Initialize mode, status, and signal handling for IEEE arithmetic.
-C See also: f77_ieee_environment(3F) f77_floatingpoint(3F)
-C           Note that in case of Sun FORTRAN, IEEEE exceptions arise
-C           only if: Sun-3 f77 with -f68881 or -ffpa option
-C                or: Sun-4 f77.
-#ifdef SUN
-#ifdef F90
-      ieeer=ieee_handler('set','common',SIGFPE_ABORT)
-      ieeer=ieee_handler('set','common',SIGFPE_bps)
-      if(ieeer.ne.0) write(iuout,*) ' IEEE_handler not set !'
-#endif
-#endif
-
 C Initialise output device.
       MMOD=MODL
       if(iappw.eq.0.and.iappx.eq.0.and.iappy.eq.0)then
-        iappw=600
+        iappw=620
         iappx=60
         iappy=70
       else
         if(iappx.le.0)iappx=60
         if(iappy.le.0)iappy=70
         if(iappw.le.200)then
-          iappwi=int(600*iappw*0.01)
+          iappwi=int(620*iappw*0.01)
           iappw=iappwi
         elseif(iappw.gt.200)then
           continue
@@ -492,6 +468,7 @@ C Assume multilayer input from IFIL+9.
 
 C Assume CFClayers input from IFIL+10.
       icfcdb=ifil+10 
+      write(LCFCDB,'(a)') DCFCDB(1:lnblnk(DCFCDB))
 
 C Initialise results library.
       CALL MORFIL(iftype)
@@ -1071,22 +1048,4 @@ C Depending on computer type set integer size of passed parameters.
       subroutine NEW2OLD()
       return
       end
-
-
-C In support of floating point exceptions. Comment out for NON SOLAIRS.
-#ifdef SUN
-#ifdef F90
-      integer function SIGFPE_bps(sig,code,context)
-      integer sig,code,context(5)
-      character label*16
-      if(loc(code).eq.208) label = 'invalid'
-      if(loc(code).eq.200) label = 'division by zero'
-      if(loc(code).eq.212) label = 'overflow'
-      if(loc(code).eq.204) label = 'underflow'
-      if(loc(code).eq.196) label = 'inexact'
-      write(6,*) 'Exception code ',loc(code),label,'at ',context(4)
-      SIGFPE_bps = loc(code)
-      end
-#endif
-#endif
 

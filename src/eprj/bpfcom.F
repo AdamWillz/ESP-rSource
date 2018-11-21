@@ -746,7 +746,7 @@ C if that is selected decrement nCFCctlloops and return.
             endif
           endif
           NN=nCFCctldaytypes(nCFCctlloops)  ! assume zero means all calendar day types
-          IF(NN.EQ.0)NN=3
+          IF(NN.EQ.0)NN=nbdaytype
           do 6687 ik=1,NN
             IP=1
             write(outs,'(a,i2)') 'How many periods in day type ',ik

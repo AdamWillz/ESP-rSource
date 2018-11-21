@@ -341,6 +341,7 @@ C non-`FURNI` surfaces.
           continue
         else
           FOUND=.false.
+          if(lastlist.gt.MBL) lastlist=MBL
           DO J=1,lastlist
             if (I.eq.IBASES(ICOMP,J)) then              
               FOUND=.true.
@@ -942,26 +943,26 @@ C Select a MLC to apply to the list of surfaces.
               CALL EDMLDB2(modmlc,'-',ISEL,IER)
             endif
           elseif(IRT.eq.3)then
-            SALT(1)='exterior                   '
-            SALT(2)='similar to current         '
-            SALT(3)='prescribed static          '
-            SALT(4)='surface in other zone      '
-            SALT(5)='ground (monthly profile)   '
+            SALT(1)  ='exterior                   '
+            SALT(2)  ='similar to current         '
+            SALT(3)  ='prescribed static          '
+            SALT(4)  ='surface in other zone      '
+            SALT(5)  ='ground (monthly profile)   '
             if(NGRDP.gt.0)then
               SALT(6)='ground (user defined profile)   '
             else
               SALT(6)='Ground (no user defined profile)'
             endif
-            SALT(7)='adiabatic                   '
-            SALT(8)='BASESIMP foundation calculation'
-            SALT(9)='CEN 13791 partition         '
-            SALT(10)='unknown at this time       '
+            SALT(7)  ='adiabatic                   '
+            SALT(8)  ='BASESIMP foundation calculation'
+            SALT(9)  ='CEN 13791 partition         '
+            SALT(10) ='unknown at this time       '
 
             helptopic='geometry_boundary_menu'
             call gethelptext(helpinsub,helptopic,nbhelp)
             IX=1
             CALL EPICKS(IX,IVALSS,' ','Surface boundary condition:',
-     &           33,10,SALT,'surface boundary options',IER,nbhelp)
+     &           32,10,SALT,'surface boundary options',IER,nbhelp)
             IOS=IVALSS(1)
             if(IOS.EQ.2)then
               VALT=0.0; VALW=0.0
@@ -1032,6 +1033,7 @@ C Present list of surfaces and allow user to select up to all of them.
             ioc10=IZSTOCN(icomp,i)
             lnl=lnblnk(SSMLCN(ioc10))
             lnsn=lnblnk(SSNAME(ioc10))
+            if(lnsn.lt.10) lnsn=10
             if((lnl+lnsn+2).ge.32) lnl=32-(lnsn+2)  ! to prevent overflow
             ITEMSS(I)=' '
             if(IRT.eq.1)then
@@ -3582,7 +3584,7 @@ C << report inside and outside hc regime here >>
       ISD(14)        ='  ___ @ other face____________ '
       if(showother)then
         if(IC2(ioc).ne.0.and.IE2(ioc).ne.0)then
-C          icoth=IZSTOCN(IC2(ioc),IE2(ioc))
+          icoth=IZSTOCN(IC2(ioc),IE2(ioc))
           WRITE(ISD(15),'(2A)')'   surface name: ',SSNAME(icoth)
           write(ozn,'(a)') zname(IC2(ioc))
           WRITE(ISD(16),'(2A)') '   surface type: ',SSOTF(icoth)(1:12)
@@ -8956,11 +8958,11 @@ C current menu line index. Build up text strings for the menu.
           M=M+1
           CALL EMKEY(L,KEY,IER)
           item(m)=' '
-          WRITE(item(M),'(A1,I3,3F9.3)')KEY,L,X(L),Y(L),Z(L)
+          WRITE(item(M),'(A1,I4,3F9.3)')KEY,L,X(L),Y(L),Z(L)
           do 20 K=1,INPICK
             if(IVLST(K).eq.L) then
-              WRITE(item(M),'(A1,I3,3F9.3,A)')KEY,L,X(L),Y(L),
-     &          Z(L),' *'
+              WRITE(item(M),'(A1,I4,3F9.3,A)')KEY,L,X(L),Y(L),
+     &          Z(L),'*'
             endif
  20       continue
         ENDIF
@@ -9654,6 +9656,10 @@ C Estimate base area.
       lastlist=0
       IBASES(ICOMP,1)=0; IBASES(ICOMP,2)=0; IBASES(ICOMP,3)=0
       IBASES(ICOMP,4)=0; IBASES(ICOMP,5)=0; IBASES(ICOMP,6)=0
+      IBASES(ICOMP,7)=0; IBASES(ICOMP,8)=0; IBASES(ICOMP,9)=0
+      IBASES(ICOMP,10)=0; IBASES(ICOMP,11)=0; IBASES(ICOMP,12)=0
+      IBASES(ICOMP,13)=0; IBASES(ICOMP,14)=0; IBASES(ICOMP,15)=0
+      IBASES(ICOMP,16)=0; IBASES(ICOMP,17)=0; IBASES(ICOMP,18)=0
       ZBASEA(ICOMP)=0.00
       IER=0
 

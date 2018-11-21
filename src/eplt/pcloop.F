@@ -68,6 +68,9 @@ C
       COMMON/PCLSOL/ICFP,IDTYPP,IPERP
       common/pcfngr/clfgsd(MCF,6),pcfngn,IDAYPD
 
+      common/caleni/nbdaytype,nbcaldays(MDTY),icalender(365)
+      INTEGER NBDAYTYPE,NBCALDAYS,ICALENDER,NIN
+
 C Variables for weekdays, and weekends.
 C Assume: Mon=1, Tue=2, Wed=3, Thu=4, Fri=5, Sat=6, Sun=7
       common/wkdtyp/idwe1,idwe2,wkd1,wkd2
@@ -92,51 +95,54 @@ C Determine year day number of present day
 
 C Process each plant control loop to test if it is active
       DO 100 ICL=1,NCL
-      ICFP=ICL
+        ICFP=ICL
 
 C Set up day type and period pointers
-      NDAYT=NPCDT(ICL)
+        NDAYT=NPCDT(ICFP)
 
-C If NDAYT=0 set data to weekday, saturday and sunday format
-      IF(NDAYT.EQ.0) THEN
-         IDTYPP=1
-         IDW=IDWP
-         IF(IHRP.EQ.24) IDW=IDWF
-         IF(IDW.EQ.idwe1) IDTYPP=2
-         IF(IDW.EQ.idwe2) IDTYPP=3
-      ELSE
-         DO 10 IDTYPP=1,NDAYT
-         IDS=IPCDV(ICL,IDTYPP,1)
-         IDF=IPCDV(ICL,IDTYPP,2)
-         IF(IDAY.GE.IDS.AND.IDAY.LE.IDF) GOTO 20
-   10    CONTINUE
-         WRITE(outs,'(a,I3)') ' CONTRL: plant control loop ',ICL
-         call edisp(iuout,outs)
-         WRITE(outs,'(9x,a,I4)') 'no valid day type for year-day ',IDAY
-         call edisp(iuout,outs)
-         call edisp(iuout,' CONTRL: cannot locate appropriate day type')
-         call epwait
-         call epagend
-         STOP
-      END IF
-
-C Check number of periods in each day and the start and finish times
-   20 NDAYP=NPCDP(ICFP,IDTYPP)
-      IF(NDAYP.EQ.0)then
-        call edisp(iuout,' CONTRL: no day-periods defined')
+C If NDAYT=0 (i.e. use default weekday/Sat/Sun format or user-defined
+C calendar from main configuration file) set NDAYT to NBDAYTYPE and 
+C confirm valid period is consistent with IDAY (legacy) 
+        NIN=0
+        IF(NDAYT.EQ.0) THEN
+          NDAYT=NBDAYTYPE
+          NIN=-1*NBDAYTYPE
+        ENDIF
+        DO 10 IDTYPP=1,NDAYT
+          IDS=IPCDV(ICFP,IDTYPP,1)
+          IDF=IPCDV(ICFP,IDTYPP,2)
+          IF(IDAY.GE.IDS.AND.IDAY.LE.IDF) GOTO 20
+   10   CONTINUE
+        WRITE(outs,'(a,I3)') ' PLTCTRL: plant control loop ',ICFP
+        call edisp(iuout,outs)
+        WRITE(outs,'(9x,a,I4)') 'no valid day type for year-day ',IDAY
+        call edisp(iuout,outs)
+        call edisp(iuout,' PLTCTRL: cannot locate appropriate day type')
         call epwait
         call epagend
         STOP
-      endif
+
+C Check number of periods in each day and the start and finish times
+   20   if(nin.le.-1.or.ndayt.lt.1)idtypp=icalender(iday)
+        NDAYP=NPCDP(ICFP,IDTYPP)
+        IF(NDAYP.EQ.0)then
+          WRITE(outs,'(a,I3,a,I3)')
+     &     ' PLTCTRL: plant control loop ',ICFP,', day type ',IDTYPP
+          call edisp(iuout,outs)
+          call edisp(iuout,' PLTCTRL: no day-periods defined')
+          call epwait
+          call epagend
+          STOP
+        endif
       DO 22 IDAYP=1,NDAYP
-      IPERP=IDAYP
-      IDAYPD=IDAYP
-      TPS=TPCPS(ICFP,IDTYPP,IDAYP)
-      IF(IDAYP.LT.NDAYP) THEN
-         TPF=TPCPS(ICFP,IDTYPP,IDAYP+1)
-      ELSE
-         TPF=24.
-      END IF
+        IPERP=IDAYP
+        IDAYPD=IDAYP
+        TPS=TPCPS(ICFP,IDTYPP,IDAYP)
+        IF(IDAYP.LT.NDAYP) THEN
+          TPF=TPCPS(ICFP,IDTYPP,IDAYP+1)
+        ELSE
+          TPF=24.
+        END IF
 
 C If just starting control loop then initialise 
 C integral and derivative action variables to zero.
@@ -828,11 +834,7 @@ C Trace output.
          WRITE(ITU,*) ' ENTERING SUBROUTINE PCBDAT'
       ENDIF
 
-      if(INDCFG.eq.2)then
-         iunit=ifil+5
-      else
-         iunit=ifil+9
-      endif
+      iunit=ifil+9
 
       if(nsincp.eq.1.and.ips.eq.1)then
         CALL STRIPC(IUNIT,OUTSTR,99,ND,1,'bound file skip',IER)
@@ -3549,7 +3551,7 @@ C number based on logical (AND, OR) relationships of other control loops
 
 C Set MMLCL = Maximum number of loops to be sensed 
       INTEGER MMLCL
-      PARAMETER(MMLCL=4)
+      PARAMETER(MMLCL=20)
 
       COMMON/OUTIN/IUOUT,IUIN
       INTEGER IUOUT,IUIN

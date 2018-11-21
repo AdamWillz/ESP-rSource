@@ -175,12 +175,14 @@ C for B.S. engineers.
 C NB FS depends on atmospheric pressure - see W P Jones page 34,
 C table 2.1 and ASHRAE handbook of fundamentals 1981 page 5.4, table 2.
       FUNCTION HUMRAT(TD,TW,PATMOS,IOPT)
+      common/OTHERHUMR/GlobalOtherHR
       PS=VAPRS1(TD,TW,PATMOS,IOPT)
       FS=-7.3E-06*TD+1.00444
       IF(TD.GE.11.0.AND.TD.LT.26.0)FS=1.32E-05*TD+1.004205
       IF(TD.GE.26.0)FS=4.05E-05*TD+1.003497
 
       HUMRAT=0.62197*FS*PS/(PATMOS-FS*PS)
+      GlobalOtherHR=HUMRAT
       RETURN
       END
 
@@ -208,9 +210,11 @@ C Calculate humidity ratio from Eastop & McConkey Applied Thermodynamics
 C for Engineering Technologists. Equation 14.3 pp 492.
 
       FUNCTION HUMR(TD,RH,PATMOS)
+      common/EXHNGHUMR/GlobalHumRatio
       x1=(rh/100.)*satvp(td)
       x2=patmos-((rh/100.)*satvp(td))
       humr=0.62197*x1/x2
+      GlobalHumRatio=humr
       RETURN
       END
 
@@ -277,6 +281,9 @@ C ********************  TWB
 C TWB: Calculates the wet bulb temperature from
 C dry bulb temperature and moisture content.
       FUNCTION TWB(TD,GS,PATMOS,IOPT)
+      common/OUTWB/GlobalOutsTWB !To take the outdoor wet bulb and use it during simulation
+                                 !(for example, for direct evaporative cooling calculations)
+     
       H=ENTHP2(TD,GS)
 
 C First guess is adiabatic saturation temperature.
@@ -288,12 +295,13 @@ C First guess is adiabatic saturation temperature.
       IF(GS1.LE.GS.AND.TINC.LT.0.0)TINC=-0.5*TINC
       T1=T1+TINC
       GDIFF=GS1-GS
-      IF(ABS(GDIFF).LT.0.00001)goto 1
+      IF(ABS(GDIFF).LT.0.000005)goto 1
       IF(ABS(TINC).GT.0.005)goto 10
       TINC=0.25
       goto 10
 
     1 TWB=T1
+      GlobalOutsTWB=TWB
       RETURN
       END
 

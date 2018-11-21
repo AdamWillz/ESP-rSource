@@ -1532,7 +1532,7 @@ C starting up the menu based control period definition.
         SALT(7)= 'Multi-stage control with hysteresis    '
         SALT(8)= 'Variable supply temp. with constraints '
         SALT(9)= 'Heat pipe                              '
-        SALT(10)='Separate flux ON & OFF set points      '
+        SALT(10)='Two position controller for heat/cool  '
         SALT(11)='Match sensed & recorded values (ideal) '
         SALT(12)='Match sensed & recorded values (on/off)'
         SALT(13)='Time-proportioning (on/off)            '
@@ -1767,7 +1767,7 @@ C Heat pipe.
      &      IER,nbhelp)
         elseif(IBCLAW(II,JJ,KK).eq.10)then
 
-C Control with separate on/off setpoints for heating and cooling.
+C Control with two position controller setpoints for heating and cooling.
           nper=NBCDP(II,JJ)
           loopdaytype=nbcdt(II)
           if(KK.GT.1)then
@@ -6560,7 +6560,7 @@ C control law to trap changes.
           SALT(7)= 'Multi-stage control with hysteresis    '
           SALT(8)= 'CAV variable supply T with constraints '
           SALT(9)= ' Heat pipe from `outside` to inside    '
-          SALT(10)='Separate flux ON & OFF set points      '
+          SALT(10)='Two position controller for heat/cool  '
           SALT(11)=' Match sensed/recorded value (ideal)   '
           SALT(12)=' Match sensed/recorded value (on/off)  '
           SALT(13)='Time-proportioning separate (on/off)   '
@@ -7550,7 +7550,7 @@ C Variable supply temperature with limit constraints.
           continue
         elseif(iclaw.eq.10)then
           
-C Control with separate on/off setpoints for heating and cooling.
+C Two position control with separate setpoints for heating and cooling.
           helptopic='sys_bctl_10'
           call gethelptext(helpinsub,helptopic,nbhelp)
           nctlhelp=nbhelp

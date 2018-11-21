@@ -1430,7 +1430,7 @@ C    Thie first array index for a frame associated with a door or window:
 C    `FRAME` marks a frame associated with an inside door or glazing,
 C    'F-FRAME' marks a frame within the facade which might need to be
 C       of a paricular area or construction for code compliance.
-C    The 2nd array index for frames is CLOSED CRACK OPEN
+C    The 2nd array index for frames is CLOSED CRACK VENT
 
 C    The first array index for a glazing:
 C    'C-WINDOW' is a code complient window (e.g.construction or size)
@@ -1450,7 +1450,7 @@ C    that a wall which is not vertical may be converted to a roof
 C    construction type.
 
 C    Surfaces which `are-not-there` e.g. fictitious are marked 'FICT'
-C    and the 2nd array index can be: CLOSED CRACK OPEN BIDIREC
+C    and the 2nd array index can be: CLOSED CRACK OPEN BIDIR
 
 C    Surfaces which represent internal or ground-contact floors are
 C    marked with 'FLOOR' and the 2nd index is 'EXTGRND' or '- ' to
@@ -1465,6 +1465,16 @@ C    and the 2nd array index is un-used.
 
 C    Interior surfaces can be marked as 'STRUC' for structural elements
 C    such as beams and columns and the 2nd array index is un-used.
+
+C    IT equipment such as TVs, computers and monitors can be marked as
+C    'ITEQUIP'. The 2nd array index is un-used.
+
+C    Interior plants can be marked as 'PLANTS'. The 2nd array index is
+C    un-used.
+
+C    Light fittings can be marked as 'FIXTURE'. The 2nd array index can
+C    be 'IES', which directs radiance to use a specific set of IES data
+C    specified in an *ies entry in the model configuration file.
 
 C    otherwise  -,-  is the initial state for newly created surfaces
 C    and surfaces which the user has not yet expressed an opinion. This
@@ -4340,7 +4350,7 @@ C Write header based on current version number.
               WRITE(OUTSTR2,7951)I,SIGSTR(1:7),SSPAZI(ic),SSPELV(ic),
      &         SSNAME(ic),SSOTF(ic)(1:8),SSVFC(ic)(1:4),
      &         SSUSE(ic,1)(1:9),SSUSE(ic,2)(1:9),SSMLCN(ic)(1:lnsmlcn),
-     &         SSOTHER(ic,1)(1:15)
+     &         OTHSTR(4:lnblnk(OTHSTR))  ! skip the ||< characters
               call edisp(ITRU,OUTSTR2)
             else
               if(lnsmlcn.gt.18) lnsmlcn=18  ! no more than 18 char for MLC

@@ -27,6 +27,10 @@ C DISCOMF: Returns local dicomfort information (PPD).
 C DRAUGHT: PPD due to draughts (nothing calls this yet).
 C OFFSETTEMP: air velocity required to maintain comfort (nothing calls this yet).
 C ASHRAEZONE: inside/ outside ASHRAE comfort zone (nothing calls this yet).
+C RCFDVRTS: Reads domain origins from a CFD domain file (needed for 
+C           old CFD results libraries).
+C VERTdT: Calculate vertical temperature difference between top and
+C         bottom of an MRT sensor, using CFD results.
 
 C ******************** MOCMFT ********************
 C MOCMFT provides a zone comfort assessment for a
@@ -577,13 +581,14 @@ C Check if there are CFD results available for this time step.
             CALL GETIFRM(IDAY,JTS,IFRAME,IER)
 
 C Set up directives for GOCFDGET - retrieve velocity and temperature.
-            CALL MOFLOWSU ! clear commons
+            CALL MOFLOWSU() ! clear commons
+            NMFGET=2
             IMFGETNO(1,1)=18
             IMFGETNO(1,3)=ICFD
             IMFGETNO(1,4)=1
-            IMFGETNO(1,1)=19
-            IMFGETNO(1,3)=ICFD
-            IMFGETNO(1,4)=1
+            IMFGETNO(2,1)=19
+            IMFGETNO(2,3)=ICFD
+            IMFGETNO(2,4)=1
             IMFLIST(1,1)=IXCEL(IZONE)
             IMFLIST(1,2)=IYCEL(IZONE)
             IMFLIST(1,3)=IZCEL(IZONE)
@@ -593,15 +598,6 @@ C Set up directives for GOCFDGET - retrieve velocity and temperature.
 C Get CFD air temperature at point closest to MRT sensor.
             WWVEL=FLOWVALS(1)
             TAIR=FLOWVALS(2)
-C Get CFD air velocity at point closest to MRT sensor.
-c            Uftmp=0.5*(Uf(IXCEL(IZONE),IYCEL(IZONE),IZCEL(IZONE))+
-c     &                 Uf(IXCEL(IZONE)+1,IYCEL(IZONE),IZCEL(IZONE)))
-c            Vftmp=0.5*(Vf(IXCEL(IZONE),IYCEL(IZONE),IZCEL(IZONE))+
-c     &                 Vf(IXCEL(IZONE),IYCEL(IZONE)+1,IZCEL(IZONE)))
-c            Wftmp=0.5*(Wf(IXCEL(IZONE),IYCEL(IZONE),IZCEL(IZONE))+
-c     &                 Wf(IXCEL(IZONE),IYCEL(IZONE),IZCEL(IZONE)+1))
-c            WWVEL=SQRT(Uftmp*Uftmp+Vftmp*Vftmp+Wftmp*Wftmp)
-c            write(6,*)'using CFD temp. and air vel.'
           endif
         endif
 

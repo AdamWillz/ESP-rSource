@@ -706,6 +706,11 @@ C Note that PCONDR is set to 1 in case fluid mass flow solver active
            IPCMP=IDENC(IPNOD)
            ICNOD=IDENN(IPNOD)
            IF(NDCON(IPCMP,ICNOD).EQ.0) GOTO 94
+
+C Suppress exit connection warning for components with inlet connection
+C with node number greater than 1 but less than the total node number.
+           IF(NDCON(IPCMP,ICNOD).EQ.1.AND.ICNOD.GT.1.AND
+     &       .ICNOD.LT.NPCDAT(IPCMP,8)) GOTO 94 
            IF(ZDR(IPNOD).LT.0.OR.ZDR(IPNOD).GT.1.) THEN
              write(outs,904) ipcmp,icnod
              call edisp(iuout,outs)
@@ -1148,6 +1153,7 @@ C
       COMMON/C16PS/IDENC(MPNODE),IDENN(MPNODE)
       COMMON/PCOND/CONVAR(MPCON,MCONVR),ICONTP(MPCON),
      &             ICONDX(MPCOM,MNODEC,MPCONC)
+      COMMON/RFN/RFCSEQ(MPCOM)
 c Logical variable that checks to see if the plt has converged.
       common/pltcon/bPltCon,LastTSTP
       LOGICAL bPltCon
@@ -1186,9 +1192,11 @@ C matrix) and ZMAT (present time-row coefficients)
 C NB NCOE: total number of component equation coefficients
 C    NXTC: PC index for component IPCOMP
 C    NXTZ: ZMAT index for component IPCOMP
+
+      DO 19 IPCOMP1=1,NPCOMP
 C
-      DO 19 IPCOMP=1,NPCOMP
-C
+      IPCOMP=RFCSEQ(IPCOMP1)
+
       NCOE=NPCDAT(IPCOMP,6)+NPCDAT(IPCOMP,7)
       NXTC=NPCDAT(IPCOMP,5)
       NXTZ=NPCDAT(IPCOMP,9)
@@ -1566,6 +1574,38 @@ C SENDING air-based coupling component (ACC) for co-simulation with TRNSYS.
 C RECEIVING air-based coupling component (ACC) for co-simulation with TRNSYS.
            nACC_R = nACC_R+1
            CALL TCC_coeff_gen(IPCOMP,OUT,ISTATS,nACC_R,ACC,.false.)
+
+C 1 node (ISV=20) Heating or Cooling Load
+        ELSE IF(ITYPE.EQ.134) THEN
+            CALL CMP134C(IPCOMP,OUT,ISTATS)
+C 3 node (ISV=20) Shell Boiler / Water Heater
+        ELSE IF(ITYPE.EQ.135) THEN
+            CALL CMP135C(IPCOMP,OUT,ISTATS)
+C 4 node (ISV=20) Buried DH Water Pipe w/ adjacent pipe
+        ELSE IF(ITYPE.EQ.136) THEN
+            CALL CMP136C(IPCOMP,OUT,ISTATS)
+C 1 node (ISV=20) Massless Converging Junction
+        ELSE IF(ITYPE.EQ.137) THEN
+            CALL CMP137C(IPCOMP,OUT,ISTATS)
+C 3-node two-way junction for bypass connection between two circuits
+        ELSE IF(ITYPE.EQ.138) THEN
+            CALL CMP138C(IPCOMP,OUT,ISTATS)
+C 3 node (ISV=20) Flow Branch Water Diverter Junction - Relative Flow 
+        ELSE IF(ITYPE.EQ.139) THEN
+            CALL CMP139C(IPCOMP,OUT,ISTATS)
+C 3 node (ISV=20) Water 3-port Diverter Valve - Relative Flow
+        ELSE IF(ITYPE.EQ.140) THEN
+            CALL CMP140C(IPCOMP,OUT,ISTATS)
+C 2 node (ISV=20) Massless Diverter Valve
+        ELSE IF(ITYPE.EQ.141) THEN
+            CALL CMP141C(IPCOMP,OUT,ISTATS)
+C 2-node bypass stratified storage tank model
+        ELSE IF(ITYPE.EQ.142) THEN
+            CALL stratified_tank_byp_coeff_gen(IPCOMP,OUT,ISTATS)
+C 3 node (ISV=20) Flow Balancing Junction
+        ELSE IF(ITYPE.EQ.143) THEN
+            CALL CMP143C(IPCOMP,OUT,ISTATS)
+
 C New component equation generators inserted here
 
          ELSE

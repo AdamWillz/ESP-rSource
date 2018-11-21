@@ -96,7 +96,7 @@ C     CDATA: none
       COMMON/PCDAT/PCDATF(MPCOM,MPCDAT),PCDATP(MPCOM,MPCDAT)
       COMMON/PP0C/A(MPP,MPPC),B(MPP,MPPC),Alpha
 
-C.....Additional component data output
+C Additional component output data.
       COMMON/PCRES/QDATA(MPCOM),PCAOUT(MPCOM,MPCRES),NAPDAT(MPCOM)
       REAL QDATA,PCAOUT
       INTEGER napdat
@@ -239,7 +239,7 @@ C External surface with fins ... <<use more elaborate calculation, here?>>
 C Modify ho for wetted surface
         IF (CdP.GT.0.) ho=ho*0.626*(Ua**0.101)
 
-C Modify external heat transfer coefficient by adding tube thermal resistance
+C Modify external heat transfer coefficient by adding tube thermal resistances
         ho=1./(1./ho+RTs/2.)
 
         Ca0=Rma0*Cpa0+Rmv0*Cpv0
@@ -321,7 +321,7 @@ C Determine maximum moisture holding capacity (kg) of tube exterior surface
 C with an assumed condensate film thickness (0.05 mm)
         film = 0.00005
         Cdmax=1000.*film*Ao
-        IF(CdP.GT.Cdmax) CdP=Cdmax
+        IF(Cd.GT.Cdmax) Cd=Cdmax
 
       END IF
 
@@ -1168,14 +1168,14 @@ C node 4 represents leaving water
 C matrix equation coefficients COUT (in order: self-coupling, cross-
 C coupling, and present-time coefficients) for energy balance(ISTATS=1),
 C 1st phase mass balance (ISTATS=2), or 2nd phase mass (ISTATS=3)
-C     ADATA: 1 pipe outer layer total mass (kg)
-C            2 pipe inner layer total mass (kg)
+C     ADATA: 1 pipe outer layer total mass per unit length (kg/m)
+C            2 pipe inner layer total mass per unit length (kg/m)
 C            3 Specific heat of outer layer (weighed average) (J/kgK)
 C            4 Specific heat of inner layer (weighed average) (J/kgK)
-C            5 Thermal resistance of outer layer (m^2.C/W)
-C            6 Thermal resistance of inner layer (m^2.C/W)
-C            7 Outside heat transfer area (m^2)
-C            8 Inside heat transfer area (m^2)
+C            5 Thermal resistance of outer layer per unit length (C/W.m)
+C            6 Thermal resistance of inner layer per unit length (C/W.m)
+C            7 Outside heat transfer area per unit length (m^2/m)
+C            8 Inside heat transfer area per unit length (m^2/m)
 C            9 Inside effective pipe diameter (m)
 C           10 Pipe length (m)
 C           11 Ambient air velocity (m/s)
@@ -1290,16 +1290,16 @@ C Restore PCDATP values
         TeP=PCNTMP(IPCOMP)
 
 C Identify the specified ADATA and CDATA
-        RMs4=ADATA(IPCOMP,1)
-        RMs3=ADATA(IPCOMP,2)
+        RL=ADATA(IPCOMP,10)
+        RMs4=ADATA(IPCOMP,1)*RL
+        RMs3=ADATA(IPCOMP,2)*RL
         Cs4=ADATA(IPCOMP,3)
         Cs3=ADATA(IPCOMP,4)
-        RTs4=ADATA(IPCOMP,5)
-        RTs3=ADATA(IPCOMP,6)
-        Ao=ADATA(IPCOMP,7)
-        Ai=ADATA(IPCOMP,8)
+        RTs4=ADATA(IPCOMP,5)/RL
+        RTs3=ADATA(IPCOMP,6)/RL
+        Ao=ADATA(IPCOMP,7)*RL
+        Ai=ADATA(IPCOMP,8)*RL
         Di=ADATA(IPCOMP,9)
-        RL=ADATA(IPCOMP,10)
         Ue=ADATA(IPCOMP,11)
 
         Te=PCNTMF(IPCOMP)
@@ -1327,24 +1327,34 @@ C Do is 5% greater than Di
         Call CVCOEFF2(Na,Ts4,Te,Ue,Do,ho)
 
 C then modify heat transfer coefficients by re-arranging input data
-        C34=(Ao+Ai)/(RTs3+RTs4)
-        ho=1./(1./ho+RTs4/2.)
-        hi=1./(1./hi+RTs3/2.)
+C        C34=(Ao+Ai)/(RTs3+RTs4)
+C        ho=1./(1./ho+RTs4/2.)
+C        hi=1./(1./hi+RTs3/2.)
+        C34=1./(RTs3+RTs4)
 
         Cw0=Rmw0*Cpw0
         Cw1=Rmw1*Cpw1
         Cw2=Rmw2*Cpw2
-        Ces=ho*Ao
-        Csw=hi*Ai
+C        Ces=ho*Ao
+C        Csw=hi*Ai
+        Csw=1./((1./(hi*Ai))+(RTs3/2))
+        Ces=1./((1./(ho*Ao))+(RTs4/2))
 
 C Check if inside waterr transport delay is required for future time step
-        DY=(Uw*TIMSEC)/RL
-        IF (DY.lt.1.0.and.abs(tw0P).lt.small) THEN
-          DELAY=1.
-          N=int(1./DY)
-        ELSE
-          DELAY=0.
-        ENDIF
+C        DY=(Uw*TIMSEC)/RL
+C        IF (DY.lt.1.0) THEN
+C          IF(DY.LT.0.0001) then
+C            DELAY=1.
+C            DY=0.0001
+C            N=int(1./DY)
+C          ELSE
+C            DELAY=1.
+C            N=int(1./DY)
+C          ENDIF
+C        ELSE
+C          DELAY=0.
+C        ENDIF
+        DELAY=0.
         Call TRNSDLAY(IPCOMP,DELAY,Tw0P,Tw1P,Ts3P,N,DY,Cw1,Csw,
      &                Tw0,Tw1,Tw2)
 

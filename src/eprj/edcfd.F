@@ -812,7 +812,7 @@ C duplicates removed).
 C Take into account if the zone is offset from the site origin.
 C Use the zone bounds (ZXMN ZYMN ZZMN). Double check the max on each
 C of the axis.
-C Rescan G1 common blocks are correctly assigned.
+C Rescan to ensure G1 common blocks are correctly assigned.
         call georead(IFIL+1,LGEOM(izone),izone,1,IUOUT,IER)
         xxmax=ZXMN(izone); yymax=ZYMN(izone); zzmax=ZZMN(izone)
         do 42 il=1,NZTV(izone)
@@ -1912,19 +1912,14 @@ C IER=0 indicates no error.
 
       SUBROUTINE CFDBVAR(IZONE,IER)
 #include "building.h"
-C #include "model.h"
-C #include "geometry.h"
 #include "cfd.h"
 #include "epara.h"
 #include "prj3dv.h"
 
       COMMON/SPAD/MMOD,LIMIT,LIMTTY
-C      COMMON/FILEP/IFIL
-C      integer menuchw,igl,igr,igt,igb,igw,igwh
-C      common/VIEWPX/menuchw,igl,igr,igt,igb,igw,igwh
-C      common/gzonpik/izgfoc,nzg,nznog(mcom)
 
       COMMON/ICFNOD/ICFD,ICP
+      COMMON/OUTIN/IUOUT,IUIN   
       common/cfdconf/ICFBLD(MNZ),ICFMFS(MNZ)
       common/KEYVOLS/NVOL(MNZ),IVOLF(MNVLS,MNZ),IVCELLS(MNVLS,MNZ,2),
      &               JVCELLS(MNVLS,MNZ,2),KVCELLS(MNVLS,MNZ,2)
@@ -1964,11 +1959,13 @@ C      common/gzonpik/izgfoc,nzg,nznog(mcom)
       character NAMES(MNVLS)*12
       character zngeo*3,etext*82
       CHARACTER*72 TITLE,CFTRFL,LPHI
-      logical origin,xgrid,ygrid,zgrid,zegrid,ortho
+      character outs*124
+      logical origin,xgrid,ygrid,zgrid,zegrid,ortho,ok,dok,show
 
 C      integer iglib   ! if 1 then X11, if 2 then GTK, if 3 then text only.
       integer INB     ! for radio button
       integer NITMS,INO,IAIN,IIND ! max items and current menu item
+      real dum(1)
 
 #ifdef OSI
       integer iside,isize,ifont
@@ -2108,102 +2105,66 @@ C Add a new/ delete a boundary definition.
      &       'Air flow opening','Solid surface','Source',
      &       'Blockage','Cancel',' ',' ',INB,nbhelp)
 
-C Set up some defaults and call relavent editing routine.
+C Create boundary condition and call relevant editing routine.
+          dum=(/0/)
+          show=.false.
+          t12='            '
           if (INB.eq.1) then
-            NVOL(ICFD)=NVOL(ICFD)+1
-            NOPEN(ICFD)=NOPEN(ICFD)+1 ! increment nb of openings
-            IVTYPE(NVOL(ICFD),ICFD)=11
-            IVOLF(NVOL(ICFD),ICFD)=0
-            do 20 I=1,2
-              IVCELLS(NVOL(ICFD),ICFD,I)=0
-              JVCELLS(NVOL(ICFD),ICFD,I)=0
-              KVCELLS(NVOL(ICFD),ICFD,I)=0
- 20         continue
-            write (t12,'(a,i3.3)') 'Open',NVOL(ICFD)
+
+C Air flow opening.
+            write (t12,'(a,i3.3)') 'Open',NVOL(ICFD)+1
             d12='  '
-            call EASKS(t12,'Opening name?','  ',12,d12,'open name',
-     &        IER,nbhelp)
+            call EASKS(t12,'Boundary condition name?',' ',12,d12,
+     &        'BC name',IER,nbhelp)
             if (IER.eq.0) then
               call st2name(t12,d12)
-              VOLNAME(NVOL(ICFD),ICFD)=d12
             endif
-C            call st2file(t12,VOLNAME(NVOL(ICFD),ICFD))
-            VCsurf(NVOL(ICFD),ICFD)='  '
-            VOLTemp(NVOL(ICFD),ICFD)=20.
+            call MKCFDBC(show,11,0,0,0,0,0,0,0,d12,t12,dum,1,
+     &        20.0,0.0,0.0,0.0,0.0,IER)
             call EDAIRO(NVOL(ICFD),IER)
-            call NEW2OLD
-            
+            call NEW2OLD            
           elseif (INB.eq.2) then
 
 C A solid boundary has been added.
-            NVOL(ICFD)=NVOL(ICFD)+1
-            NSB(ICFD)=NSB(ICFD)+1  ! increment number of solids
-            IVTYPE(NVOL(ICFD),ICFD)=1
-            IVOLF(NVOL(ICFD),ICFD)=0
-            do 21 I=1,2
-              IVCELLS(NVOL(ICFD),ICFD,I)=0
-              JVCELLS(NVOL(ICFD),ICFD,I)=0
-              KVCELLS(NVOL(ICFD),ICFD,I)=0
- 21         continue
-            write (t12,'(a,i3.3)') 'Wall',NVOL(ICFD)
+            write (t12,'(a,i3.3)') 'Wall',NVOL(ICFD)+1
             d12='  '
-            call EASKS(t12,'Solid surface name?','  ',12,d12,
-     &        'solid name',IER,nbhelp)
+            call EASKS(t12,'Boundary condition name?',' ',12,d12,
+     &        'BC name',IER,nbhelp)
             if (IER.eq.0) then
               call st2name(t12,d12)
-              VOLNAME(NVOL(ICFD),ICFD)=d12
             endif
-C            call st2file(t12,VOLNAME(NVOL(ICFD),ICFD))
-            VCsurf(NVOL(ICFD),ICFD)='  '
+            call MKCFDBC(show,1,0,0,0,0,0,0,0,d12,t12,dum,1,
+     &        20.0,0.0,0.0,0.0,0.0,IER)
             call EDSLDB(IZONE,NVOL(ICFD),IER)
             call NEW2OLD
             
           elseif (INB.eq.3) then
 
-C A contaminate source has been added. << what variable to update? >>
-            NVOL(ICFD)=NVOL(ICFD)+1
-            IVTYPE(NVOL(ICFD),ICFD)=20
-            IVOLF(NVOL(ICFD),ICFD)=9
-            do 22 I=1,2
-              IVCELLS(NVOL(ICFD),ICFD,I)=0
-              JVCELLS(NVOL(ICFD),ICFD,I)=0
-              KVCELLS(NVOL(ICFD),ICFD,I)=0
- 22         continue
-            write (t12,'(a,i3.3)') 'Source',NVOL(ICFD)
+C A contaminate source has been added.
+            write (t12,'(a,i3.3)') 'Source',NVOL(ICFD)+1
             d12='  '
-            call EASKS(t12,'Source name?','  ',12,d12,'source name',
-     &        IER,nbhelp)
+            call EASKS(t12,'Boundary condition name?',' ',12,d12,
+     &        'BC name',IER,nbhelp)
             if (IER.eq.0) then
               call st2name(t12,d12)
-              VOLNAME(NVOL(ICFD),ICFD)=d12
             endif
-C            call st2file(t12,VOLNAME(NVOL(ICFD),ICFD))
-            VCsurf(NVOL(ICFD),ICFD)='  '
+            call MKCFDBC(show,20,9,0,0,0,0,0,0,d12,t12,dum,1,
+     &        0.0,0.0,0.0,0.0,0.0,IER)
             call EDSRC(NVOL(ICFD),IER)
             call NEW2OLD
             
           elseif (INB.eq.4) then
 
 C A blockage has been added.
-            NVOL(ICFD)=NVOL(ICFD)+1
-            NBLK(ICFD)=NBLK(ICFD)+1  ! increment nb of blockages
-            IVTYPE(NVOL(ICFD),ICFD)=30
-            IVOLF(NVOL(ICFD),ICFD)=8
-            do 23 I=1,2
-              IVCELLS(NVOL(ICFD),ICFD,I)=0
-              JVCELLS(NVOL(ICFD),ICFD,I)=0
-              KVCELLS(NVOL(ICFD),ICFD,I)=0
- 23         continue
-            write (t12,'(a,i3.3)') 'Block',NVOL(ICFD)
+            write (t12,'(a,i3.3)') 'Block',NVOL(ICFD)+1
             d12='  '
-            call EASKS(t12,'Blockage name?','  ',12,d12,'block name',
-     &        IER,nbhelp)
+            call EASKS(t12,'Boundary condition name?',' ',12,d12,
+     &        'BC name',IER,nbhelp)
             if (IER.eq.0) then
               call st2name(t12,d12)
-              VOLNAME(NVOL(ICFD),ICFD)=d12
             endif
-C            call st2file(t12,VOLNAME(NVOL(ICFD),ICFD))
-            VCsurf(NVOL(ICFD),ICFD)='  '
+            call MKCFDBC(show,30,9,0,0,0,0,0,0,d12,t12,dum,1,
+     &        0.0,0.0,0.0,0.0,0.0,IER)
             call EDBLK(NVOL(ICFD),IER)
             call NEW2OLD
           endif
@@ -2218,51 +2179,8 @@ C Delete a boundary condition. First, ask which one.
             INVOL=NVOL(ICFD)
             call EPICKS(INDEL,IDEL,' ',' ',12,INVOL,NAMES,
      &        'Key volume name',IER,nbhelp)
-
-C Depending on type, decrement counters.
-            if (IVTYPE(IAIN,ICFD).eq.30) NBLK(ICFD)=NBLK(ICFD)-1
-     
-C Move all definitions greater than selected volume up one slot.
-            do 333 I=IDEL(1),NVOL(ICFD)
-              if (I.lt.NVOL(ICFD)) then
-                IVOLF(I,ICFD)=IVOLF(I+1,ICFD)
-                IVCELLS(I,ICFD,1)=IVCELLS(I+1,ICFD,1)
-                IVCELLS(I,ICFD,2)=IVCELLS(I+1,ICFD,2)
-                JVCELLS(I,ICFD,1)=JVCELLS(I+1,ICFD,1)
-                JVCELLS(I,ICFD,2)=JVCELLS(I+1,ICFD,2)
-                KVCELLS(I,ICFD,1)=KVCELLS(I+1,ICFD,1)
-                KVCELLS(I,ICFD,2)=KVCELLS(I+1,ICFD,2)
-                VOLNAME(I,ICFD)=VOLNAME(I+1,ICFD)
-                VCsurf(I,ICFD)=VCsurf(I+1,ICFD)
-                IVTYPE(I,ICFD)=IVTYPE(I+1,ICFD)
-                VOLTemp(I,ICFD)=VOLTemp(I+1,ICFD)
-                VOLHeat(I,ICFD)=VOLHeat(I+1,ICFD)
-                IVConfl(I,ICFD)=IVConfl(I+1,ICFD)
-                VOLHum(I,ICFD)=VOLHum(I+1,ICFD)
-                VOLCO2(I,ICFD)=VOLCO2(I+1,ICFD)
-                VOLVel(I,ICFD)=VOLVel(I+1,ICFD)
-                VOLDir(I,ICFD,1)=VOLDir(I+1,ICFD,1)
-                VOLDir(I,ICFD,2)=VOLDir(I+1,ICFD,2)
-                VOLArea(I,ICFD)=VOLArea(I+1,ICFD)
-                VOLPres(I,ICFD)=VOLPres(I+1,ICFD)
-              else
-                IVOLF(I,ICFD)=0
-                IVCELLS(I,ICFD,1)=0; IVCELLS(I,ICFD,2)=0
-                JVCELLS(I,ICFD,1)=0; JVCELLS(I,ICFD,2)=0
-                KVCELLS(I,ICFD,1)=0; KVCELLS(I,ICFD,2)=0
-                VOLNAME(I,ICFD)=' '; VCsurf(I,ICFD)=' '
-                IVTYPE(I,ICFD)=0
-                VOLTemp(I,ICFD)=0.; VOLHeat(I,ICFD)=0.
-                IVConfl(I,ICFD)=0
-                VOLHum(I,ICFD)=0.; VOLCO2(I,ICFD)=0.
-                VOLVel(I,ICFD)=0.
-                VOLDir(I,ICFD,1)=0.; VOLDir(I,ICFD,2)=0.
-                VOLArea(I,ICFD)=0.; VOLPres(I,ICFD)=0.
-              endif
- 333        continue
-          NVOL(ICFD)=NVOL(ICFD)-1
+            CALL DELCFDBC(IDEL(1))
           endif
-          CALL NEW2OLD
         endif
 
       elseif (INO.eq.(NITMS-4)) then
@@ -2294,6 +2212,374 @@ C Existing volume, edit according to type.
 
       end
 
+C ************************** DELCFDBC **************************
+C DELCFDBC deletes a CFD boundary condition, index ibc, from data
+C structures.
+
+      SUBROUTINE DELCFDBC(ibc)
+
+#include "building.h"
+#include "cfd.h"
+
+      COMMON/ICFNOD/ICFD,ICP
+      common/KEYVOLS/NVOL(MNZ),IVOLF(MNVLS,MNZ),IVCELLS(MNVLS,MNZ,2),
+     &               JVCELLS(MNVLS,MNZ,2),KVCELLS(MNVLS,MNZ,2)
+      common/KEYVOLN/VOLNAME(MNVLS,MNZ),VCsurf(MNVLS,MNZ)
+      character VOLNAME*12,VCsurf*12
+      common/KEYVDAT/IVTYPE(MNVLS,MNZ),VOLTemp(MNVLS,MNZ),
+     &          VOLHeat(MNVLS,MNZ),IVConfl(MNVLS,MNZ),VOLHum(MNVLS,MNZ),
+     &          VOLCO2(MNVLS,MNZ),VOLVel(MNVLS,MNZ),VOLDir(MNVLS,MNZ,2),
+     &          VOLArea(MNVLS,MNZ),VOLPres(MNVLS,MNZ),
+     &          VOLPol(MCTM,MNVLS,MNZ)
+
+C Move all definitions greater than selected volume up one slot.
+      do I=ibc,NVOL(ICFD)
+        if (I.lt.NVOL(ICFD)) then
+          IVOLF(I,ICFD)=IVOLF(I+1,ICFD)
+          IVCELLS(I,ICFD,1)=IVCELLS(I+1,ICFD,1)
+          IVCELLS(I,ICFD,2)=IVCELLS(I+1,ICFD,2)
+          JVCELLS(I,ICFD,1)=JVCELLS(I+1,ICFD,1)
+          JVCELLS(I,ICFD,2)=JVCELLS(I+1,ICFD,2)
+          KVCELLS(I,ICFD,1)=KVCELLS(I+1,ICFD,1)
+          KVCELLS(I,ICFD,2)=KVCELLS(I+1,ICFD,2)
+          VOLNAME(I,ICFD)=VOLNAME(I+1,ICFD)
+          VCsurf(I,ICFD)=VCsurf(I+1,ICFD)
+          IVTYPE(I,ICFD)=IVTYPE(I+1,ICFD)
+          VOLTemp(I,ICFD)=VOLTemp(I+1,ICFD)
+          VOLHeat(I,ICFD)=VOLHeat(I+1,ICFD)
+          IVConfl(I,ICFD)=IVConfl(I+1,ICFD)
+          VOLHum(I,ICFD)=VOLHum(I+1,ICFD)
+          VOLCO2(I,ICFD)=VOLCO2(I+1,ICFD)
+          VOLVel(I,ICFD)=VOLVel(I+1,ICFD)
+          VOLDir(I,ICFD,1)=VOLDir(I+1,ICFD,1)
+          VOLDir(I,ICFD,2)=VOLDir(I+1,ICFD,2)
+          VOLArea(I,ICFD)=VOLArea(I+1,ICFD)
+          VOLPres(I,ICFD)=VOLPres(I+1,ICFD)
+          do J=1,MCTM
+            VOLPol(J,I,ICFD)=VOLPol(J,I,ICFD)
+          enddo
+        else
+          IVOLF(I,ICFD)=0
+          IVCELLS(I,ICFD,1)=0; IVCELLS(I,ICFD,2)=0
+          JVCELLS(I,ICFD,1)=0; JVCELLS(I,ICFD,2)=0
+          KVCELLS(I,ICFD,1)=0; KVCELLS(I,ICFD,2)=0
+          VOLNAME(I,ICFD)=' '; VCsurf(I,ICFD)=' '
+          IVTYPE(I,ICFD)=0
+          VOLTemp(I,ICFD)=0.; VOLHeat(I,ICFD)=0.
+          IVConfl(I,ICFD)=0
+          VOLHum(I,ICFD)=0.; VOLCO2(I,ICFD)=0.
+          VOLVel(I,ICFD)=0.
+          VOLDir(I,ICFD,1)=0.; VOLDir(I,ICFD,2)=0.
+          VOLArea(I,ICFD)=0.; VOLPres(I,ICFD)=0.
+          do J=1,MCTM
+            VOLPol(J,I,ICFD)=0.
+          enddo
+        endif
+      enddo
+      NVOL(ICFD)=NVOL(ICFD)-1
+      CALL NEW2OLD
+
+      RETURN
+      END
+
+C ************************** MKCFDBC **************************
+C GENSGLBC creates a single CFD boundary condition. Input arguments are:
+
+C itype (IVTYPE): BC type
+C solid 
+C 1 = temperature
+C 2 = heat flux
+C 3 = symmetrical
+C 4 = temperature, conflated
+C 5 = heat flux, conflated
+C 6 = symmetrical, conflated
+C air flow opening
+C 10 = pressure
+C 11 = velocity
+C 12 = zero gradient
+C 13 = mass
+C source
+C 20 = source
+C blockage
+C 30 = blockage
+
+C ifac (IVOLF): face
+C 1 = west
+C 2 = east
+C 3 = south
+C 4 = north
+C 5 = low
+C 6 = high
+C 7 = whole
+C 8 = block
+C 9 = source
+
+C i1,i2,j1,j2,k1,k2 (IVCELLS,JVCELLS,KVCELLS):
+C start and end cell indices for i,j, and k directions
+
+C nam (VOLNAME): volume name
+C confsurf (VCsurf): conflated surface name (solid only)
+C pol(npol) (VOLPol): contaminant concentrations (source only)
+
+C dat1,dat2,dat3,dat4,dat5: depending on itype, data for the BC
+C itype=1:  VOLTemp,-      ,-      ,-      ,-
+C itype=2:  VOLHeat,-      ,-      ,-      ,-
+C itype=3:  -      ,-      ,-      ,-      ,-
+C itype=4:  VOLTemp,IVConfl,-      ,-      ,-
+C itype=5:  VOLHeat,IVConfl,-      ,-      ,-
+C itype=6:  -      ,IVConfl,-      ,-      ,-
+C itype=10: VOLTemp,VOLArea,VOLPres,-      ,-
+C itype=11: VOLTemp,VOLArea,VOLVel ,VOLDir1,VOLDir2
+C itype=12: VOLTemp,VOLArea,-      ,-      ,-
+C itype=13: VOLTemp,VOLArea,VOLVel ,-      ,-
+C itype=20: VOLHeat,VOLHum ,VOLCO2 ,-      ,-
+C itype=30: VOLHeat,-      ,-      ,-      ,-
+
+C If show is true, will highlight the boundary condition in the 3D model
+C display and print text feedback, then pause for half a second.
+
+      SUBROUTINE MKCFDBC(show,itype,ifac,i1,i2,j1,j2,k1,k2,nam,confsurf,
+     &  pol,npol,dat1,dat2,dat3,dat4,dat5,IER)
+
+#include "building.h"
+#include "cfd.h"
+
+      logical show
+      integer itype,ifac,i1,i2,j1,j2,k1,k2,npol
+      character nam*12,confsurf*12
+      real pol(npol),dat1,dat2,dat3,dat4,dat5
+
+      COMMON/OUTIN/IUOUT,IUIN      
+      COMMON/ICFNOD/ICFD,ICP
+      common/KEYVOLS/NVOL(MNZ),IVOLF(MNVLS,MNZ),IVCELLS(MNVLS,MNZ,2),
+     &               JVCELLS(MNVLS,MNZ,2),KVCELLS(MNVLS,MNZ,2)
+      common/KEYVOLN/VOLNAME(MNVLS,MNZ),VCsurf(MNVLS,MNZ)
+      character VOLNAME*12,VCsurf*12
+      common/KEYVDAT/IVTYPE(MNVLS,MNZ),VOLTemp(MNVLS,MNZ),
+     &          VOLHeat(MNVLS,MNZ),IVConfl(MNVLS,MNZ),VOLHum(MNVLS,MNZ),
+     &          VOLCO2(MNVLS,MNZ),VOLVel(MNVLS,MNZ),VOLDir(MNVLS,MNZ,2),
+     &          VOLArea(MNVLS,MNZ),VOLPres(MNVLS,MNZ),
+     &          VOLPol(MCTM,MNVLS,MNZ)
+      COMMON/NDMAP/NOPEN(MNZ),MFNODE(MCFND,MNZ),IOPENi(MCFND,MNZ),
+     &             IOPENf(MCFND,MNZ),JOPENi(MCFND,MNZ),
+     &             JOPENf(MCFND,MNZ),KOPENi(MCFND,MNZ),
+     &             KOPENf(MCFND,MNZ),FIXM(MCFND,MNZ),
+     &             FIXT(MCFND,MNZ),FIXC(MCFND,MNZ),
+     &             FIXK(MCFND,MNZ),FIXE(MCFND,MNZ),
+     &             IWOPEN(MCFND,MNZ),ICFDCN(MCFND,MNZ),
+     &             ICNACT(MCFND,MNZ),IVOLN(MCFND,MNZ)
+      COMMON/Sbdary/NSB(MNZ),ISBi(MNSBZ,MNZ),ISBf(MNSBZ,MNZ),
+     &              JSBi(MNSBZ,MNZ),JSBf(MNSBZ,MNZ),
+     &              KSBi(MNSBZ,MNZ),KSBf(MNSBZ,MNZ),
+     &              ISUFLC(MNSBZ,MNZ),IWSB(MNSBZ,MNZ),SSB(MNSBZ,MNZ),
+     &              SSBHC(MNSBZ,MNZ),IVOLNSB(MNSBZ,MNZ),
+     &              ITCtype(MNSBZ,MNZ),icTREF(MNSBZ,MNZ)
+      common/blksso/NBLK(MNZ),INBLK(MNVLS,MNZ),NSSO(MNZ),
+     &          INSSO(MNVLS,MNZ)
+      COMMON/CFDVIS/HAS_GEOM,ISHSB,ISHAO,IFACES,ISHBLK,ISHGEO,INITD
+      logical HAS_GEOM
+      character INITD*6
+
+      character outs*124,stype*8,sfac*14
+
+      if (itype.eq.1) then
+        NVOL(ICFD)=NVOL(ICFD)+1
+        n=NVOL(ICFD)
+        IVTYPE(n,ICFD)=itype
+        IVOLF(n,ICFD)=ifac
+        IVCELLS(n,ICFD,1)=i1; IVCELLS(n,ICFD,2)=i2
+        JVCELLS(n,ICFD,1)=j1; JVCELLS(n,ICFD,2)=j2
+        KVCELLS(n,ICFD,1)=k1; KVCELLS(n,ICFD,2)=k2
+        VOLNAME(n,ICFD)=nam
+        VCsurf(n,ICFD)=confsurf
+        VOLTemp(n,ICFD)=dat1
+      elseif (itype.eq.2) then
+        NVOL(ICFD)=NVOL(ICFD)+1
+        n=NVOL(ICFD)
+        IVTYPE(n,ICFD)=itype
+        IVOLF(n,ICFD)=ifac
+        IVCELLS(n,ICFD,1)=i1; IVCELLS(n,ICFD,2)=i2
+        JVCELLS(n,ICFD,1)=j1; JVCELLS(n,ICFD,2)=j2
+        KVCELLS(n,ICFD,1)=k1; KVCELLS(n,ICFD,2)=k2
+        VOLNAME(n,ICFD)=nam
+        VCsurf(n,ICFD)=confsurf
+        VOLHeat(n,ICFD)=dat1
+      elseif (itype.eq.3) then
+        NVOL(ICFD)=NVOL(ICFD)+1
+        n=NVOL(ICFD)
+        IVTYPE(n,ICFD)=itype
+        IVOLF(n,ICFD)=ifac
+        IVCELLS(n,ICFD,1)=i1; IVCELLS(n,ICFD,2)=i2
+        JVCELLS(n,ICFD,1)=j1; JVCELLS(n,ICFD,2)=j2
+        KVCELLS(n,ICFD,1)=k1; KVCELLS(n,ICFD,2)=k2
+        VOLNAME(n,ICFD)=nam
+        VCsurf(n,ICFD)=confsurf
+      elseif (itype.eq.4) then
+        NVOL(ICFD)=NVOL(ICFD)+1
+        n=NVOL(ICFD)
+        IVTYPE(n,ICFD)=itype
+        IVOLF(n,ICFD)=ifac
+        IVCELLS(n,ICFD,1)=i1; IVCELLS(n,ICFD,2)=i2
+        JVCELLS(n,ICFD,1)=j1; JVCELLS(n,ICFD,2)=j2
+        KVCELLS(n,ICFD,1)=k1; KVCELLS(n,ICFD,2)=k2
+        VOLNAME(n,ICFD)=nam
+        VCsurf(n,ICFD)=confsurf
+        VOLTemp(n,ICFD)=dat1
+        IVconfl(n,ICFD)=int(dat2)
+      elseif (itype.eq.5) then
+        NVOL(ICFD)=NVOL(ICFD)+1
+        n=NVOL(ICFD)
+        IVTYPE(n,ICFD)=itype
+        IVOLF(n,ICFD)=ifac
+        IVCELLS(n,ICFD,1)=i1; IVCELLS(n,ICFD,2)=i2
+        JVCELLS(n,ICFD,1)=j1; JVCELLS(n,ICFD,2)=j2
+        KVCELLS(n,ICFD,1)=k1; KVCELLS(n,ICFD,2)=k2
+        VOLNAME(n,ICFD)=nam
+        VCsurf(n,ICFD)=confsurf
+        VOLHeat(n,ICFD)=dat1
+        IVconfl(n,ICFD)=int(dat2)
+      elseif (itype.eq.6) then
+        NVOL(ICFD)=NVOL(ICFD)+1
+        n=NVOL(ICFD)
+        IVTYPE(n,ICFD)=itype
+        IVOLF(n,ICFD)=ifac
+        IVCELLS(n,ICFD,1)=i1; IVCELLS(n,ICFD,2)=i2
+        JVCELLS(n,ICFD,1)=j1; JVCELLS(n,ICFD,2)=j2
+        KVCELLS(n,ICFD,1)=k1; KVCELLS(n,ICFD,2)=k2
+        VOLNAME(n,ICFD)=nam
+        VCsurf(n,ICFD)=confsurf
+        IVconfl(n,ICFD)=int(dat2)
+      elseif (itype.eq.10) then
+        NVOL(ICFD)=NVOL(ICFD)+1
+        n=NVOL(ICFD)
+        IVTYPE(n,ICFD)=itype
+        IVOLF(n,ICFD)=ifac
+        IVCELLS(n,ICFD,1)=i1; IVCELLS(n,ICFD,2)=i2
+        JVCELLS(n,ICFD,1)=j1; JVCELLS(n,ICFD,2)=j2
+        KVCELLS(n,ICFD,1)=k1; KVCELLS(n,ICFD,2)=k2
+        VOLNAME(n,ICFD)=nam
+        VOLTemp(n,ICFD)=dat1
+        VOLArea(n,ICFD)=dat2
+        VOLPres(n,ICFD)=dat3
+      elseif (itype.eq.11) then
+        NVOL(ICFD)=NVOL(ICFD)+1
+        n=NVOL(ICFD)
+        IVTYPE(n,ICFD)=itype
+        IVOLF(n,ICFD)=ifac
+        IVCELLS(n,ICFD,1)=i1; IVCELLS(n,ICFD,2)=i2
+        JVCELLS(n,ICFD,1)=j1; JVCELLS(n,ICFD,2)=j2
+        KVCELLS(n,ICFD,1)=k1; KVCELLS(n,ICFD,2)=k2
+        VOLNAME(n,ICFD)=nam
+        VOLTemp(n,ICFD)=dat1
+        VOLArea(n,ICFD)=dat2
+        VOLVel(n,ICFD)=dat3
+        VOLDir(n,ICFD,1)=dat4
+        VOLDir(n,ICFD,2)=dat5
+      elseif (itype.eq.12) then
+        NVOL(ICFD)=NVOL(ICFD)+1
+        n=NVOL(ICFD)
+        IVTYPE(n,ICFD)=itype
+        IVOLF(n,ICFD)=ifac
+        IVCELLS(n,ICFD,1)=i1; IVCELLS(n,ICFD,2)=i2
+        JVCELLS(n,ICFD,1)=j1; JVCELLS(n,ICFD,2)=j2
+        KVCELLS(n,ICFD,1)=k1; KVCELLS(n,ICFD,2)=k2
+        VOLNAME(n,ICFD)=nam
+        VOLTemp(n,ICFD)=dat1
+        VOLArea(n,ICFD)=dat2
+      elseif (itype.eq.13) then
+        NVOL(ICFD)=NVOL(ICFD)+1
+        n=NVOL(ICFD)
+        IVTYPE(n,ICFD)=itype
+        IVOLF(n,ICFD)=ifac
+        IVCELLS(n,ICFD,1)=i1; IVCELLS(n,ICFD,2)=i2
+        JVCELLS(n,ICFD,1)=j1; JVCELLS(n,ICFD,2)=j2
+        KVCELLS(n,ICFD,1)=k1; KVCELLS(n,ICFD,2)=k2
+        VOLNAME(n,ICFD)=nam
+        VOLTemp(n,ICFD)=dat1
+        VOLArea(n,ICFD)=dat2
+        VOLVel(n,ICFD)=dat3
+      elseif (itype.eq.20) then
+        NVOL(ICFD)=NVOL(ICFD)+1
+        n=NVOL(ICFD)
+        IVTYPE(n,ICFD)=itype
+        IVOLF(n,ICFD)=ifac
+        IVCELLS(n,ICFD,1)=i1; IVCELLS(n,ICFD,2)=i2
+        JVCELLS(n,ICFD,1)=j1; JVCELLS(n,ICFD,2)=j2
+        KVCELLS(n,ICFD,1)=k1; KVCELLS(n,ICFD,2)=k2
+        VOLNAME(n,ICFD)=nam
+        VOLPol(1:size(pol),n,ICFD)=pol
+        VOLHeat(n,ICFD)=dat1
+        VOLHum(n,ICFD)=dat2
+        VOLCO2(n,ICFD)=dat3
+      elseif (itype.eq.30) then
+        NVOL(ICFD)=NVOL(ICFD)+1
+        n=NVOL(ICFD)
+        IVTYPE(n,ICFD)=itype
+        IVOLF(n,ICFD)=ifac
+        IVCELLS(n,ICFD,1)=i1; IVCELLS(n,ICFD,2)=i2
+        JVCELLS(n,ICFD,1)=j1; JVCELLS(n,ICFD,2)=j2
+        KVCELLS(n,ICFD,1)=k1; KVCELLS(n,ICFD,2)=k2
+        VOLNAME(n,ICFD)=nam
+        VOLHeat(n,ICFD)=dat1
+      else
+        IER=1
+        write(outs,'(a,i2)')'MKCFDBC: unrecognised type ',itype
+        call EDISP(IUOUT,outs)
+        goto 999
+      endif
+      call NEW2OLD
+
+      if (show) then
+        if (itype.ge.1 .and. itype.le.6) then
+          stype='solid   '
+          lstype=5          
+          ISHSB=NSB(ICFD); ISHAO=-1; ISHBLK=-1
+        elseif (itype.ge.10 .and. itype.le.13) then
+          stype='opening '
+          lstype=7
+          ISHSB=-1; ISHAO=NOPEN(ICFD); ISHBLK=-1
+        elseif (itype.eq.20) then
+          stype='source  '
+          lstype=6
+          ISHSB=-1; ISHAO=-1; ISHBLK=-1 ! << Need to implement sources
+        elseif (itype.eq.30) then
+          stype='blockage'
+          lstype=8
+          ISHSB=-1; ISHAO=-1; ISHBLK=NBLK(ICFD)
+        endif
+
+        if (ifac.eq.1) then 
+          sfac=' on west face '
+          lsfac=13
+        elseif (ifac.eq.2) then
+          sfac=' on east face '
+          lsfac=13
+        elseif (ifac.eq.3) then
+          sfac=' on south face'
+          lsfac=14
+        elseif (ifac.eq.4) then
+          sfac=' on north face'
+          lsfac=14
+        elseif (ifac.eq.5) then
+          sfac=' on low face  '
+          lsfac=12
+        elseif (ifac.eq.6) then
+          sfac=' on high face '
+          lsfac=13
+        else
+          sfac=' '
+          lsfac=1
+        endif
+
+        write(outs,'(6a)')' Created ',stype(1:lstype),' BC',
+     &    sfac(1:lsfac),' called ',nam(1:lnblnk(nam))
+        call EDISP(IUOUT,outs)
+        call redraw(IER)
+        call pausems(500)
+      endif
+
+  999 RETURN
+      END
 
 C ************************** EDAIRO **************************
 C EDAIRO controls the editing of CFD air flow opening boundary variables.

@@ -224,6 +224,11 @@ C Temporary IFIL+1.
       IOPTDB=IFIL+15
       IBCF=IFIL+22
 
+C CFClayers on channel IFIL+12.
+      icfcdb = ifil + 12
+      write(LCFCDB,'(a)') DCFCDB(1:lnblnk(DCFCDB))
+
+
 C ECO initialiastion
       BCFNAME = 'UNKNOWN'
       DBCFNAM = 'UNKNOWN'
@@ -1065,6 +1070,10 @@ C Dummy subroutine needed to compile (called from library code).
 
       SUBROUTINE CFDVIEW(IER)
       IER=0
+      return
+      end
+      
+      SUBROUTINE GRAAPH(IDRW1,IDRW2)
       return
       end
 

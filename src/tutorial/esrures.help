@@ -838,6 +838,12 @@ C        CALL EASKABC('Data display options:',outs,
 'surface is not necessarily an exterior surface.'
 'Delta T dewpoint is difference between inside surface T'
 'and zone dew point temperature (Surf T - Dewpoint).'
+'Operative temperature is calculated as in CIBSE Guide A'
+'(2018 edition), and where possible will use local air'
+'parameters from CFD. Keeping track of when CFD was'
+'activated during the assessment is up to you, though'
+'you will be notified in the text feedback when results'
+'are not available.'
 *enditem
         call MENUATOL('Select a temperature metric.',
 *item GOMENU res_comfort_metrics
@@ -1072,6 +1078,19 @@ C        CALL EASKABC('Data display options:',outs,
 'to an anchor point. '
 *enditem
             CALL EASKAB('Options for surface selection:','  ',
+*item GOMENU res_opT_noCFD
+'Operative temperatures in ESP-r are calculated according to'
+'the procedure in CIBSE Guide A (2018). This incorporates air'
+'temperature, mean radiant temperature and air velocity.'
+'Normally local values of air parameters would be drawn from'
+'the CFD. However, CFD domains are not present in some of the'
+'selected zones (see text feedback). You may continue anyway,'
+'with the caveat that operative temperature results in the'
+'listed zones are subject to the following assumptions:'
+'1 - zone air is well mixed (i.e. constant temperature), and'
+'2 - air velocity is below 0.1 m/s.'
+*enditem
+
 *subroutine plttab
 *item plttab res_plant_perf_menu
 'The viewing of plant system component performance'

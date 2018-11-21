@@ -7719,7 +7719,7 @@ C working then try switching bweteen these options.
       subroutine runit(cmd,tg)
       common/OUTIN/IUOUT,IUIN
       character*(*) cmd,tg
-      character tmp*1000,ltmp*1000,tmode*8,message*248
+      character tmp*1200,ltmp*1200,tmode*8,message*248
       character dq*1
       integer system
       logical unixok

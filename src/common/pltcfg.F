@@ -165,6 +165,7 @@ C LPCDB/IPCDB (for plant template database)
       COMMON/C12PS/NPCDAT(MPCOM,9),IPOFS1(MCOEFG),IPOFS2(MCOEFG,MPVAR)
       COMMON/C13PS/NPMCOE,NPNOD,NPMTYP
       COMMON/FFN/IFLWN,ICFFS(MPCON)
+      COMMON/RFN/RFCSEQ(MPCOM)
       COMMON/PCPAR/NPI(MPCOM), TADATA(MPCOM,MADATA)
       common /datdsc/ mscdsc(madata), cvrdsc(mconvr)
       common /pcddsc/ pcdesc(maxpc), npref(mpcom)
@@ -330,6 +331,7 @@ C to 'building only'.
       ENDIF
 C  Set the electrical component counter to 0.
       npel=0
+      RFlg=0
 
 C Reporting.
       IF(ITRC.GE.1)THEN
@@ -390,7 +392,6 @@ C descriptor for the plant component itself!
           READ(IUNIT1,REC=IREC,IOSTAT=ISTAT,ERR=950) 
      &       pcdesc(NPREF(IPCOMP))
         ENDIF
-
 
 C Determine number of control parameters
         CALL STRIPC(iuc,OUTSTR,0,ND,1,'no of ctl',IER)
@@ -470,6 +471,10 @@ C of miscellaneous data items.
      &        AA,ICODE,CEDATE,NNODE,NMATX,NMISC
             
 C Save number of nodes associated with each component.
+            NPCDAT(iPComp,4) = ICODE/10
+            IF(NPCDAT(iPComp,4).eq.139.or.NPCDAT(iPComp,4).eq.140)then
+	      RFlg=1
+            ENDIF
             NPCDAT(iPComp,8) = NNODE
           ENDIF
 
@@ -553,10 +558,22 @@ C Reporting.
   479       FORMAT(F5.3,1X,I3,1X,F10.3,1X,F10.3,1X,I3)
             call edisp(itu,outs)
             call edisp(itu,' ')
-          ENDIF 
+          ENDIF
 
-   44   CONTINUE
+   44 CONTINUE
 
+
+C Alter component sequence for relative flow control components if any (i.e. RFlg=1).
+C Relative flow control requires components CMP_XXXC calls in pmatrx.f to be in 
+C order from furthest branch components backwards. Each RFC component, except final branch
+C junctions requires visibility of all downstream component relative flow values.
+      IF(RFlg.eq.1)THEN
+        CALL SRFCSEQ
+      ELSE
+	DO 19 IPCOMP=1,NPCOMP
+          RFCSEQ(IPCOMP)=IPCOMP
+   19   CONTINUE
+      ENDIF
 C Read number of plant component connections
         CALL STRIPC(iuc,OUTSTR,0,ND,1,'possible conn',IER)
         IF(IER.NE.0)RETURN
@@ -693,7 +710,7 @@ C Reporting.
           K=0
           CALL EGETW(OUTSTR,K,WORD,'W','component name',IER)
           call findpc(npcomp,word,ipcc(icont))
-          CALL EGETWI(OUTSTR,K,INDCP(ICONT),0,3,'W',
+          CALL EGETWI(OUTSTR,K,INDCP(ICONT),0,5,'W',
      &         'containment type',IER)
           CALL EGETWR(OUTSTR,K,CNTDAT(ICONT,1),0.,0.,'-',
      &         'containment data 1',IER)
@@ -755,6 +772,8 @@ C Reporting.
               WRITE(CNTSTR,'(A,F7.3)') 'fix temp: ',CNTDAT(ICONT,1)
             ELSEIF(INDCP(ICONT).EQ.3)THEN
               WRITE(CNTSTR,'(2A)') 'zone: ',ZNAME(NINT(CNTDAT(ICONT,1)))
+            ELSEIF(INDCP(ICONT).EQ.5) THEN
+              WRITE(CNTSTR,'(A)') 'ground temp'
             ENDIF
             WRITE(outs,'(I2,2x,A15,1X,A20,1X,I3,a,3F8.2)')ICONT,
      &        PCNAME(IPCC(ICONT)),CNTSTR,INDCP(ICONT),' details: ',
@@ -963,4 +982,128 @@ C through pcname(?) until a match is found.
    20 return
       end
 
+C ************************* SRFCSEQ *********************
+C This subroutine finds the Relative Flow Control-linked
+C junctions and diverter valves and resequences the 
+C order of component calls to CMP_XXXC in pmatrx.f such that
+C RFC components are called in reverse order from the further 
+C branch. This is required as each component proportional diversion 
+C needs visibility of the required relative flow for downstream
+C components. 
+      subroutine SRFCSEQ
+#include "plant.h"
+      
+      COMMON/RFN/RFCSEQ(MPCOM)
+      COMMON/C12PS/NPCDAT(MPCOM,9),IPOFS1(MCOEFG),IPOFS2(MCOEFG,MPVAR)
+      COMMON/PCPAR/NPI(MPCOM), TADATA(MPCOM,MADATA)
+      COMMON/C9/NPCOMP,NCI(MPCOM),CDATA(MPCOM,MMISCD)
+      DIMENSION IPSEQ(MPCOM), IPCP(MPCOM) 
+      DIMENSION JNC(MPCOM), FND(MPCOM)
+
+      integer RW,CNT
+
+      IPCNT=1
+      NPCNT=0
+      DO IPCOMP=1,NPCOMP
+        ITYPE=NPCDAT(IPCOMP,4)
+        IF(ITYPE.NE.139.AND.ITYPE.NE.140)THEN
+          IPSEQ(IPCOMP)=IPCNT
+          IPCP(IPCNT)=IPCOMP
+          IPCNT=IPCNT+1
+        ELSE
+          IPSEQ(IPCOMP)=NPCOMP-NPCNT
+          IPCP(NPCOMP-NPCNT)=IPCOMP
+          NPCNT=NPCNT+1
+        ENDIF
+      END DO
+
+      RFCSEQ=IPCP
+
+      NPC2=NPCOMP
+      RW=IPCNT
+      CNT=1
+C First locate controlled diverters from end of branch back to first junctions        
+      DO IPDIV=1,NPCNT
+        IPNUM=IPCNT-1+IPDIV
+C Search for furthest node in circuit
+        IF(TADATA(IPCP(IPNUM),1).EQ.99)THEN 
+          IPCF=IPCP(IPNUM)
+          ITYPE1=NPCDAT(IPCF,4)
+          RFCSEQ(RW)=IPCF
+          RW=RW+1
+          NXTN=TADATA(IPCF,2)
+          IPD1=IPCNT
+          JNC(CNT)=TADATA(IPCF,2)
+          CNT=CNT+1
+          FND(IPCF)=1
+C Search for subsequent nodes in reverse order
+          DO WHILE (IPD1<NPCOMP)
+            IPCF=IPCP(IPD1)
+            ITYPE1=NPCDAT(IPCF,4)
+C Finds next controlled diverter in sequence  
+            IF(TADATA(IPCF,1).EQ.NXTN.AND
+     &            .ITYPE1.EQ.140)THEN   
+              RFCSEQ(RW)=IPCF
+              RW=RW+1
+              NXTN=TADATA(IPCF,2)
+C Reset counter, restart search for next upstream node
+              JNC(CNT)=TADATA(IPCF,2)
+              CNT=CNT+1
+              IPD1=IPCNT
+              FND(IPCF)=1
+            ELSE
+              IPD1=IPD1+1
+            ENDIF
+          ENDDO
+        ENDIF
+      ENDDO
+C Skip remainder if all junctions found
+      IF(CNT.EQ.NPCNT+1) GOTO 177
+C Once all controlled diverters per branch are found, locate upstream junctions
+      IPDIV=1
+      DO WHILE (IPDIV<=NPCNT)
+        IPNUM=IPCNT-1+IPDIV
+        IPCF=IPCP(IPNUM)
+        IF(NPCDAT(IPCF,4).EQ.139.AND.FND(IPCF).EQ.0)THEN
+          JCK=0
+          DO IPDIV=1,NPCNT
+            IF(JNC(IPDIV).EQ.TADATA(IPCF,1).OR.
+     &           JNC(IPDIV).EQ.TADATA(IPCF,2))THEN
+              JCK=JCK+1
+            ENDIF
+          ENDDO
+          IF(JCK.EQ.2)THEN
+            RFCSEQ(RW)=IPCF
+            RW=RW+1
+            FND(IPCF)=1
+          ENDIF
+          IF(TADATA(IPCF,3).GT.0)THEN
+            JNC(CNT)=TADATA(IPCF,3)
+            CNT=CNT+1
+          ENDIF
+C Check for controlled upstream junction
+          DCK=0
+          DO IPDIV=1,NPCNT
+            IPNUM=IPCNT-1+IPDIV
+            IPCF1=IPCP(IPNUM)
+            ITYPE1=NPCDAT(IPCF1,4)
+            IF(DCK.EQ.0) DSJ=TADATA(IPCF,3)
+            IF(ITYPE1.EQ.140.AND.TADATA(IPCF1,1)
+     &           .EQ.DSJ.AND.FND(IPCF1).EQ.0)THEN
+              RFCSEQ(RW)=IPCF1
+              RW=RW+1
+              JNC(CNT)=TADATA(IPCF1,2)
+              CNT=CNT+1
+              FND(IPCF1)=1
+              DSJ=TADATA(IPCF1,2)
+              DCK=1
+            ENDIF
+          ENDDO
+          IPDIV=1
+        ELSE
+          IPDIV=IPDIV+1
+        ENDIF
+      ENDDO
+ 177  RETURN
+      END
 

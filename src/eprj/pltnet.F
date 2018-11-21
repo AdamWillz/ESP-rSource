@@ -499,7 +499,7 @@ C Common for new format component database
       COMMON/NCDBFORM/ICDBF
 
 
-      DIMENSION cVERT(35), CTYPE(4)
+      DIMENSION cVERT(35), CTYPE(5)
       CHARACTER PCNAME*15, UCdbNam*16, CDBCAT*32, CDBDesc*72
       character*80 pcdesc
       integer icdbf
@@ -518,6 +518,7 @@ C if icdbf check here!
       ctype(2)= 'water heating   '
       ctype(3)= 'primitive part  '
       ctype(4)= 'solar and other '
+      ctype(5)= 'heat network    '
       ILEN=NPCOMP
       IPACT=CREATE
       CALL EKPAGE(IPACT)
@@ -558,8 +559,10 @@ C current menu line index. Build up text strings for the menu.
               WRITE(DESC,'(A16)')CTYPE(2)
             ELSEIF(ICODE(NRF).GE.510.AND.ICODE(NRF).LT.700)THEN
               WRITE(DESC,'(A16)')CTYPE(3)
-            ELSE
+            ELSEIF(ICODE(NRF).GE.700.AND.ICODE(NRF).LT.1340)THEN
               WRITE(DESC,'(A16)')CTYPE(4)
+            ELSE
+              WRITE(DESC,'(A16)')CTYPE(5)
             ENDIF
             WRITE(cVERT(M),'(A1,1X,A15,3X,I3,3X,A16)')
      &KEY,PCNAME(L),NPREF(L),DESC
@@ -1027,6 +1030,8 @@ C current menu line index. Build up text strings for the menu.
             WRITE(CNTSTR,'(A,F7.3)') 'fix temp: ',CNTDAT(L,1)
           ELSEIF(INDCP(L).EQ.3)THEN
             WRITE(CNTSTR,'(A,A)') 'zone: ',ZNAME(NINT(CNTDAT(L,1)))
+          ELSEIF(INDCP(L).EQ.4)THEN
+            WRITE(CNTSTR,'(A)') 'Ground Temp'
           ENDIF
           WRITE(VERT(M),'(A1,1X,A15,1X,A20,1X,I3)')KEY,PCNAME(IPCC(L)),
      &CNTSTR,INDCP(L)

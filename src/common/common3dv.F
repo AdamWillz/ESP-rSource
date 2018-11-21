@@ -1366,6 +1366,86 @@ C Complete the polygon.
       RETURN
       END
 
+C **************** withinview
+C withinview checks if a dummy surface at xyz is within viewing cone.
+C Derived from  DRWSEN.
+C IER is returned as non-zero if there is a problem.
+      SUBROUTINE withinview(tx,ty,tz,cansee,ier)
+#include "building.h"
+#include "prj3dv.h"
+
+C Passed parameter.
+      real tx,ty,tz
+      logical cansee
+      integer ier
+      
+      COMMON/SPAD/MMOD,LIMIT,LIMTTY
+
+C Local arrays.
+      real AX,AY,AZ,BX,BY,BZ,SBBOX,COG1,COG2,COG3
+      integer IANXT,IBNXT
+      DIMENSION  AX(5),AY(5),AZ(5),IANXT(5)
+      DIMENSION  BX(5),BY(5),BZ(5),IBNXT(5)
+      DIMENSION  SBBOX(3,2),COG1(3),COG2(3),COG3(3)
+#ifdef OSI
+      integer iix,iiy,iixlast,iiylast,iid2
+#else
+      integer*8 iix,iiy,iixlast,iiylast,iid2
+#endif     
+
+C If not in graphic mode return.
+      if(MMOD.lt.8)return
+      cansee=.false.  ! assume we cannot see.
+
+C Transform the location into eyepoint and then screen coords.
+      tx2=tx+0.3; tx3=tx-0.3
+      ty2=ty; ty3=ty
+      tz2=tz+0.3; tz3=tz+0.3
+      COG1(1)=tx
+      COG1(2)=ty
+      COG1(3)=tz
+      CALL VECTRN(COG1,TEMAT,COG2,IER)
+      CALL VECTRN(COG2,ETSMAT,COG3,IER)
+      call u2pixel(COG3(1),COG3(2),iix,iiy)
+
+C Continue with small triangle offset from tx ty tz.
+C Copy polygon for sensor surface I into structure AX AY AZ
+C where IANXT = Index of 'next' point. Clear IANXT & IBNXT arrays.
+      do 1101 J = 1,3
+        IANXT(J) = 0
+        IBNXT(J) = 0
+ 1101 continue
+
+C There are 3 initial vertices in polygon.
+      NAP=3
+      AX(1) = tx; AY(1) = ty; AZ(1) = tz
+      AX(2) = tx2; AY(1) = ty2; AZ(1) = tz2
+      AX(3) = tx3; AY(1) = ty3; AZ(1) = tz3
+      IANXT(1) = 2; IANXT(2) = 3;IANXT(3) = 1
+
+C Transform polygon to EYE co-ordinates.
+      CALL MATPOLS(NAP,AX,AY,AZ,IANXT,TEMAT,SBBOX,
+     &             NBP,BX,BY,BZ,IBNXT,IERR)
+
+C Generate clipping flags and clip geometry in eye coords.
+C If ISTAT =  0 : totally inside frustrum
+C If ISTAT =  1 : totally outside frustrum
+C If ISTAT = -1 : straddles frustrum
+      call CLIPSUR(NBP,BX,BY,BZ,ISTAT)
+      IF (ISTAT .EQ. 1) THEN
+        cansee=.false.
+      ELSEIF (ISTAT .EQ. -1) THEN
+        cansee=.true.
+      ELSEIF (ISTAT .EQ. 0) THEN
+        cansee=.true.
+      ENDIF
+      ier=IERR
+
+C      write(6,'(a,3f7.2,L,4i5)') 'withinview ',tx,ty,tz,cansee,
+C     &  ISTAT,iix,iiy,ierr
+      RETURN
+      END  ! of withinview
+
 C ****** Routine to draw ground topology.
 C EGRNDR  Draws ground topology held in GT5 and grndpl commons.
 C IER is returned as non-zero if there has been a problem.
@@ -1936,6 +2016,7 @@ C IVISMOD is the visualisation mode:
 C -1 = blank
 C 1 = building geometry (standard)
 C 2 = CFD domain
+C 3 = 3-D gridding (grd module)
 
       subroutine redraw(IER)
 
@@ -1948,9 +2029,13 @@ C Check we're in graphic mode, just in case.
       if (IVISMOD.eq.-1) then
         call startbuffer()
       elseif (IVISMOD.eq.1) then
-        CALL ADJVIEW(IER)
+        CALL adjview(IER)
       elseif (IVISMOD.eq.2) then
         CALL CFDVIEW(IER)
+      elseif (IVISMOD.eq.3) then
+        i1=-1
+        i2=-1
+        CALL GRAAPH(i1,i2)
       endif
 
  999  return

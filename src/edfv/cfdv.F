@@ -971,6 +971,10 @@ C Dummy subroutines needed by common3dv.F
       SUBROUTINE DRAWESP(ier)
       return
       end
+      
+      SUBROUTINE GRAAPH(IDRW1,IDRW2)
+      return
+      end
 
       SUBROUTINE ERCZONE(ICOMP)
       return

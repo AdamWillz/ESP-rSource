@@ -10,7 +10,7 @@ C Type declarations:
       integer MSPMNO, MSRC
 
 C Maximum number of nodes, components, connections.
-      PARAMETER (MNOD=70,MCMP=80,MCNN=199)
+      PARAMETER (MNOD=100,MCMP=100,MCNN=199)
 C Maximum number of node supplementary data items
       PARAMETER (MNDS=2)
 C Number of valid fluid flow component types
@@ -26,7 +26,7 @@ C Maximum number of wind pressure distribution sets
 C Maximum number of CPCALC derived pressure distribution sets
       PARAMETER (MPCP=20)
 C Record width of binary results file (should be larger of MNOD or MCMS + 6)
-      PARAMETER (NMRL=70)
+      PARAMETER (NMRL=100)
 C Results analysis:
 C Max number of connection lists and number of connections allowed.
       PARAMETER (MFCNLST=20)
@@ -40,6 +40,6 @@ C cfd.h if MCONTM is changed change MCTM accordingly
 C Max number of contaminant supplementary data items
       PARAMETER (MCSD=9)
 C Max number of sources/sinks
-      PARAMETER (MSPMNO=20)
+      PARAMETER (MSPMNO=30)
 C Max number of contaminant source/sink types
       PARAMETER (MSRC=6)

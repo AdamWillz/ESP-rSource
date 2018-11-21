@@ -63,14 +63,6 @@ C espriou.h provides currentfile, defdbfl exemfl.
       
       integer lnblnk  ! function definition
 
-C IEEE callback (Solaris)
-#ifdef SUN
-#ifdef F90
-      external SIGFPE_bps      
-      integer SIGFPE_bps      
-#endif
-#endif
-
       common/initv/initvt,EYEMI(3),VIEWMI(3),ANGI
       common/SPAD/MMOD,LIMIT,LIMTTY
       integer childterminal  ! picks up mmod from starting of prj
@@ -362,26 +354,14 @@ C Clear number of images and allow image browsing.
       nidst= 0
 
 C Initialise coordinates for eye point, view point and angle of view.
-      EYEM(1)=-100.
-      EYEM(2)=-100.
-      EYEM(3)=100.
-      VIEWM(1)=10.
-      VIEWM(2)=10.
-      VIEWM(3)=10.
+      EYEM(1)=-100.0; EYEM(2)=-100.0; EYEM(3)=100.0
+      VIEWM(1)=10.0; VIEWM(2)=10.0; VIEWM(3)=10.0
       ANG=40.
       IVISMOD=1
 
 C General image option flags.
-      ITDSP=0
-      ITBND=1
-      ITEPT=0
-      ITZNM=0
-      ITSNM=1
-      ITVNO=1
-      ITORG=0
-      ITSNR=1
-      ITOBS=0
-      ITGRD=0
+      ITDSP=0; ITBND=1; ITEPT=0; ITZNM=0; ITSNM=1; ITVNO=1
+      ITORG=0; ITSNR=1; ITOBS=0; ITGRD=0
       GRDIS=0.0
       ITPPSW=0
       IFS=1
@@ -401,31 +381,15 @@ C be atrributed.
       changedit=.false.
       MODSIT=.false.  ! assume model context has not changed.
 
-C If your compiler does not support floating-point arithmetic
-C according to ANSI/IEEE Std 754-1985 comment out the following code.
-
-C Initialize mode, status, and signal handling for IEEE arithmetic.
-C See also: f77_ieee_environment(3F) f77_floatingpoint(3F)
-C           Note that in case of Sun FORTRAN, IEEEE exceptions arise
-C           only if: Sun-3 f77 with -f68881 or -ffpa option
-C                or: Sun-4 f77.
-#ifdef SUN
-#ifdef F90
-      ieeer=ieee_handler('set','common',SIGFPE_ABORT)
-      ieeer=ieee_handler('set','common',SIGFPE_bps)
-      if(ieeer.ne.0) write(iuout,*) ' IEEE_handler not set !'
-#endif
-#endif
-
 C Initialise output device, assume minimal trace and a standard
-C display.  If passed zero size and offsets use default (630 pixels
+C display.  If passed zero size and offsets use default (670 pixels
 C high). If size is <200 then assume it is intended as a % of the
 C nominal size and take % of default, otherwise use passed width.
 C If left & top offsets are 0 then use defaults. If > 200 then it
 C is treated as a specific pixel height.
       MMOD=MODL
       if(iappw.eq.0.and.iappx.eq.0.and.iappy.eq.0)then
-        iappw=630  ! default hight
+        iappw=690  ! default height
         iappx=40
         iappy=40
         iappwpc=100   ! remember %
@@ -434,10 +398,10 @@ C is treated as a specific pixel height.
         if(iappy.lt.0)iappy=40
         if(iappw.le.200)then
           iappwpc=iappw    ! remember %
-          iappwi=int(630*iappw*0.01)
+          iappwi=int(690*iappw*0.01)
           iappw=iappwi
         elseif(iappw.gt.200)then
-          iappwpc=nint(100.0*(real(iappw)/630.0))  ! reconstitute %
+          iappwpc=nint(100.0*(real(iappw)/690.0))  ! reconstitute %
           continue
         endif
       endif
@@ -6157,19 +6121,7 @@ C Set folder separator (fs) to \ or / as required.
       return
       end
 
-C In support of floating point exceptions.
-#ifdef SUN
-#ifdef F90
-      integer function SIGFPE_bps(sig,code,context)
-      integer sig,code,context(5)
-      character label*16
-      if(loc(code).eq.208) label = 'invalid'
-      if(loc(code).eq.200) label = 'division by zero'
-      if(loc(code).eq.212) label = 'overflow'
-      if(loc(code).eq.204) label = 'underflow'
-      if(loc(code).eq.196) label = 'inexact'
-      write(6,*) 'Exception code ',loc(code),label,'at ',context(4)
-      SIGFPE_bps = loc(code)
+C Dummy subroutine.
+      SUBROUTINE GRAAPH(IDRW1,IDRW2)
+      return
       end
-#endif
-#endif

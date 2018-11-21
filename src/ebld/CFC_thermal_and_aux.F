@@ -3301,6 +3301,8 @@ C Perform actual control of shade ON/OFF and slat angle here
                 vb_phiNew(iact2,iact3) = shdONslatPOSITION    ! set new slag angle
                 i_shd(iact2,iact3)     = 1                    ! shade state ON
               elseif(iact1.eq.3)then
+C               ON/OFF & three angles;
+C               shdON is smallest of three values available!
                 if (solrad.gt.shdCLSsetpoint)then
                   vb_phiNew(iact2,iact3) = shdONslatPOSITION  ! set new slat angle
                   i_shd(iact2,iact3)     = 3                  ! shade state ON, "closed"
@@ -3324,9 +3326,11 @@ C             Cut-off angle control
                 vb_phiNew(iact2,iact3) = shdOFFslatPOSITION   ! set new slat angle
                 i_shd(iact2,iact3)     = 1                    ! shade state ON     
               elseif(iact1.eq.3)then
+C               ON/OFF & three angles
                 vb_phiNew(iact2,iact3) = vb_phi(iact2,iact3)  ! default slat angle
                 i_shd(iact2,iact3)     = 0                    ! shade state OFF
               elseif(iact1.eq.4)then
+C               Cut-off angle control
                 vb_phiNew(iact2,iact3) = vb_phi(iact2,iact3)  ! default slat angle
                 i_shd(iact2,iact3)     = 0                    ! shade state OFF
               endif

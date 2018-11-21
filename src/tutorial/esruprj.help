@@ -1569,6 +1569,7 @@ C          CALL EASKI(I3,' ','Which bidirectional set to use (1-40)?',
 
 '  on set point (units depends on control type)'
 '  off setpoint (units depends on control type)'
+'  (the values must satisfy the constraint SPTON < SPTOFF)'
 '  output at hi, output at lo'
 '  '
 '  sensor lag (in plant-timesteps)'
@@ -4261,7 +4262,6 @@ C         CALL EASKR(cm(ndx+6),' ',' Aux sensor "fraction ON"? ',
 '      otherwise the ACC will always use the MIT zero-equation model'
 '      for preliminary simulations and the k-e model for the adapted'
 '      simulations.'
-'  '
 'Buoyancy. Three choices (temperature should be solved if 
 '          buoyancy is active):'
 '   none - buoyancy effects are ignored.'
@@ -4287,7 +4287,6 @@ C         CALL EASKR(cm(ndx+6),' ',' Aux sensor "fraction ON"? ',
 'If you have messed up the solution parameters you might want to'
 'reset them to default values. Note that default solution'
 'parameters might not be appropriate. '
-'  '
 *enditem
         call askok('Resetting solution parameters to default values.',
         CALL PHELPD('solution variables',25,'-',0,0,IER)
@@ -4342,7 +4341,6 @@ C         CALL EASKR(cm(ndx+6),' ',' Aux sensor "fraction ON"? ',
 '     reference T (~ average in the domain). Best for small'
 '     temperature variations in domain. '
 'Option s: Set reference temperature for the Boussinesq approximation.'
-' '
 'Option t: Set the maximum number of iterations that the solver will'
 '  perform. By default unconverged solutions are accepted, though this'
 '  behaviour can be controlled if the ACC is disabled.'
@@ -4350,7 +4348,6 @@ C         CALL EASKR(cm(ndx+6),' ',' Aux sensor "fraction ON"? ',
 '  to judge when a converged solution has been obtained.'
 'Option v: Location of the monitoring cell. Key values at this cell'
 '  are displayed during the simulation.'
-'  '
 'Option +: If contaminants are included in the CFD domain, this menu'
 '  allows the user to set relaxation factors for the solution.'
 *enditem
@@ -4416,33 +4413,97 @@ C         CALL EASKR(cm(ndx+6),' ',' Aux sensor "fraction ON"? ',
 *enditem
 *subroutine CFDBVAR
 *item CFDBVAR cfd_boundary_variables
-'A summary of each boundary condition is presented. By selecting'
-'one you can see all the data associated with this boundary and'
-'edit it if necessary. If source type bc are to be defined do'
-'not start the name by SRC_'
+'A summary of each boundary condition (BC) is presented. By selecting'
+'one you can see all the data associated with this boundary and edit
+'it if necessary. If source type BCs are to be defined do not start'
+'the name with SRC_'
 '  '
-'If new source type boundary condition types have been '
-'defined to accomodate contaminant entering and leaving'
-'the CFD domain via airflow connections these are named'
-'in the pattern SRC_[contaminant #][airflow node #]'
+'If new source type boundary condition types have been defined to'
+'accomodate contaminant entering and leaving the CFD domain via'
+'airflow connections these are named according to the pattern'
+'SRC_[contaminant #][airflow node #]'
 '  '
+' option a attempts to infer boundary conditions by generating'
+'   boundary volumes matched with surfaces in the zone geometry.'
+'   Surface usage attributes should be defined in the zone geometry'
+'   before using this function.'
+'   This will work best if the gridding is strongly consistent with'
+'   zone geometry, and will only work for rectangular surfaces.
+'   Generally, surfaces with more than one child surfaces will not'
+'   be handled. The exception to this is if the parent is narrow,'
+'   for example a single parent surface could be used to frame a'
+'   strip of window surfaces. However this does depend on the local'
+'   grid resolution; a frame width of less than half a cells width'
+'   will usually be fine. Narrow frames like this will be ignored'
+'   In any case, both the parent and any children must still be'
+'   rectangular. You will be notified in the text feedback if the'
+'   function is unable to process any surface.'
+' '
 ' option + allows you to manage the boundary conditions list.'
 '   if you add a new boundary condition it can be:'
-'   * air flow opening (to mass flow)'
-'   * a solid surface (one of the zone surfaces)'
-'   * a source ?'
+'   * air flow opening'
+'   * a solid surface'
+'   * a source '
 '   * a blockage '
 '   if you ask to delete a boundary condition you are asked'
 '   to select form a list of volume names.'
-'  '
-'Boundary conditions facilities help messages are terse - we'
-'need volunteers to improve them...'
 *enditem
         CALL PHELPD('boundary conditions',9,'-',0,0,IER)
         CALL PHELPD('boundary conditions',5,'-',0,0,IER)
         call easkabc('Add/ delete a boundary condition?','  ','Add',
         call EASKATOG('Which type of boundary?','  ',
         call EPICKS(INDEL,IDEL,' ',' ',12,INVOL,NAMES,
+*subroutine GENCFDBC
+*item GENCFDBC cfdbc_infer_delete_existing
+'There are existing boundary condition definitions. New boundary'
+'conditions inferred from geometry might conflict with exisiting'
+'definitions, so it is recommended to delete existing ones before'
+'inferring new ones.'
+' '
+'A possible exception could be if existing boundary conditions are'
+'sources and/or blockages, which are currently not generated by'
+'this function.'
+*enditem
+
+*item GENCFDBC cfdbc_isitrectangular
+'This function can only deal with rectangular surfaces. The'
+'current surface (highlighted on the 3D model display) has'
+'more than 4 vertices; please confirm if it is rectangular.'
+'Surfaces with child surface(s) should be fine, so long as'
+'the outside edges of the parent and child are rectangular.'
+'Surfaces with more than one child will only be processed'
+'if the parent framing is narrow with respect to the local'
+'grid resolution (generally less than half a cells width).'
+' '
+'Note that selecting yes if this surface is not rectangular'
+'will result in incorrect boundary conditions.'
+*enditem
+
+*item GENCFDBC cfdbc_parentframing
+'The edges of the parent surface (highlighted in the 3D model'
+'display) and its child surface are close together. This'
+'suggests that the parent is a frame or something similar,'
+'which is relatively narrow. At least some parts of the frame'
+'are wide enough to be represented by a solid boundary'
+'condition.'
+' '
+'However, the solid boundary condition(s) created for the parent'
+'surface may not represent the surface well in terms of position'
+'and area due to the constraints of the grid resolution. On the'
+'other hand, if the parent surface is not represented with a'
+'solid boundary condition, the boundary condition for the child'
+'surface will be extended.'
+' '
+'You are being asked if you wish to represent the parent surface'
+'with solid boundary conditions. You can preview the boundary'
+'conditions that would be created either way before deciding.'
+'During the preview, look for how well the boundary conditions'
+'would represent the parent and child surfaces. If the grid'
+'resolution prevents both from being accurately represented, it'
+'may be better to ignore the parent and only represent the'
+'child.'
+*enditem
+
 *subroutine EDAIRO
 *item EDAIRO cfd_air_boundary
 'One boundary condition option for a CFD domain involves links'

@@ -283,7 +283,7 @@ C looping, creating infinite output. Stop the program.
       call pauses(1)
       STOP
 
-      END
+      END ! of EASKI
 
 C ******************** EASKR
 C EASKR is a facility for asking the user for an real which
@@ -517,7 +517,7 @@ C looping, creating infinite output. Stop the program.
       call pauses(1)
       STOP
 
-      END
+      END ! of EASKR
 
 C ******************** EASKE
 C EASKE is a facility for asking the user for an real number
@@ -1508,6 +1508,8 @@ C Must have input a character string.
         CMDACT=.FALSE.
         RETURN
       ELSE
+
+C Text mode.
         CALL USRMSG(PROMP1,PROMP2,'?')
         READ(IUIN,'(A72)',END=666)WORD
         A=WORD(1:1)
@@ -1678,6 +1680,8 @@ C Must have input a character string.
         CNCLACT=.FALSE.
         RETURN
       ELSE
+
+C Text mode.
         CALL USRMSG(PROMP1,PROMP2,'?')
         READ(IUIN,'(A72)',END=666)WORD
         A=WORD(1:1)
@@ -1878,6 +1882,8 @@ C Must have input a character string.
         ICACT=0
         RETURN
       ELSE
+
+C Text mode.
         CALL USRMSG(PROMP1,PROMP2,'?')
         READ(IUIN,'(A72)',END=666)WORD
         A=WORD(1:1)
@@ -2540,7 +2546,7 @@ C looping, creating infinite output. Stop the program.
       call pauses(1)
       STOP
 
-      END
+      END  ! of ASKOK
 
 C ******************** EASKATOG
 C EASKABCD Generic choice of 3 - 7 items returning 1 to 7 according to
@@ -2669,7 +2675,7 @@ C looping, creating infinite output. Stop the program.
       call pauses(1)
       STOP
 
-      END
+      END  ! of EASKATOG
 
 C+++++++++++++++++++++++++++++++++++++++++++++++++++++++
       SUBROUTINE EMPAGE(IPAG,IW,IEND)

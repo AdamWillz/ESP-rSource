@@ -1066,7 +1066,7 @@ C   cntdat(?,1..3) - supplementary data for containment ?.
       COMMON/gzonpik/izgfoc,nzg,nznog(mcom)
       COMMON/FILEP/IFIL
 
-      dimension ival(mpcom), cnttyp(4)
+      dimension ival(mpcom), cnttyp(6)
       character cnttyp*45,  head*19, emod*1, outs*124, h*72
 
 C Fill array with existing containment types.
@@ -1074,13 +1074,21 @@ C Fill array with existing containment types.
       cnttyp(2)='A plant component temperature.       '
       cnttyp(3)='Fixed temperature.                   '
       cnttyp(4)='Zone (air/surface/const) temperature.'
+      cnttyp(5)='Temporal data file (future)          '
+      cnttyp(6)='Ground temperature                   '
+
+      if(emod.eq.'E') then
+	ipcomp=icont
+      else
 
 C Let user select a component.
-      call usrmsg(
+      	call usrmsg(
      &'Which component does this containment apply to?',' ','-')
- 9    head=' Select component:'
-      CALL ASKPCMP(head,'-',IPCOMP,IER)
-      call usrmsg(' ',' ','-')
+ 9    	head=' Select component:'
+      	CALL ASKPCMP(head,'-',IPCOMP,IER)
+      	call usrmsg(' ',' ','-')
+      endif
+
       if (ipcomp.eq.0)  return
       if(ipcomp.gt.0) then
          ipcct=ipcomp
@@ -1103,7 +1111,7 @@ C containment specified.
 
 C Let user select containment type.
   107    itm=1
-         ncontyp=4
+         ncontyp=6
          call epicks(itm,ival,' ',
      &    ' Select containment type: ',45,ncontyp,cnttyp,
      &    ' Containments types',ier,0)
@@ -1213,6 +1221,10 @@ C General image option flags.
                 cntdt3=float(IND)
               ENDIF
             ENDIF
+	 elseif(indctt.eq.5) then
+	   cntdt1=1.0
+           cntdt2=0.0
+           cntdt3=0.0
          endif
 
 C Now assign containment data and increment
@@ -1536,10 +1548,11 @@ C Common for new format component database
 
 C Temporary arrays to hold 'grouped components.
       character*70 wchdesc(maxpc),ahudesc(maxpc),ppdesc(maxpc),
-     &othdesc(maxpc),tmpdesc(maxpc)
+     &othdesc(maxpc),tmpdesc(maxpc),hndesc(maxpc)
       character*80 pcdesc
       dimension ival(mpcom),item(7),iloc(3)
       dimension ndbahu(maxpc),ndbwch(maxpc),ndbpp(maxpc),ndboth(maxpc)
+      dimension ndbhn(maxpc)
       CHARACTER H*72, item*28, head*28
       integer nitms,ino ! max items and current menu item
       Logical editable
@@ -1572,6 +1585,7 @@ C Fill the subarrays with relevant component descriptions.
       nwch=0
       npp=0
       noth=0
+      nhn=0
       do 10 i=1,NPCDB
         if(icode(i).gt.0.and.icode(i).lt.200) then
            nahu=nahu+1
@@ -1585,10 +1599,14 @@ C Fill the subarrays with relevant component descriptions.
            npp=npp+1
            ndbpp(npp)=i
            ppdesc(npp)=pcdesc(i)(1:70)
-        elseif(icode(i).ge.700) then
+        elseif(icode(i).ge.700.and.icode(i).lt.1340) then
            noth=noth+1
            ndboth(noth)=i
            othdesc(noth)=pcdesc(i)(1:70)
+        elseif(icode(i).ge.1340) then
+           nhn=nhn+1
+           ndbhn(nhn)=i
+           hndesc(nhn)=pcdesc(i)(1:70)
         endif
   10  continue
 
@@ -1598,22 +1616,23 @@ C Top level menu displaying component categories.
       h(3)='on the desired categories and select the components '
       h(4)='required for the plant network. '
       ino=-1
-      nitms=7
+      nitms=8
       head='Component type'
       item(1)='a air conditioning      '
       item(2)='b wet central heating   '
       item(3)='c primitive part        '
       item(4)='d solar and others      '
-      item(5)='--------------------    '
-      item(6)='? Help                  '
-      item(7)='- Exit                  '
+      item(5)='e heat network          '
+      item(6)='--------------------    '
+      item(7)='? Help                  '
+      item(8)='- Exit                  '
 
       call emenu(head,item,nitms,ino)
 
-      if(ino.eq.6) then
+      if(ino.eq.7) then
         call phelpd('class help',4,'-',0,0,IER)
         goto 2
-      elseif(ino.ge.1.and.ino.le.4) then
+      elseif(ino.ge.1.and.ino.le.5) then
         if(ino.eq.1) then
           ncmp=nahu
           do 101 i1=1,nahu 
@@ -1634,6 +1653,11 @@ C Top level menu displaying component categories.
           do 104 i4=1,noth 
             tmpdesc(i4)=othdesc(i4)
   104     continue
+        elseif(ino.eq.5) then
+          ncmp=nhn
+          do 105 i5=1,nhn 
+            tmpdesc(i5)=hndesc(i5)
+  105     continue
         endif
 
         IX=1
@@ -1665,12 +1689,15 @@ C Translate ival(1) to the correct database value
           elseif(ino.eq.4) then
             isel=ival(1)
             ival(1)=ndboth(isel)
+          elseif(ino.eq.5) then
+            isel=ival(1)
+            ival(1)=ndbhn(isel)
           endif
         endif
 
 C debug ....
         if(ier.ne.0) return
-      elseif(ino.eq.7) then
+      elseif(ino.eq.8) then
         ix=0
         return
       endif

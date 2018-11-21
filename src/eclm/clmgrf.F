@@ -176,16 +176,22 @@ C Setup and pass in parameters to win3d.
               iigl=igl;iigr=igr;iigt=igt;iigb=igb;iigw=igw;iigwh=igwh
               CALL win3d(iimenu,iiw1,iiw2,iiw3,iiw4,
      &          iigl,iigr,iigt,iigb,iigw,iigwh)
+              call opencpw
+              call opensetup
             elseif(onleft.eq.1)then
               iiw1=6; iiw2=20; iiw3=6; iiw4=3; iimenu=menuchw
               iigl=igl;iigr=igr;iigt=igt;iigb=igb;iigw=igw;iigwh=igwh
               CALL win3d(iimenu,iiw1,iiw2,iiw3,iiw4,
      &          iigl,iigr,iigt,iigb,iigw,iigwh)
+              call opencpw
+              call opensetup
             elseif(onleft.eq.0)then
               iiw1=3; iiw2=20; iiw3=6; iiw4=3; iimenu=menuchw
               iigl=igl;iigr=igr;iigt=igt;iigb=igb;iigw=igw;iigwh=igwh
               CALL win3d(iimenu,iiw1,iiw2,iiw3,iiw4,
      &          iigl,iigr,iigt,iigb,iigw,iigwh)
+              call opencpw
+              call opensetup
             endif
             igl=int(iigl); igr=int(iigr); igt=int(iigt); igb=int(iigb)
             igw=int(iigw); igwh=int(iigwh)
@@ -195,16 +201,22 @@ C Setup and pass in parameters to win3d.
               iigl=igl;iigr=igr;iigt=igt;iigb=igb;iigw=igw;iigwh=igwh
               CALL win3d(iimenu,iiw1,iiw2,iiw3,iiw4,
      &          iigl,iigr,iigt,iigb,iigw,iigwh)
+              call opencpw
+              call opensetup
             elseif(onleft.eq.1)then
               iiw1=6; iiw2=16; iiw3=6; iiw4=3; iimenu=menuchw
               iigl=igl;iigr=igr;iigt=igt;iigb=igb;iigw=igw;iigwh=igwh
               CALL win3d(iimenu,iiw1,iiw2,iiw3,iiw4,
      &          iigl,iigr,iigt,iigb,iigw,iigwh)
+              call opencpw
+              call opensetup
             elseif(onleft.eq.0)then
               iiw1=3; iiw2=16; iiw3=6; iiw4=3; iimenu=menuchw
               iigl=igl;iigr=igr;iigt=igt;iigb=igb;iigw=igw;iigwh=igwh
               CALL win3d(iimenu,iiw1,iiw2,iiw3,iiw4,
      &          iigl,iigr,iigt,iigb,iigw,iigwh)
+              call opencpw
+              call opensetup
             endif
             igl=int(iigl); igr=int(iigr); igt=int(iigt); igb=int(iigb)
             igw=int(iigw); igwh=int(iigwh)
@@ -214,16 +226,22 @@ C Setup and pass in parameters to win3d.
               iigl=igl;iigr=igr;iigt=igt;iigb=igb;iigw=igw;iigwh=igwh
               CALL win3d(iimenu,iiw1,iiw2,iiw3,iiw4,
      &          iigl,iigr,iigt,iigb,iigw,iigwh)
+              call opencpw
+              call opensetup
             elseif(onleft.eq.1)then
               iiw1=6; iiw2=12; iiw3=6; iiw4=3; iimenu=menuchw
               iigl=igl;iigr=igr;iigt=igt;iigb=igb;iigw=igw;iigwh=igwh
               CALL win3d(iimenu,iiw1,iiw2,iiw3,iiw4,
      &          iigl,iigr,iigt,iigb,iigw,iigwh)
+              call opencpw
+              call opensetup
             elseif(onleft.eq.0)then
               iiw1=3; iiw2=12; iiw3=6; iiw4=3; iimenu=menuchw
               iigl=igl;iigr=igr;iigt=igt;iigb=igb;iigw=igw;iigwh=igwh
               CALL win3d(iimenu,iiw1,iiw2,iiw3,iiw4,
      &          iigl,iigr,iigt,iigb,iigw,iigwh)
+              call opencpw
+              call opensetup
             endif
             igl=int(iigl); igr=int(iigr); igt=int(iigt); igb=int(iigb)
             igw=int(iigw); igwh=int(iigwh)
@@ -233,16 +251,22 @@ C Setup and pass in parameters to win3d.
               iigl=igl;iigr=igr;iigt=igt;iigb=igb;iigw=igw;iigwh=igwh
               CALL win3d(iimenu,iiw1,iiw2,iiw3,iiw4,
      &          iigl,iigr,iigt,iigb,iigw,iigwh)
+              call opencpw
+              call opensetup
             elseif(onleft.eq.1)then
               iiw1=6; iiw2=6; iiw3=6; iiw4=3; iimenu=menuchw
               iigl=igl;iigr=igr;iigt=igt;iigb=igb;iigw=igw;iigwh=igwh
               CALL win3d(iimenu,iiw1,iiw2,iiw3,iiw4,
      &          iigl,iigr,iigt,iigb,iigw,iigwh)
+              call opencpw
+              call opensetup
             elseif(onleft.eq.0)then
               iiw1=3; iiw2=6; iiw3=6; iiw4=3; iimenu=menuchw
               iigl=igl;iigr=igr;iigt=igt;iigb=igb;iigw=igw;iigwh=igwh
               CALL win3d(iimenu,iiw1,iiw2,iiw3,iiw4,
      &          iigl,iigr,iigt,iigb,iigw,iigwh)
+              call opencpw
+              call opensetup
             endif
             igl=int(iigl); igr=int(iigr); igt=int(iigt); igb=int(iigb)
             igw=int(iigw); igwh=int(iigwh)
@@ -251,8 +275,16 @@ C Setup and pass in parameters to win3d.
           call startbuffer()
 
 C Debug.
-C          write(6,*)'clmgrf igl igr igt igb igw igwh',igl,igr,igt,
-C     &      igb,igw,igwh
+C          write(6,'(a,6i5)')'clmgrf igl igr igt igb igw igwh',
+C     &      igl,igr,igt,igb,igw,igwh
+          DO I=1,6
+            igwid=igw
+            igheight=igwh
+            call axiscale(igwid,igheight,TMIN,TMAX,YMIN(I),YMAX(I),
+     &        XSC,bysc,sca,Xadd,addY)
+            YSC(I)=bysc
+            Yadd(I)=addY
+          ENDDO
 
           mxmn=.TRUE.
           CALL CLMDRW(IPICK,mxmn,onleft,onright,'-')
@@ -301,14 +333,14 @@ C Second set of axis.
         CALL EGETWR(HOLD,K,YMAX(6),0.,0.,'-','rh mx',IER)
         CALL EGETWR(HOLD,K,YMIN(6),0.,0.,'-','rh mn',IER)
         if(ier.ne.0)goto 43
-        DO 70 I=1,6
+        DO I=1,6
           igwid=igw
           igheight=igwh
           call axiscale(igwid,igheight,TMIN,TMAX,YMIN(I),YMAX(I),
      &      XSC,bysc,sca,Xadd,addY)
           YSC(I)=bysc
           Yadd(I)=addY
-  70    CONTINUE
+        ENDDO
         mxmn=.FALSE.
         CALL CLMDRW(IPICK,mxmn,onleft,onright,'-')
         goto 6
@@ -356,16 +388,22 @@ C Take into account which axis needed to be drawn as in esrures/tgraph.F
             iigl=igl;iigr=igr;iigt=igt;iigb=igb;iigw=igw;iigwh=igwh
             CALL win3d(iimenu,iiw1,iiw2,iiw3,iiw4,
      &        iigl,iigr,iigt,iigb,iigw,iigwh)
+            call opencpw
+            call opensetup
           elseif(onleft.eq.1)then
             iiw1=6; iiw2=20; iiw3=6; iiw4=3; iimenu=menuchw
             iigl=igl;iigr=igr;iigt=igt;iigb=igb;iigw=igw;iigwh=igwh
             CALL win3d(iimenu,iiw1,iiw2,iiw3,iiw4,
      &        iigl,iigr,iigt,iigb,iigw,iigwh)
+            call opencpw
+            call opensetup
           elseif(onleft.eq.0)then
             iiw1=3; iiw2=20; iiw3=6; iiw4=3; iimenu=menuchw
             iigl=igl;iigr=igr;iigt=igt;iigb=igb;iigw=igw;iigwh=igwh
             CALL win3d(iimenu,iiw1,iiw2,iiw3,iiw4,
      &        iigl,iigr,iigt,iigb,iigw,iigwh)
+            call opencpw
+            call opensetup
           endif
           igl=int(iigl); igr=int(iigr); igt=int(iigt); igb=int(iigb)
           igw=int(iigw); igwh=int(iigwh)
@@ -375,16 +413,22 @@ C Take into account which axis needed to be drawn as in esrures/tgraph.F
             iigl=igl;iigr=igr;iigt=igt;iigb=igb;iigw=igw;iigwh=igwh
             CALL win3d(iimenu,iiw1,iiw2,iiw3,iiw4,
      &        iigl,iigr,iigt,iigb,iigw,iigwh)
+            call opencpw
+            call opensetup
           elseif(onleft.eq.1)then
             iiw1=6; iiw2=16; iiw3=6; iiw4=3; iimenu=menuchw
             iigl=igl;iigr=igr;iigt=igt;iigb=igb;iigw=igw;iigwh=igwh
             CALL win3d(iimenu,iiw1,iiw2,iiw3,iiw4,
      &        iigl,iigr,iigt,iigb,iigw,iigwh)
+            call opencpw
+            call opensetup
           elseif(onleft.eq.0)then
             iiw1=3; iiw2=16; iiw3=6; iiw4=3; iimenu=menuchw
             iigl=igl;iigr=igr;iigt=igt;iigb=igb;iigw=igw;iigwh=igwh
             CALL win3d(iimenu,iiw1,iiw2,iiw3,iiw4,
      &        iigl,iigr,iigt,iigb,iigw,iigwh)
+            call opencpw
+            call opensetup
           endif
           igl=int(iigl); igr=int(iigr); igt=int(iigt); igb=int(iigb)
           igw=int(iigw); igwh=int(iigwh)
@@ -394,16 +438,22 @@ C Take into account which axis needed to be drawn as in esrures/tgraph.F
             iigl=igl;iigr=igr;iigt=igt;iigb=igb;iigw=igw;iigwh=igwh
             CALL win3d(iimenu,iiw1,iiw2,iiw3,iiw4,
      &        iigl,iigr,iigt,iigb,iigw,iigwh)
+            call opencpw
+            call opensetup
           elseif(onleft.eq.1)then
             iiw1=6; iiw2=12; iiw3=6; iiw4=3; iimenu=menuchw
             iigl=igl;iigr=igr;iigt=igt;iigb=igb;iigw=igw;iigwh=igwh
             CALL win3d(iimenu,iiw1,iiw2,iiw3,iiw4,
      &        iigl,iigr,iigt,iigb,iigw,iigwh)
+            call opencpw
+            call opensetup
           elseif(onleft.eq.0)then
             iiw1=3; iiw2=12; iiw3=6; iiw4=3; iimenu=menuchw
             iigl=igl;iigr=igr;iigt=igt;iigb=igb;iigw=igw;iigwh=igwh
             CALL win3d(iimenu,iiw1,iiw2,iiw3,iiw4,
      &        iigl,iigr,iigt,iigb,iigw,iigwh)
+            call opencpw
+            call opensetup
           endif
           igl=int(iigl); igr=int(iigr); igt=int(iigt); igb=int(iigb)
           igw=int(iigw); igwh=int(iigwh)
@@ -413,16 +463,22 @@ C Take into account which axis needed to be drawn as in esrures/tgraph.F
             iigl=igl;iigr=igr;iigt=igt;iigb=igb;iigw=igw;iigwh=igwh
             CALL win3d(iimenu,iiw1,iiw2,iiw3,iiw4,
      &        iigl,iigr,iigt,iigb,iigw,iigwh)
+            call opencpw
+            call opensetup
           elseif(onleft.eq.1)then
             iiw1=6; iiw2=6; iiw3=6; iiw4=3; iimenu=menuchw
             iigl=igl;iigr=igr;iigt=igt;iigb=igb;iigw=igw;iigwh=igwh
             CALL win3d(iimenu,iiw1,iiw2,iiw3,iiw4,
      &        iigl,iigr,iigt,iigb,iigw,iigwh)
+            call opencpw
+            call opensetup
           elseif(onleft.eq.0)then
             iiw1=3; iiw2=6; iiw3=6; iiw4=3; iimenu=menuchw
             iigl=igl;iigr=igr;iigt=igt;iigb=igb;iigw=igw;iigwh=igwh
             CALL win3d(iimenu,iiw1,iiw2,iiw3,iiw4,
      &        iigl,iigr,iigt,iigb,iigw,iigwh)
+            call opencpw
+            call opensetup
           endif
           igl=int(iigl); igr=int(iigr); igt=int(iigt); igb=int(iigb)
           igw=int(iigw); igwh=int(iigwh)
@@ -431,7 +487,18 @@ C Take into account which axis needed to be drawn as in esrures/tgraph.F
         call startbuffer()
 
 C Debug.
-C        write(6,*)'igl igr igt igb igw igwh ',igl,igr,igt,igb,igw,igwh
+C        write(6,'(a,6i5)')'igl igr igt igb igw igwh ',
+C     &    igl,igr,igt,igb,igw,igwh
+
+C Update the scale to reflect changes in window size etc.
+        DO I=1,6
+          igwid=igw
+          igheight=igwh
+          call axiscale(igwid,igheight,TMIN,TMAX,YMIN(I),YMAX(I),
+     &      XSC,bysc,sca,Xadd,addY)
+          YSC(I)=bysc
+          Yadd(I)=addY
+        ENDDO
 
         mxmn=.FALSE.
         CALL CLMDRW(IPICK,mxmn,onleft,onright,'-')
@@ -972,7 +1039,8 @@ C DRAW TIME AXIS
 C Pick up the data increment for the horizontal axis.
 
 C Debug.
-C      write(6,*)'dcaxes igl igr igt igb igw igwh onleft onright ',
+C      write(6,'(a,8i5,2a)')
+C     &  'dcaxes igl igr igt igb igw igwh onleft onright ',
 C     &  igl,igr,igt,igb,igw,igwh,onleft,onright,' ',acthor
 
       call dintervalf(TMIN,TMAX,DT,NDEC,1)
@@ -1312,6 +1380,7 @@ C If solar or wind direction is the other then use the +50 slot.
           endif
         endif
   50  CONTINUE
+      call usrmsg(' ',' ','-') ! force redraw of the dialog box
       RETURN
       END
 

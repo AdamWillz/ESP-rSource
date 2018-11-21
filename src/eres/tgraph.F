@@ -973,9 +973,7 @@ C Cast values back depending on machine type.
         WRITE(ETEXT,'(4A)')'Lib: ',RFILE(1:lsn1),
      &    ': ',RSNAME(ISIM)(1:lnblnk(RSNAME(ISIM)))
       endif
-      iside=1
-      isize=0
-      ifont=1
+      iside=1; isize=0; ifont=1
       call viewtext(etext,iside,isize,ifont)
 
       WRITE(ETEXT,'(3A)')PDESCR(1:lnblnk(PDESCR)),' ',
@@ -1016,15 +1014,11 @@ C Remember if a 4th line of text is being drawn.
       if(graftitle(1:2).ne.'  ')then
         t64=graftitle
         if(iancline.gt.0)then
-          iside=5
-          isize=1
-          ifont=2
+          iside=5; isize=1; ifont=2
           call viewtext(t64,iside,isize,ifont)
         endif
         if(iancline.eq.0)then
-          iside=4
-          isize=1
-          ifont=2
+          iside=4; isize=1; ifont=2
           call viewtext(t64,iside,isize,ifont)
         endif
       endif

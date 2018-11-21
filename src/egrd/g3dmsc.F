@@ -92,6 +92,7 @@ C         9             p           p-th edg-crn
 C        10             0           ground
 C        11             q           q-th ground cross section
 C        12             r           r-th ground boundary surface
+C        -1            -1           used saved values in common grdgrph
 C *********************************************************************
       SUBROUTINE GRAAPH(IDRW1,IDRW2)
 #include "building.h"
@@ -102,6 +103,13 @@ C *********************************************************************
       integer ncomp,ncon
       COMMON/C1/NCOMP,NCON
       COMMON/gzonpik/izgfoc,nzg,nznog(mcom)
+      COMMON/grdgrph/IIDRW1,IIDRW2
+
+      if (IDRW1.eq.-1 .and. IDRW2.eq.-1) then
+        IDRW1=IIDRW1; IDRW2=IIDRW2
+      else
+        IIDRW1=IDRW1; IIDRW2=IDRW2
+      endif
 
       IF(MMOD.NE.8)RETURN
       IF(IDRW1.EQ.1)THEN
@@ -115,7 +123,7 @@ C *********************************************************************
   10    CONTINUE
         CALL INLNST(1)
         izgfoc=0
-        CALL redraw(IER)
+        CALL ADJVIEW(IER)
       ELSEIF(IDRW1.EQ.2)THEN
         CALL startbuffer()
         MODIFYVIEW=.TRUE.
@@ -125,7 +133,7 @@ C *********************************************************************
         nznog(1)=IDRW2
         izgfoc=IDRW2
         CALL INLNST(1)
-        CALL redraw(IER)
+        CALL ADJVIEW(IER)
       ELSEIF(IDRW1.EQ.3)THEN
         CALL DRWSRF(IDRW2)
       ELSEIF(IDRW1.EQ.4)THEN
@@ -133,6 +141,7 @@ C *********************************************************************
       ELSEIF(IDRW1.EQ.5)THEN
         CALL DRWCRN(IDRW2)
       ELSEIF(IDRW1.EQ.10)THEN
+        MODLEN=.TRUE.
         CALL DRWGND
       ELSEIF(IDRW1.EQ.11)THEN
         CALL FHCGND(IDRW2)
@@ -373,7 +382,7 @@ C ASCII  --> Binary ( connection file ).
         ENDIF
         IREC=IREC+1
         IF(IREC.NE.IC)THEN
-          WRITE(MSG,'(2A,I8)')' WARNING: wronge connection number ',
+          WRITE(MSG,'(2A,I8)')' WARNING: wrong connection number ',
      &                        'at line:',IREC+1
           CALL EDISP(IUOUT,MSG)
         ENDIF
@@ -430,7 +439,7 @@ C ASCII  --> Binary ( nodes temperature ).
         ENDIF
         IREC=IREC+1
         IF(IREC.NE.IND)THEN
-          WRITE(MSG,'(A,I8)')'wronge node number at line:',IREC+1
+          WRITE(MSG,'(A,I8)')'wrong node number at line:',IREC+1
           CALL EDISP(IUOUT,MSG)
           CALL ERPFREE(IU1,ISTAT)
           CALL ERPFREE(IU2,ISTAT)

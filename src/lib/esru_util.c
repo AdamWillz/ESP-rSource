@@ -174,7 +174,8 @@ void getfilelist_(folder,act,flist,nwflist,nflist,lenfolder,lenact,lenflist)
 	`dbb` binary database or climate file,
 	`xbm` X bitmaps, `gif` gif image files.
         `ipv` IPV definition file, `rep` IPV report file
-        `qac` QA contents file, `zip` cflo3 zip (geometry) file.
+        `qac` QA contents file, `zip` cflo3 zip (geometry) file
+        `jsn` .json files
     NOTE: the size of the 1st array index in char file_list must be edited to be
     the same as the parameter MFFOLD in include/espriou.h
  */
@@ -318,6 +319,8 @@ void getfilelist_(folder,act,flist,nwflist,nflist,lenfolder,lenact,lenflist)
         if (strstr(dirt->d_name,".rep")) foundone = 1;
       } else if(strcmp("qac",act2)== 0) { /* If request for QA contents only, then build this list. */
         if (strstr(dirt->d_name,".contents")) foundone = 1;
+      } else if(strcmp("jsn",act2)== 0) { /* If request for .json files, then build this list. */
+        if (strstr(dirt->d_name,".json")) foundone = 1;
       } else if(strcmp("zip",act2)== 0) { /* If request for Zip or cflo3, then build this list. */
         if (strstr(dirt->d_name,".zip")) foundone = 1;
 /* debug   fprintf(stderr,"%s is a zip file\n", dirt->d_name); */
@@ -376,6 +379,7 @@ void getfileslist_(folder,act,nflist,lenfolder,lenact)
 	`xbm` X bitmaps, `gif` gif image files.
         `ipv` IPV definition file, `rep` IPV report file
         `qac` QA contents file, `zip` cflo3 zip (geometry) file.
+        `jsn` .json files
  */
 
   long int *nflist;	/* number of folders or file names */
@@ -507,6 +511,8 @@ void getfileslist_(folder,act,nflist,lenfolder,lenact)
         if (strstr(dirt->d_name,".rep")) foundone = 1;
       } else if(strcmp("qac",act2)== 0) { /* If request for QA contents only, then build this list. */
         if (strstr(dirt->d_name,".contents")) foundone = 1;
+      } else if(strcmp("jsn",act2)== 0) { /* If request for .json files, then build this list. */
+        if (strstr(dirt->d_name,".json")) foundone = 1;
       } else if(strcmp("zip",act2)== 0) { /* If request for Zip or cflo3, then build this list. */
         if (strstr(dirt->d_name,".zip")) foundone = 1;
 /* debug   fprintf(stderr,"%s is a zip file\n", dirt->d_name); */

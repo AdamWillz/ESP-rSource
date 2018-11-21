@@ -1613,7 +1613,7 @@ do
      ecnv)   result="${SRCdir}/cnv/ecnv${EXE}"      ;;
      enet)    result="${SRCdir}/net/enet${EXE}"      ;;
      vew)    result="${SRCdir}/evew/viewer${EXE}"      ;;
-     bpsdll) result="${SRCdir}/bps/bps.dll"   ;;
+     bpsdll) result="${SRCdir}/ebps/bps.dll"   ;;
      harmonizer) result="${SRCdir}/harmonizer/harmonizer.exe"   ;;
      harmonizerdll) result="${SRCdir}/harmonizer/harmonizer.dll"   ;;
      *)      result="${SRCdir}/e${target}/$target${EXE}"   ;;

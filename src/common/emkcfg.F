@@ -89,6 +89,7 @@ C ICLIM,LCLIM (for climate file)
 C Plant network.
       COMMON/C23/IFPNF,LPNF
       INTEGER :: ifpnf
+      COMMON/C23a/BPF
 
 C Configuration control.
       common/cctlnm/ctldoc,lctlf
@@ -302,7 +303,11 @@ C Calendar commons.
 C iSlr_half_hr_flg value = 0 :hour-centered; =1 : half-hour centered.
       common/CWEC_SOL/iSlr_half_hr_flg
       integer iSlr_half_hr_flg     
-
+      
+      common/EVCOOL/iflgevapC(mcom) !only modifies wet bulb temp (more precisely: the indoor air humidity ratio)
+      integer iflgevapC             ! when equals 1, it makes the indoor wet bulb temp = outdoor wet bulb temperature
+      integer ii
+      
 C When iexcludediff_flag is 1, diffuse shading is excluded. 
 C If 0 then the calculation includes diffuse shading.      
       integer iexcludediff_flag
@@ -323,6 +328,7 @@ C Zone fluid.
       CHARACTER LAPROB*72
       CHARACTER CXSTR*78
       CHARACTER LPNF*72
+      CHARACTER*72 BPF
       CHARACTER*72 L3DCVS,L3DCNC,L3DNDC,L3DTAQ,LMOIST,LGrdSt
       CHARACTER ctldoc*248,LCTLF*72,H*72
       CHARACTER spflnam*72
@@ -782,6 +788,14 @@ C Solar radiation (half hour data) flag.
         WRITE(IFCFG,'(A,i2,A)',IOSTAT=IOS,ERR=2) '*slr_half_hr  ',
      &    iSlr_half_hr_flg,'  # solar timing half-hour centred'
       endif
+
+C Twb_out=Twb_in flag for direct evaporative cooling.
+      do 888 ii = 1,ncomp      
+        if(iflgevapC(ii).eq.1)then
+          WRITE(IFCFG,'(A,i2,i3,A)',IOSTAT=IOS,ERR=2) '*Twb_evCool  ',
+     &      iflgevapC(ii),ii,'  # Twb Out = Twb in'
+        endif
+ 888  continue
 
 C Diffuse shading flag.
       if(iexcludediff_flag.eq.1)then
@@ -1570,6 +1584,10 @@ C Plant network information - plant file and model name (if plant only).
         WRITE(IFCFG,'(a)',IOSTAT=IOS,ERR=2) '* Plant'
         WRITE(IFCFG,'(2a)',IOSTAT=IOS,ERR=2)LPNF(1:lnblnk(LPNF)),
      &    '  # plant network description'
+        if(BPF(1:3).EQ.'../')then
+          WRITE(IFCFG,'(a)',IOSTAT=IOS,ERR=2) '* Boundary'
+          WRITE(IFCFG,'(a)',IOSTAT=IOS,ERR=2)BPF
+        endif
         if(INDCFG.EQ.2)then
           WRITE(IFCFG,'(a)',IOSTAT=IOS,ERR=2) 
      &      modeltitle(1:lnblnk(modeltitle))

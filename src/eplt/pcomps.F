@@ -91,7 +91,8 @@ C      CMP70S   1 node (ISV=20) Flat plate solar collector (type1)
 C      CMP71S   1 node (ISV=20) Solar collector "segment"
 C      CMP72S   1 node (ISV=20) Water storage tank layer
 C      CMP73S   3 node (ISV=20) WCH 3-port valve
-C      CMP74S   1 node (ISV=20) WCH automatic control valve
+C      CMP74S   1 node (ISV=20) WCH 3-port valve w/ automatic control
+C                               valve (EXPERIMENTAL)
 C      CMP79S   1 node (ISV=20) WCH stochastic hot water draw
 C      CMP90S   2 node (ISV>19)     air & water temperature source
 C      CMP91S   2 node (ISV>19)     imaginary building-like plant load
@@ -112,6 +113,15 @@ C      simple_solar_coll_static 1 node (ISV=20) simple solar collector
 C      NCHE_static_template 2 node (ISV=20) natural convection heat exchanger (NCHE)
 C      stratified_tank_1HX_static 2 node (ISV=20) stratified tank with one immersed coil
 C      stratified_tank_2HX_static 3 node (ISV=20) stratified tank with two immersed coil
+C
+C      cmp134s 1 node (ISV=20) Heating or Cooling Load
+C      cmp135s 3 node (ISV=20) Shell Boiler / Water Heater
+C      cmp136s 4 node (ISV=20) Buried DH Water Pipe w/ adjacent pipe
+C      cmp137s 1 node (ISV=20) Massless Converging Junction
+C      cmp138s 3 node (ISV=20) Water 3-port diverter with flow balancing
+C      cmp139s 3 node (ISV=20) Flow Branch Water Diverter Junction - Relative Flow 
+C      cmp140s 3 node (ISV=20) Water 3-port Diverter Valve - Relative Flow
+C      cmp141s 2 node (ISV=20) Massless Diverter Valve
 
 C ******************** MZSDAT ********************
 
@@ -401,6 +411,29 @@ C Air-based receiving coupling component (HCC-R) for co-simulation with TRNSYS.
       ELSE IF (ITYPE .EQ. 133) THEN
          CALL TCC_static(IPCOMP, ACC_R, ACC, .false.)
          ACC_R = ACC_R+1
+
+      ELSE IF(ITYPE.EQ.134) THEN
+         CALL CMP134S(IPCOMP)
+      ELSE IF(ITYPE.EQ.135) THEN
+         CALL CMP135S(IPCOMP)
+      ELSE IF(ITYPE.EQ.136) THEN
+         CALL CMP136S(IPCOMP)
+      ELSE IF(ITYPE.EQ.137) THEN
+         CALL CMP137S(IPCOMP)
+      ELSE IF(ITYPE.EQ.138) THEN
+         CALL CMP138S(IPCOMP)
+      ELSE IF(ITYPE.EQ.139) THEN
+         CALL CMP139S(IPCOMP)
+      ELSE IF(ITYPE.EQ.140) THEN
+         CALL CMP140S(IPCOMP)
+      ELSE IF(ITYPE.EQ.141) THEN
+         CALL CMP141S(IPCOMP)
+C 2-node stratified storage tank model
+      ELSE IF(ITYPE.EQ.142) THEN
+         CALL stratified_tank_byp_static(IPCOMP)
+      ELSE IF(ITYPE.EQ.143) THEN
+         CALL CMP143S(IPCOMP)
+
       ELSE
         WRITE(IUOUT,*) ' No static template for component ',IPCOMP,ITYPE
         STOP ' MZSDAT: unresolvable error on component type'
@@ -661,7 +694,7 @@ C
 C Trace output
       IF(ITC.GT.0.AND.ITRACE(35).NE.0) THEN
          WRITE(ITU,*) ' Component ',IPCOMP,' pre-simulation data for a:'
-         WRITE(ITU,*) ' 1 node (ISV=21) AC  cooling coil & ',
+         WRITE(ITU,*) ' 1 node (ISV=21) AC  cooling coil and',
      &                ' water mass flow rate control'
          NITMS=3
          WRITE(ITU,*) ' ADATA ',(ADATA(IPCOMP,J),J=1,NITMS)
@@ -1000,7 +1033,7 @@ C Establish static data derivable from the data read from database
 C Trace output
       IF(ITC.GT.0.AND.ITRACE(35).NE.0) THEN
          WRITE(ITU,*) ' Component ',IPCOMP,' pre-simulation data for a:'
-         WRITE(ITU,*) ' 1 node (ISV=21) AC  cooling coil & ',
+         WRITE(ITU,*) ' 1 node (ISV=21) AC  cooling coil and',
      &                ' water mass flow rate control'
          NITMS=3
          WRITE(ITU,*) ' ADATA ',(ADATA(IPCOMP,J),J=1,NITMS)
@@ -1077,7 +1110,7 @@ C
 C Trace output
       IF(ITC.GT.0.AND.ITRACE(35).NE.0) THEN
          WRITE(ITU,*) ' Component ',IPCOMP,' pre-simulation data for a:'
-         WRITE(ITU,*) ' 1 node (ISV=21) AC  cooling coil & ',
+         WRITE(ITU,*) ' 1 node (ISV=21) AC  cooling coil and',
      &                ' water mass flow rate control'
          NITMS=3
          WRITE(ITU,*) ' ADATA ',(ADATA(IPCOMP,J),J=1,NITMS)
@@ -2236,7 +2269,7 @@ C
 C Trace output
       IF(ITC.GT.0.AND.ITRACE(35).NE.0) THEN
          WRITE(ITU,*) ' Component ',IPCOMP,' pre-simulation data for a:'
-         WRITE(ITU,*) ' 1 node (ISV=20) Water cooler & ',
+         WRITE(ITU,*) ' 1 node (ISV=20) Water cooler and',
      &                ' flux control'
          NITMS=3
          WRITE(ITU,*) ' ADATA ',(ADATA(IPCOMP,J),J=1,NITMS)
@@ -3628,7 +3661,7 @@ C Temp compensation gradient (-)
 C Trace output
       IF(ITC.GT.0.AND.ITRACE(35).NE.0) THEN
          WRITE(ITU,*) ' Component ',IPCOMP,' pre-simulation data for a:'
-         WRITE(ITU,*) ' 1 node (ISV=20) WCH air-source heat pump '
+         WRITE(ITU,*) ' 1 node (ISV=20) WCH heat rejection device'
          NITMS=3
          WRITE(ITU,*) ' ADATA ',(ADATA(IPCOMP,J),J=1,NITMS)
          NITMS=33
@@ -3995,16 +4028,16 @@ C Trace output
         WRITE(ITU,*) ' ADATA ',(ADATA(IPCOMP,J),J=1,NITMS)
         NITMS=30
         WRITE(ITU,*) ' BDATA ',(BDATA(IPCOMP,J),J=1,NITMS)
-        NITMS=2
+        NITMS=3
         WRITE(ITU,*) ' CDATA ',(CDATA(IPCOMP,J),J=1,NITMS)
         IF(ITU.EQ.IUOUT) THEN
            IX1=(IPCOMP/5)*5
            IF(IX1.EQ.IPCOMP.OR.IPCOMP.EQ.NPCOMP) call epagew
         ENDIF
       ENDIF
-C
+
 C Check user specified number of controlled variables
-      NCITM=1
+      NCITM=3
       IF(NCI(IPCOMP).NE.NCITM)
      &   WRITE(ITU,*) ' CMP47S warning: user specified wrong number',
      &                ' of controlled variables'
@@ -4219,7 +4252,7 @@ C Temp compensation gradient (-)
       TempCompc0=BDATA(IPCOMP,24)
 
 C Is a lock out time defined?
-      BLKOUT=BDATA(IPCOMP,25)*60.
+      BLKOUT=BDATA(IPCOMP,28)*60.
 
       if (BLKOUT.gt.0.) then
         bBLKOUT=.true.
@@ -4255,16 +4288,16 @@ C Trace output
          WRITE(ITU,*) ' ADATA ',(ADATA(IPCOMP,J),J=1,NITMS)
          NITMS=31
          WRITE(ITU,*) ' BDATA ',(BDATA(IPCOMP,J),J=1,NITMS)
-         NITMS=1
+         NITMS=3
          WRITE(ITU,*) ' CDATA ',(CDATA(IPCOMP,J),J=1,NITMS)
          IF(ITU.EQ.IUOUT) THEN
             IX1=(IPCOMP/5)*5
             IF(IX1.EQ.IPCOMP.OR.IPCOMP.EQ.NPCOMP) call epagew
          ENDIF
       ENDIF
-C
+
 C Check user specified number of controlled variables
-      NCITM=1
+      NCITM=3
       IF(NCI(IPCOMP).NE.NCITM)
      &   WRITE(ITU,*) ' CMP48S warning: user specified wrong number',
      &                ' of controlled variables'
@@ -4872,13 +4905,16 @@ C
       END
 
 C ******************** CMP74S ********************
-C CMP74S establishes for a plant component with plant db code 740 ie.
-C 1 node (ISV=20) WCH automatic flow control valve
-C whether the specified number of controlled variables is OK, and also
-C whether the number of connections to this component is correct
-C and whether the connected nodes are of a type as expected by the
-C corresponding coefficient generator routine
-      subroutine cmp74s(ipcomp)
+C
+C CMP74S establishes for plant component with plant db code 740 i.e
+C 3 node (ISV=20) 3-port valve including automatic flow control.
+C Checks are made on the number controlled variables the number of
+C connections and whether the connected nodes are of the correct
+C type as expected by the plant solver.
+C
+
+      SUBROUTINE CMP74S(IPCOMP)
+
 #include "plant.h"
 #include "building.h"
 C
@@ -4887,35 +4923,26 @@ C
       COMMON/TRACE/ITCF,ITRACE(MTRACE),IZNTRC(MCOM),ITU
 C
       COMMON/C9/NPCOMP,NCI(MPCOM),CDATA(MPCOM,MMISCD)
-      COMMON/PDBDT/ADATA(MPCOM,MADATA),BDATA(MPCOM,MBDATA)
       COMMON/PCOND/CONVAR(MPCON,MCONVR),ICONTP(MPCON),
      &             ICONDX(MPCOM,MNODEC,MPCONC)
 C
 C Trace output
       IF(ITC.GT.0.AND.ITRACE(35).NE.0) THEN
          WRITE(ITU,*) ' Component ',IPCOMP,' pre-simulation data for a:'
-         WRITE(ITU,*) ' 1 node (ISV=20) WCH automatic control valve'
-         NITMS=4
-         WRITE(ITU,*) ' ADATA ',(ADATA(IPCOMP,J),J=1,NITMS)
+         WRITE(ITU,*) ' 3 node 3-port valve w/ automatic flow cnt.'
          IF(ITU.EQ.IUOUT) THEN
             IX1=(IPCOMP/5)*5
             IF(IX1.EQ.IPCOMP.OR.IPCOMP.EQ.NPCOMP) call epagew
          END IF
       END IF
-C
-C Check user specified number of controlled variables
-      NCITM=0
-      IF(NCI(IPCOMP).NE.NCITM)
-     &   WRITE(ITU,*) ' CMP74S warning: user specified wrong number',
-     &                ' of controlled variables'
-C
-C Check component has 1 connection only, to "water"
+
+C Check component has 1 connections to water
       NCONS=1
       DO 10 IPCONC=1,MPCONC
       IPCON=ICONDX(IPCOMP,1,IPCONC)
       IF(IPCONC.LE.NCONS) THEN
          IF(IPCON.EQ.0) THEN
-            GOTO 990
+           GOTO 990
          ELSE IF(ICONTP(IPCON).NE.20) THEN
             GOTO 990
          END IF
@@ -4923,12 +4950,11 @@ C Check component has 1 connection only, to "water"
          GOTO 990
       END IF
    10 CONTINUE
-
-C Return to calling module
       RETURN
 C Error handling
   990 WRITE(IUOUT,*) ' CMP74S: connection error for component ',IPCOMP
-      WRITE(IUOUT,*) '         should be ',NCONS,' connection(s) to air'
+      WRITE(IUOUT,*) '         should be 1 connection(s)'
+      WRITE(IUOUT,*) '         to water.'
       STOP ' CMP74S: unresolvable error'
       END
 
