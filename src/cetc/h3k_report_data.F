@@ -690,7 +690,7 @@ C PIN is in a plant component node - not implemented yet.
         elseif ( iban(i_ZnCtl,1) .eq. -2 ) then
 
 C PIN is mix of radiative/convective flux (ie - plant component)
-         Q_zone = (QPLTF(iZone)+QPLTP(iZone))*0.5
+         Q_zone = QPLTF(iZone)
 
         else
 
