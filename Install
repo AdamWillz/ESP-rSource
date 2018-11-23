@@ -1378,6 +1378,10 @@ if [ "$platform" = "mingw" ] && [ "$xLibs" = "GTK" ]; then
    CFLAGS="$CFLAGS -mwindows -mms-bitfields"
 fi
 
+if [ "$enable_cosim" == "yes" ] && [ "$platform" == "mingw" ]; then
+    CFLAGS="$CFLAGS -large-address-aware"
+fi
+
 
 #------------- ULIBS -------------------------
 # Assign library paths/flags
