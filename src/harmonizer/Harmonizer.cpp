@@ -558,7 +558,8 @@ int main (int argc, char *argv[])
     int len;
 // Load & initialize ESP-r dll
     cout << "\n\n ---------------Loading ESP-r Dll: " << bpsDll << "\n";
-    ESPr_dll = LoadLibraryA((LPCSTR)bpsDll);
+    // ESPr_dll = LoadLibraryA((LPCSTR)bpsDll);
+    ESPr_dll = LoadLibrary( TEXT(bpsDll) );
     // Check we have a valid handle to the dll
     int err = GetLastError();
     if(!ESPr_dll){
