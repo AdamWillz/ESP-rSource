@@ -622,6 +622,7 @@ C For construction moisture nodes.
         DO 30 IL=1,NE
           NM=MNDL(ICOMP,I,IL)
         DO 30 IM=1,NM
+          ITM=ITM+1
           DELTp(I,ITM)=DELTs(ICOMP,I,ITM)
           DTPp(I,ITM)=DTPs(ICOMP,I,ITM)
    30   CONTINUE
@@ -798,8 +799,10 @@ C Calculate the moisture capacity for air.
 C Estimate the future time convective mass transfer coefficients.
       NC=NCONST(ICOMP)
       DO 20 I=1,NC
+C       Internal construction surface, TCfair is future zone air temp.
         ALPHA=HCIF(ICOMP,I)
         BETAif(ICOMP,I)=BETA01(ALPHA,CPfair,TCfair)
+C       External construction surface
         ALPHA=HCOF(ICOMP,I)
         TCf=ATF(ICOMP,I)
         BETAof(ICOMP,I)=BETA01(ALPHA,CPfair,TCf)
