@@ -966,6 +966,7 @@ C Calculate the current period id.
               IPER=I
             endif
  30       continue
+          if(IPER.eq.0) IPER=1  ! to avoid zero array index
 
 C<< This if statement to calculate the sensible and latent load from occupant in case of dynamic people
 C<< METAo metabolic rate is converted to watt after multiplying: 1 Met = 58 W/m2 and the mean surface area 
