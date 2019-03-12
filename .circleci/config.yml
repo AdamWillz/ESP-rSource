@@ -1,0 +1,28 @@
+version: 2
+jobs:
+  build:
+    docker:
+      - image: willsa/espr-ubuntu:latest
+    steps:
+      - checkout
+      - run:
+          name: Clone databases
+          command: |
+            cd ..
+            git clone https://github.com/AdamWillz/ESP-rDatabases
+            cd ESP-rDatabases
+            git checkout development
+            cd ..
+            mkdir project/data/climate
+            mkdir project/data/databases
+            mv ESP-rDatabases/climate/ project/data
+            mv ESP-rDatabases/databases/ project/data
+      - run:
+          name: Compile ESP-r
+          command: |
+            ./Install -d /usr/esru/test/ --xml --no-training --noX --gcc4 --complex --silent
+      - run:
+          name: Run Tester
+          command: |
+            cd tester/scripts/
+            sudo perl RunTester.pl

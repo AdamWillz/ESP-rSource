@@ -697,6 +697,7 @@ $TableSpacer"."------------------------------------
    $gSys_params{'sys_type'} = `uname -m`;
    $gSys_params{'os_type'}  = `uname -s`.":".`uname -r`;
    $gSys_params{'username'} = $ENV{'USER'};
+   if(not defined $gSys_params{'username'}) {$gSys_params{'username'}='';}
    $gSys_params{'hostname'} = `uname -n`;
 
    #-------------------------------------------------------------------
@@ -2016,7 +2017,7 @@ sub create_report(){
                   ."^^^^^^^^^^^^^^^^^^^^"
                   ."^^^^^^^^^^^^";
   push @output, $current_rule;
-  push @output, sprintf (" %\-".$folder_length."s<>  %-".$model_length."s<> .summary <> .xml<> .csv <> overall<> dt-CPU(%%)", "Folder", "Model");
+  push @output, sprintf (" %\-".$folder_length."s<>  %-".$model_length."s<> .summary <> .xml<> .data <> .csv <> overall<> dt-CPU(%%)", "Folder", "Model");
   push @output, $current_rule;
 
   # Loop throug results, and report to buffer
@@ -2038,7 +2039,7 @@ sub create_report(){
       $cpu_change = "N/A";
     }
     
-    push @output, sprintf (" %\-".$folder_length."s<>  %-".$model_length."s<>     %1s   <>    %1s  <>  %1s   <>   %1s    <> ".$spacer."%-10s  ", $folder, $model,  $summary_pass,$xml_pass, $csv_pass, $overall_pass, $cpu_change);
+    push @output, sprintf (" %\-".$folder_length."s<>  %-".$model_length."s<>     %1s   <>    %1s  <>  %1s   <>   %1s    <> ".$spacer."%-10s  ", $folder, $model,  $summary_pass,$xml_pass, $data_pass, $csv_pass, $overall_pass, $cpu_change);
   }
   push @output, $current_rule;
   push @output, "  ";
@@ -2442,7 +2443,7 @@ sub process_historical_archive($){
   chdir $gTest_paths{"$version\_archive_folder"};
   
   # Decompress and explode tarball.
-  my $decompression_failure = `$gSys_params{"unzip_command"} $gTest_paths{"$version\_archive_file"} | $gSys_params{"untar_command"} -`;
+  my $decompression_failure = `$gSys_params{"unzip_command"} $gTest_paths{"$version\_archive_file"} | $gSys_params{"untar_command"} - --no-same-owner`;
   if ( $decompression_failure ){
     print "\n>>>>>> $decompression_failure ";
     fatalerror("\nCould not decompress $archive_file");
@@ -3352,7 +3353,7 @@ sub CollectXMLResults(){
       $readable_element_string =~ s/->//g;    # remove arrows
       $readable_element_string =~ s/^{//g;    # remove leading brace
       $readable_element_string =~ s/}$//g;    # remove trailing brace
-      $readable_element_string =~ s/}{/:/g;   # replace braces with colons
+      $readable_element_string =~ s/\}\{/:/g;   # replace braces with colons
 
       # Delete "WattsToGJ:bin" and "binned_data" tags ( We"re effectively
       # merging two different elements into a parent element that will
