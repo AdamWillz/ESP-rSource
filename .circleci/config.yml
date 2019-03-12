@@ -20,7 +20,7 @@ jobs:
       - run:
           name: Compile ESP-r
           command: |
-            ./Install -d /usr/esru/test/ --xml --no-training --noX --gcc4 --complex --silent
+            ./Install -d /usr/esru/test/ --xml --no-training --noX --gcc4 --silent
       - run:
           name: Run Tester
           command: |
