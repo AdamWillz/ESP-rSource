@@ -219,7 +219,7 @@ if [ $# -ne 0 ]; then
                  echo " Error: argument $i is not supported. "
                  echo " Run ./Install --help for more information."
                  echo " "
-                 exit
+                 exit 2
               fi
            ;;
         esac
@@ -411,7 +411,13 @@ if [ "$xml_support" = "yes" ] || [ "$xml_support" = "prompt" ]; then
     #
     # This code has only been tested with GNU ld.
     #
-    ld_output=`ld -lxslt`
+    if [ "${architecture:0:6}" = "CYGWIN" ]; then
+        ld_output=`cygcheck -c libxslt | grep libxslt`
+    elif [ "${architecture:0:5}" = "MINGW" ] || [ "${architecture:0:4}" = "MSYS" ]; then
+        ld_output=`ld -l libxslt`
+    else
+        ld_output=`ldconfig -p | grep libxslt`
+    fi
     case $ld_output in
       "") xsl_libs_available="yes";;
       *)  xsl_libs_available="no";;
@@ -423,7 +429,13 @@ fi
 # check that SQLite support is available
 if [ "$SQLite_support" = "yes" ]; then
    # check for libsqlite3.so library on system
-   ld_output=`ld -lsqlite3`
+   if [ "${architecture:0:6}" = "CYGWIN" ]; then
+       ld_output=`cygcheck -c libsqlite | grep libsqlite`
+   elif [ "${architecture:0:5}" = "MINGW" ] || [ "${architecture:0:4}" = "MSYS" ]; then
+       ld_output=`ld -l libsqlite`
+   else
+       ld_output=`ldconfig -p | grep libsqlite`
+   fi
    case $ld_output in 
      "" ) SQLite_libs_found="yes";
           if [ "$xml_support" = "no" ]; then
@@ -530,7 +542,7 @@ if [ "$platform" = "auto-detect" ]; then
          echo " Specify using the --platform switch, or run script in interactive"
          echo " mode."
          echo " "
-         exit
+         exit 2
        fi
 
    fi
@@ -607,7 +619,7 @@ if [ "$mode" = "interactive" ]; then
                A=1
                mode="silent";;
             *) echo "Error: Unknown host"
-               exit;;
+               exit 2;;
           esac
          fi
 
@@ -1209,7 +1221,7 @@ case $xLibs in
          echo " ERROR:"
          echo " Could not find the X-window libraries!"
          echo " "
-         exit
+         exit 2
        fi
 
        # Now check if the appropriate include files are installed
@@ -1231,7 +1243,7 @@ case $xLibs in
            echo " Check to see if you've installed the X11 development"
            echo " package (usually called xfree86-devel, xorg-X11-devel,"
            echo " or libX11-devel.)"
-           exit
+           exit 2
          fi
        fi
      ;;
@@ -1571,7 +1583,7 @@ if [ ! -d $DESTdir ]; then
       echo " Installation error: Destination directory (${DESTdir})"
       echo " could not be created. Installation aborted."
       echo " "
-      exit
+      exit 2
     fi
     # This flag will be used later when the script checks
     # if the directory tree is correct.
@@ -1583,7 +1595,7 @@ if [ ! -d $DESTdir ]; then
     echo " Installation error: Destination directory (${DESTdir})"
     echo " does not exist. Installation aborted"
     echo " "
-    exit
+    exit 2
   fi
 fi
 
@@ -1595,7 +1607,7 @@ if [ ! -w $DESTdir ] || [ ! -d $DESTdir ]; then
   echo " $DESTdir"
   echo " Installation aborted."
   echo " "
-  exit
+  exit 2
 fi
 if [ "$enable_cosim" == "yes" ]; then
 	#---------------------------------------------------------
@@ -1653,7 +1665,7 @@ if [ "$enable_cosim" == "yes" ]; then
 	      echo " Installation error: Destination directory (${COSIMdir})"
 	      echo " could not be created. Installation aborted."
 	      echo " "
-	      exit
+	      exit 2
 	    fi
 	    # This flag will be used later when the script checks
 	    # if the directory tree is correct.
@@ -1665,7 +1677,7 @@ if [ "$enable_cosim" == "yes" ]; then
 	    echo " Installation error: Destination directory (${COSIMdir})"
 	    echo " does not exist. Installation aborted"
 	    echo " "
-	    exit
+	    exit 2
 	  fi
 	fi
 	
@@ -1677,7 +1689,7 @@ if [ "$enable_cosim" == "yes" ]; then
 	  echo " $COSIMdir"
 	  echo " Installation aborted."
 	  echo " "
-	  exit
+	  exit 2
 	fi
 fi
 
@@ -1764,7 +1776,7 @@ if [ "$corrupted_tree" = "yes" ] || [ "$create_espr_dir" = "yes" ]; then
       echo " Use the '--force' option to overwrite the directory"
       echo " structure. Run 'Install --help' for more information."
       echo " "
-      exit
+      exit 2
     fi
   fi
 
@@ -1817,7 +1829,7 @@ if [ "$mode" = "interactive" ]; then
     echo " "
     echo " Aborting ESP-r installation. "
     echo " "
-    exit
+    exit 2
   fi
 fi
 
@@ -2135,7 +2147,7 @@ do
         echo " Executable ${target} could not be built!"
         echo " Installation aborted."
         echo " "
-        exit
+        exit 2
       fi
 
    else
