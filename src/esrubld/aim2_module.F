@@ -959,6 +959,10 @@ C Check allocation was sucessful
 C Allocate memory for AIM2_num_zones_infil
         ALLOCATE(AIM2_infil_to_zones(NCOMP),
      &       STAT=allocate_status)
+C Initialize to zero
+        DO iDummy=1,NCOMP
+            AIM2_infil_to_zones(iDummy)=0.
+        END DO
 C Check allocation was sucessful     
         IF (.NOT.ALLOCATED(AIM2_infil_to_zones)) THEN
           CALL EDISP(IUOUT,'AIM2_infil_to_zones not allocated')
