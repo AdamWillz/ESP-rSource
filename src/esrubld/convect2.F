@@ -1230,8 +1230,15 @@ C plumes develop above a hot floor or below a cold ceiling).
       ELSEIF( (ANGLE.LT.-45. .and. TS.gt.TA) .or.
      &        (ANGLE.GT.45. .and. TS.lt.TA) )THEN
 
-C Alamdari & Hammond requested => use A&H.
-        if(IHCT.eq.1) ICOR = 50
+C Alamdari & Hammond requested => use Awbi and Hatton if floor. There 
+C is no Awbi and Hatton correlation for ceiling, so, if ceiling, use A&H.
+        if(IHCT.eq.1) then 
+         if (ANGLE.GT.45.) then
+           ICOR = 50
+         else
+           ICOR = 55
+         endif
+        endif
 
 C Khalifa & Marshall `radiator under window' requested => use k&M eq.7 if
 C surface is a ceiling.  But, if surface is a floor, use A&H as there is no
