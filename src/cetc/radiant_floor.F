@@ -289,7 +289,7 @@ C     Declaration of additional parameters
 C     Max number iterations
       INTEGER ITmax
 C     Relaxation factor     
-      REAL    Relax
+      REAL    Relax, ErrCorr
 C----------------------------------------------------------------------
 C     Trace output
       IF(ITC.GT.0.AND.NSINC.GE.ITC.AND.NSINC.LE.ITCF.AND.
@@ -425,7 +425,7 @@ C     This variable denotes the position of the center node of a construction la
       hCOVER = 0.0
 
       IF (ModelFlag .EQ. 1) THEN
-        DO 11 J = 1, NELTS(Iz,Is)
+        DO 11 J = InsulationLayer+1, NELTS(Iz,Is)
 C       Layer conductivity
             COND = THRMLI(Iz,Is,J,1)
 C       Layer density
@@ -434,10 +434,8 @@ C       Layer specific heat
             SHT  = THRMLI(Iz,Is,J,3)
 C       Layer thickness
             THKL = THRMLI(Iz,Is,J,4)
-    
-            IF(J .GT. InsulationLayer .OR. InsulationLayer .EQ. 0) THEN
-                THKC = THKC + THKL
-            ENDIF
+
+            THKC = THKC + THKL
     
 C       Find the resistance of the air gap associated with layer J.
             IF(NairGap .GT. 0 .AND. THRMLI(Iz,Is,J,1) .LT. Small)THEN
@@ -455,14 +453,12 @@ C                    Ncentr = Ncentr + 1
  12           CONTINUE
             ELSE
                 Ncentr = Ncentr + 2
-                IF(In .EQ. Ncentr+1) Xqc = THKC
-                IF(In .EQ. Ncentr  ) Xqc = THKC - THKL/2.
-                IF(In .EQ. Ncentr-1) Xqc = THKC - THKL
+                IF(In-(InsulationLayer*2) .EQ. Ncentr+1) Xqc = THKC
+                IF(In-(InsulationLayer*2) .EQ. Ncentr  ) Xqc = THKC - THKL/2.
+                IF(In-(InsulationLayer*2) .EQ. Ncentr-1) Xqc = THKC - THKL
             ENDIF
-            IF(J .GT. InsulationLayer .OR. InsulationLayer .EQ. 0) THEN
-                AKslab  = AKslab  + COND*THKL
-                RCPslab = RCPslab + DENS*SHT*THKL
-            ENDIF
+            AKslab  = AKslab  + COND*THKL
+            RCPslab = RCPslab + DENS*SHT*THKL
  11     CONTINUE
     
 C       average thermal conductivity, diffusivity and volumetric
@@ -513,7 +509,13 @@ C           Layer thickness
       
       
 C     Check if the specified injection node is valid -----------------
-      IF(In .LT. 1 .OR. In .GT. Ncentr+1) THEN
+      IF( ModelFlag .EQ. 1) THEN
+        ErrCorr=(InsulationLayer*2.0)-1.0
+      ELSE
+        ErrCorr = 0.0
+      ENDIF
+      
+      IF(In .LT. 1 .OR. In .GT. Ncentr+1.0+ErrCorr) THEN
          WRITE(outs,*)'Radiant floor fatal error: injection node ',In,
      &' not in range 1 to',Ncentr+1
          call edisp(iuout,outs)
