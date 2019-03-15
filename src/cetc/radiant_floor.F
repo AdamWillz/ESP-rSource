@@ -287,9 +287,11 @@ C     Flag indicating if radiant floor is active, number of radiant floors, indi
 C----------------------------------------------------------------------
 C     Declaration of additional parameters
 C     Max number iterations
-      INTEGER ITmax
+      INTEGER ITmax, ErrCorr
 C     Relaxation factor     
-      REAL    Relax, ErrCorr
+      REAL    Relax
+C     Boolean to indicate if advanced model is active
+      LOGICAL bIsAdvanced
 C----------------------------------------------------------------------
 C     Trace output
       IF(ITC.GT.0.AND.NSINC.GE.ITC.AND.NSINC.LE.ITCF.AND.
@@ -307,13 +309,9 @@ C     Initialize pointers to inter-connection(s) ICON, and node(s) INOD
       INOD1=NPCDAT(IPCOMP,9)
 
 C     variable assignments -----------------------------------------------
-C     number of nodes used for finite difference method
-      nNodes = ADATA(IPCOMP,14)
-C     Allocate MatrixA, VectorC and VectorT
-      if (.not.allocated(MatrixA)) 
-     &   allocate ( MatrixA(nNodes*2,nNodes*2) )
-      if (.not.allocated(VectorC)) allocate ( VectorC(nNodes*2) )
-      if (.not.allocated(VectorT)) allocate ( VectorT(nNodes*2) )
+C     Assume that the old model is in use
+      bIsAdvanced = .false.
+
 C     Plant time step
       Dt    = TIMSEC
 C     Inlet fluid temperature
@@ -363,38 +361,58 @@ C     1-D average temperature of the pipe outer surface
 C     1-D average temperature of the inside face of the radiant surface
       Tsurf1D = TFS(Iz, Is)
 
-C     Layer of insulation
-      InsulationLayer = ADATA(IPCOMP,10)
-      
+C     Layer of insulation (if no insulation, then 0)
+      InsulationLayer = INT(ADATA(IPCOMP,10))
+
 C     Relaxation factor
       Relax = ADATA(IPCOMP,11)
-     
+
 C     Number of model iterations
       ITmax = INT( ADATA(IPCOMP,12) )
-      
-C     Flag for model. 1 = Laouadi Model, 2 = Fin model for pipe in subfloor (e.g. Warmboard)
-      ModelFlag = INT( ADATA(IPCOMP,13) )
 
-C     Fin model operations
-      FloorCoverElement = INT((In+2.)/2.)
-      finElement = INT(In/2.)
-      FINrho = THRMLI(Iz,Is,finElement,2)
-      FINCp = THRMLI(Iz,Is,finElement,3)
-      FINk = THRMLI(Iz,Is,finElement,1)
-      FINt = THRMLI(Iz,Is,finElement,4)
-C      COVERrho = THRMLI(Iz,Is,FloorCoverElement,2)
-C      COVERCp = THRMLI(Iz,Is,FloorCoverElement,3)
-C      COVERk = THRMLI(Iz,Is,FloorCoverElement,1)
-C      COVERt = THRMLI(Iz,Is,FloorCoverElement,4)
-      finL = ADATA(IPCOMP,4)/2
-      pipeOuterD = ADATA(IPCOMP,3)
-      qsolar = QSLIF(Iz,Is) !need figure out how to include absorbed solar radiation on floor
-      qlongwave = qlwrdi(Iz,Is,2)/AreaR
-C     hFlrCover = radiation heat transfer coefficient plus HCIF (convective).  Need to find how to estimate radiant heat transfer coefficient.      
-      hFlrCover = HCIF(Iz,Is)
-C     hfincover is the conductive heat transfer coefficient between floor cover and fin 
-      
-      deltax=finL/(nNodes-0.5)
+      if (ITmax > 0 ) then
+C       The new version of the radiant floor is active
+C       Flag for model. 1 = Laouadi Model, 2 = Fin model for pipe in subfloor (e.g. Warmboard)
+        ModelFlag = INT( ADATA(IPCOMP,13) )
+    
+C       number of nodes used for finite difference method
+        nNodes = INT(ADATA(IPCOMP,14))
+    
+C       Allocate MatrixA, VectorC and VectorT
+        if ( ModelFlag .EQ. 2 ) then 
+            if (.not.allocated(MatrixA)) 
+     &         allocate ( MatrixA(nNodes*2,nNodes*2) )
+            if (.not.allocated(VectorC)) allocate ( VectorC(nNodes*2) )
+            if (.not.allocated(VectorT)) allocate ( VectorT(nNodes*2) )
+        endif
+    
+C       Fin model operations
+        FloorCoverElement = INT((In+2.)/2.)
+        finElement = INT(In/2.)
+        FINrho = THRMLI(Iz,Is,finElement,2)
+        FINCp = THRMLI(Iz,Is,finElement,3)
+        FINk = THRMLI(Iz,Is,finElement,1)
+        FINt = THRMLI(Iz,Is,finElement,4)
+C        COVERrho = THRMLI(Iz,Is,FloorCoverElement,2)
+C        COVERCp = THRMLI(Iz,Is,FloorCoverElement,3)
+C        COVERk = THRMLI(Iz,Is,FloorCoverElement,1)
+C        COVERt = THRMLI(Iz,Is,FloorCoverElement,4)
+        finL = ADATA(IPCOMP,4)/2.0
+        pipeOuterD = ADATA(IPCOMP,3)
+        qsolar = QSLIF(Iz,Is) !need figure out how to include absorbed solar radiation on floor
+        qlongwave = qlwrdi(Iz,Is,2)/AreaR
+C       hFlrCover = radiation heat transfer coefficient plus HCIF (convective).  Need to find how to estimate radiant heat transfer coefficient.      
+        hFlrCover = HCIF(Iz,Is)
+C       hfincover is the conductive heat transfer coefficient between floor cover and fin 
+        
+        deltax=finL/(nNodes-0.5)
+      else
+C     Old version of the radiant floor
+        InsulationLayer = 0
+        ModelFlag = 1
+        Relax = 1.0
+        ITmax = 100
+      end if
 
 C---------------------------------------------------------------------------------
 C     Calculate the total thickness, average conductivity and volumetric specific heat
@@ -412,7 +430,7 @@ C     and the variable denoting the total thickness of the construction
       THKC    = 0.0
 
 C     This variable denotes the position of the center node of a construction layer
-      IF (ModelFlag .EQ. 1) THEN
+      IF (ModelFlag .EQ. 1 ) THEN
         Ncentr  = 0
       ELSE IF (ModelFlag .EQ. 2) THEN
         Ncentr = 2*NELTS(Iz,Is)
@@ -424,7 +442,7 @@ C     This variable denotes the position of the center node of a construction la
       COVERt = 0.0
       hCOVER = 0.0
 
-      IF (ModelFlag .EQ. 1) THEN
+      IF (ModelFlag .EQ. 1 ) THEN
         DO 11 J = InsulationLayer+1, NELTS(Iz,Is)
 C       Layer conductivity
             COND = THRMLI(Iz,Is,J,1)
@@ -454,8 +472,10 @@ C                    Ncentr = Ncentr + 1
             ELSE
                 Ncentr = Ncentr + 2
                 IF(In-(InsulationLayer*2) .EQ. Ncentr+1) Xqc = THKC
-                IF(In-(InsulationLayer*2) .EQ. Ncentr  ) Xqc = THKC - THKL/2.
-                IF(In-(InsulationLayer*2) .EQ. Ncentr-1) Xqc = THKC - THKL
+                IF(In-(InsulationLayer*2) .EQ. Ncentr  ) Xqc = THKC 
+     &                                                   - THKL/2.
+                IF(In-(InsulationLayer*2) .EQ. Ncentr-1) Xqc = THKC
+     &                                                   - THKL
             ENDIF
             AKslab  = AKslab  + COND*THKL
             RCPslab = RCPslab + DENS*SHT*THKL
@@ -467,7 +487,7 @@ C       specific heat of slab system
         RCPslab = RCPslab/THKC
         DIFslab = AKslab / RCPslab
 
-      ELSE IF (ModelFlag .EQ. 2.0) THEN
+      ELSE IF (ModelFlag .EQ. 2) THEN
         DO J = FloorCoverElement, NELTS(Iz,Is)
 C           Layer conductivity
             COND = THRMLI(Iz,Is,J,1)
@@ -497,25 +517,29 @@ C           Layer thickness
             IF (hCOVER .EQ. 0.0) THEN
                 hCOVER = (THKL/COND)**(-1.0)
             ELSE
-                hCOVER = (1/hCOVER + THKL/COND)**(-1.0)
+                hCOVER = (1.0/hCOVER + THKL/COND)**(-1.0)
             END IF
       
         END DO
         COVERk = COVERk/COVERt
         COVERCp = COVERCp/COVERt
         COVERrho = COVERrho/COVERt
-        hfincover = (FINt/(2*FINk)+1/hCOVER)**(-1.0)
+        hfincover = (FINt/(2.0*FINk)+1.0/hCOVER)**(-1.0)
       END IF
       
       
 C     Check if the specified injection node is valid -----------------
       IF( ModelFlag .EQ. 1) THEN
-        ErrCorr=(InsulationLayer*2.0)-1.0
+        if (InsulationLayer > 0 ) then
+            ErrCorr=(InsulationLayer*2)-1
+        else
+            ErrCorr = 0
+        end if
       ELSE
-        ErrCorr = 0.0
+        ErrCorr = 0
       ENDIF
       
-      IF(In .LT. 1 .OR. In .GT. Ncentr+1.0+ErrCorr) THEN
+      IF(In .LT. 1 .OR. In .GT. Ncentr+1+ErrCorr) THEN
          WRITE(outs,*)'Radiant floor fatal error: injection node ',In,
      &' not in range 1 to',Ncentr+1
          call edisp(iuout,outs)
@@ -583,7 +607,7 @@ C     See the above reports for more details
          ConBf(irf)  = ConBp(irf)
          ConDf(irf)  = ConDp(irf)
 
-         IF (ModelFlag .EQ. 1.0) THEN
+         IF (ModelFlag .EQ. 1) THEN
 C           calculate series coefficients: Aij abd Fij. See the above reports for more details
             DO 10 I = 1, Nmax
                 II = I - 1
@@ -599,16 +623,16 @@ C           calculate series coefficients: Aij abd Fij. See the above reports fo
                 Fcof(irf,I,J) = 0.
     
  10            CONTINUE
+         ELSEIF ( ModelFlag .EQ. 2 ) THEN
+C        Initiate MatrixA, VectorC, and VectorT
+            MatrixA(:,:) = 0.0
+            VectorC(:) = 0.0
+            VectorT(:) = 0.0
          END IF
 
 C        Initiate Tp vector for fin model
          Tf=15.0
          Tp=15.0
-
-C        Initiate MatrixA, VectorC, and VectorT
-         MatrixA = 0.0
-         VectorC = 0.0
-         VectorT = 0.0         
 
          ENDIF
 
@@ -766,20 +790,20 @@ C     Check whether or not convergence is reached
                   IF( (Error .LT. Tol) .AND. (ErrorF .LT. TolF)) GOTO 50
 
 C	  If fin model is used           
-      ELSE IF (ModelFlag .EQ. 2.0) THEN
-      MatrixA = 0.0
+      ELSE IF (ModelFlag .EQ. 2) THEN
+      MatrixA(:,:) = 0.0
 C     setup MatrixA starting with fin element near pipe ---------------
     
 C     First element
-      MatrixA(1,1)=FINk*FINt/deltax+hfincover*deltax/2+
-     &    deltax*FINt*FINrho*FINCp/(2*Dt)
+      MatrixA(1,1)=FINk*FINt/deltax+hfincover*deltax/2.0+
+     &    deltax*FINt*FINrho*FINCp/(2.0*Dt)
       MatrixA(1,2)=-FINk*FINt/deltax
-      MatrixA(1,nNodes+1)=-hfincover*deltax/2
+      MatrixA(1,nNodes+1)=-hfincover*deltax/2.0
     
 C     Middle elements
       DO icount = 2,nNodes-1
       
-      MatrixA(icount,icount)=2*FINk*FINt/deltax+hfincover*deltax+
+      MatrixA(icount,icount)=2.*FINk*FINt/deltax+hfincover*deltax+
      &     FINrho*FINCp*FINt*deltax/Dt
       MatrixA(icount,icount-1)=-FINk*FINt/deltax
       MatrixA(icount,icount+1)=-FINk*FINt/deltax
@@ -796,7 +820,7 @@ C     Last element
 C     setup VectorC starting with fin element near pipe
     
       VectorC(1)=Qcir/(2.0*Cirl)+FINrho*FINCp*Tp(irf,1)
-     &           *FINt*deltax/(2*Dt)
+     &           *FINt*deltax/(2.*Dt)
       
       DO icount=2,nNodes
       VectorC(icount)=FINt*FINrho*FINCp*Tp(irf,icount)*deltax/Dt
@@ -808,15 +832,16 @@ C     Setup cover elements starting with element closest to pipe
     
     
 C     1st element (Cover near pipe)
-      MatrixA(nNodes+1,nNodes+1)=COVERk*COVERt/deltax+hfincover*deltax/2
-     &    +hFlrCover*deltax/2+deltax*COVERt*COVERrho*COVERCp/(2*Dt)
+      MatrixA(nNodes+1,nNodes+1)=COVERk*COVERt/deltax+hfincover*
+     &   deltax/2.+hFlrCover*deltax/2+deltax*COVERt*COVERrho*
+     &   COVERCp/(2.*Dt)
       MatrixA(nNodes+1,nNodes+2)=-COVERk*COVERt/deltax
-      MatrixA(nNodes+1,1)=-hfincover*deltax/2
+      MatrixA(nNodes+1,1)=-hfincover*deltax/2.
     
 C     All middle elements      
       DO icount=2,nNodes-1;
     
-      MatrixA(nNodes+icount,nNodes+icount)=2*COVERk*COVERt/deltax+
+      MatrixA(nNodes+icount,nNodes+icount)=2.*COVERk*COVERt/deltax+
      &  hfincover*deltax+COVERrho*COVERCp*COVERt*deltax/Dt+
      &  hFlrCover*deltax
       MatrixA(nNodes+icount,nNodes+icount-1)=-COVERk*COVERt/deltax
@@ -829,9 +854,9 @@ C     Last element
       MatrixA(2*nNodes,2*nNodes-1)=-COVERk*COVERt/deltax
       MatrixA(2*nNodes,nNodes)=-hfincover*deltax
       
-      VectorC(1+nNodes)=qsolar*deltax/2+COVERrho*COVERCp*
-     & Tp(irf,nNodes+1)*COVERt*deltax/(2*Dt)+hFlrCover*tfa(Iz)*deltax/2
-     & +qlongwave*deltax/2
+      VectorC(1+nNodes)=qsolar*deltax/2.+COVERrho*COVERCp*
+     & Tp(irf,nNodes+1)*COVERt*deltax/(2.*Dt)+hFlrCover*tfa(Iz)*
+     & deltax/2.+qlongwave*deltax/2.
       
       DO icount=2,nNodes;
     
