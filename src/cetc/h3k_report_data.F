@@ -536,8 +536,9 @@ C Window opening data
       integer iWindowCount    
       integer iWindow      
 C Flow control data 
-      COMMON/mfctl/ctlpos(MCNN)      
+      COMMON/mfctl/ctlpos(MCNN),ctlpast(MCNN)       
       real ctlpos
+      real ctlpast
 
 C Function determining if HOT3000 features enabled?
       logical bH3KExtentionsActive
