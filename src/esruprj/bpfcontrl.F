@@ -4646,8 +4646,8 @@ C Plant slave controller
           helptopic='flow_ctl_plantslv'
           call gethelptext(helpinsub,helptopic,nbhelp)
           cm(1)=1.
-          CALL EASKI(INT(cm(2)),' ',' Linked plant control loop ?',
-     &      1,'F',9999,'F',1,'LinkedPlant',
+          CALL EASKR(cm(2),' ',' Linked plant control loop ?',
+     &      1.,'F',9999.,'F',1.,'LinkedPlant',
      &      IER,nbhelp)
 
         elseif(iclaw.eq.7)then
@@ -4656,8 +4656,8 @@ C Differential window controller
           helptopic='flow_ctl_wind_diff'
           call gethelptext(helpinsub,helptopic,nbhelp)
           cm(1)=5.
-          CALL EASKI(INT(cm(2)),' ',' Sensed indoor zone number ? ',
-     &      1,'F',MCOM,'F',1,'Sensed indoor zone number',
+          CALL EASKR(cm(2),' ',' Sensed indoor zone number ? ',
+     &      1.,'F',MCOM,'F',1.,'Sensed indoor zone number',
      &      IER,nbhelp)
           CALL EASKR(cm(3),'  ','High indoor setpoint temp? ',
      &      -100.0,'F',100.0,'F',25.0,' HighSetpoint',IER,nbhelp)
