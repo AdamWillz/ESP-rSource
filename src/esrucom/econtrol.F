@@ -3630,6 +3630,21 @@ C PI controller
      &    '; proportional band=',cm(5),'; integral reset=',cm(6),
      &    '; action flag=',cm(7),'; optional multi sensing loop=',cm(8)
           call SDELIM(lmsg,message,'S',IW)
+
+C Plant network slave
+        elseif(IFCLAW(II,JJ,KK).EQ.6)then
+          SSTR='Plant net slave '
+          write(lmsg,'(A29)') 
+     &      ' Plant net slave: Linked loop'
+          call SDELIM(lmsg,message,'S',IW)
+
+C Window differential controller
+        elseif(IFCLAW(II,JJ,KK).EQ.7)then
+          SSTR='Window diff ctrl '
+          write(lmsg,'(A43,A44)') 
+     &      ' Diff window ctrl: sensed_zone high_indoor_',
+     &      'temp low_indoor_temp temp_diff min_amb_temp '
+          call SDELIM(lmsg,message,'S',IW)
         endif
         return
       endif

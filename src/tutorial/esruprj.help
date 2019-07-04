@@ -1835,6 +1835,8 @@ C          CALL EASKI(I3,' ','Which bidirectional set to use (1-40)?',
 '  '
 '  proportional and integral controller without hysterisis'
 '  '
+'  differential window controller'
+'  '
 'Note: if no change required in an item then accept the'
 'current value.'
 *enditem
@@ -2007,7 +2009,7 @@ C         CALL EASKR(cm(ndx+6),' ',' Aux sensor "fraction ON"? ',
           CALL EASKR(cm(14),' ','Air intake surface ID?',
  545      call ASKMFNOD(INOPT,NNPK,INPK,prmpt1,prmpt2,9)
           CALL PHELPD('node selection help',2,'-',0,0,IER)
-*item EFCNTRL
+*item EFCNTRL flow_ctl_PI
 'This control law is a simplified PI controller (it does not'
 'include hysterisis).'
 '  '
@@ -2043,6 +2045,36 @@ C         CALL EASKR(cm(ndx+6),' ',' Aux sensor "fraction ON"? ',
           CALL EASKAB('Action flag (see help)',' ',
           CALL EASKABC('Which sensor to use',' ',
           CALL EASKR(ocli,' ',' control loop index ',
+*item EFCNTRL flow_ctl_plantslv
+'Number of items for Plant network slave = 1 '
+' Actuates a mass flow network component or connection based on the'
+' output of a given plant network control loop. Complication is caused'
+' because flow controllers output a ratio CTLPOS which is from 0 to 1'
+' but plant controllers may output larger or smaller (absolute) numbers'
+' This controller has been used with the following plant control laws:'
+'    PCL08 (on/off),'
+'    PCL05 (Proportional),'
+'    PCL14 (multisensor of plant loops)'
+' '
+*enditem
+*item EFCNTRL flow_ctl_wind_diff
+'Number of items for differential window controller = 5 '
+' 1st is zone being sensed. This enables the controller to determine'
+' if the zone has cooling capacity and the cooling system will turn '
+' ON. If the cooling system is on, the window is shut, '
+' '
+' 2nd is the high setpoint. If the sensed zone db temperature is '
+' this temperature, and there is no HVAC cooling, the windows can open,'
+' '
+' 3rd is the low setpoint. Below this zone temperature the window is '
+' shut, '
+' '
+' 4th is the minimum temperature difference (Tinterior - Texterior) '
+' required for the window to open to ensure free cooling is significant,'
+' '
+' 5th is the minimum ambient temperature. Below this temperature the '
+' window is shut.'
+*enditem
 *subroutine EGCNTRL
 *item EGCNTRL
 'ESP-r allows you to specify global controls which ?'

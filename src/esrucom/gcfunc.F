@@ -822,7 +822,7 @@ c#include "plant.h"
      &              ITPCON(MCNN),NDSCNN(MCNN,MCNS)
       COMMON/PCLSOL/ICFP,IDTYPP,IPERP
 c      COMMON/C9/NPCOMP,NCI(MPCOM),CDATA(MPCOM,MMISCD)
-      COMMON/mfctl/ctlpos(MCNN)
+      COMMON/mfctl/ctlpos(MCNN),ctlpast(MCNN)
 
       LOGICAL CLOSER
 

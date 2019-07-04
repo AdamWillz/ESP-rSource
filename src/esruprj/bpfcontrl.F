@@ -4317,7 +4317,9 @@ C What is the equivalent for flow.....
      &   'c range based (for 30 35 40 110 130)',
      &   'd multi-sensor on/off',
      &   'e human behaviour algorithm ver 1.0',
-     &   'f proportional and integral ',' ',' ',' ',' ',' '
+     &   'f proportional and integral ',
+     &   'g plant network slave ',
+     &   'h differential window control ',' ',' ',' '
      &   ,' ',ino,idno,nbhelp)
         if(ino.eq.0)then
           continue
@@ -4597,7 +4599,7 @@ C Ask for node associated with operative temperature
         elseif(iclaw.eq.5)then
 
 C PI controller
-          helptopic='flow_ctl_adaptive'
+          helptopic='flow_ctl_PI'
           call gethelptext(helpinsub,helptopic,nbhelp)
           CALL ECLOSE(CM(1),0.0,0.001,close1)
           IF(CLOSE1)THEN
@@ -4639,6 +4641,30 @@ C PI controller
           ENDIF
           if(ier.ne.0)goto 101
 
+C Plant slave controller
+        elseif(iclaw.eq.6)then
+          helptopic='flow_ctl_plantslv'
+          call gethelptext(helpinsub,helptopic,nbhelp)
+          cm(1)=1.
+          CALL EASKR(cm(2),'  ','Linked plant control loop? ',
+     &      0.0,'F',9999.,'F',1.0,'LinkedPlant',IER,nbhelp)
+
+        elseif(iclaw.eq.7)then
+
+C Differential window controller
+          helptopic='flow_ctl_wind_diff'
+          call gethelptext(helpinsub,helptopic,nbhelp)
+          cm(1)=5.
+          CALL EASKR(cm(2),'  ','Sensed indoor zone number? ',
+     &      0.0,'F',REAL(MCOM),'F',1.0,'SensedZone',IER,nbhelp)
+          CALL EASKR(cm(3),'  ','High indoor setpoint temp? ',
+     &      -100.0,'F',100.0,'F',25.0,' HighSetpoint',IER,nbhelp)
+          CALL EASKR(cm(4),' ','Low indoor setpoint temperature?',
+     &      -100.0,'F',100.0,'F',21.0,' LowSetpoint',IER,nbhelp)
+          CALL EASKR(cm(5),' ','Temp diff to open windows ? ',
+     &      0.,'F',999.9,'F',1.0,' DeltaTIntExt',IER,nbhelp)
+          CALL EASKR(cm(6),' ','Minimum outdoor temperature?',
+     &      -100.0,'F',100.0,'F',18.0,' MinAmb',IER,nbhelp)
 C Miscellaneous data for additional flow controllers should follow here.
         endif
   70    continue
