@@ -13,6 +13,7 @@ MFSdir = $(SRCdir)/esrumfs
 PRJdir = $(SRCdir)/esruprj
 BLDdir = $(SRCdir)/esrubld
 CETCdir = $(SRCdir)/cetc
+COSIMdir = $(SRCdir)/co-sim
 PROG = res$(EXE)
 REPdir = $(SRCdir)/cetc/h3kreports
 default: $(PROG)
@@ -23,7 +24,7 @@ default: $(PROG)
 %.o : %.f90
 	$(MCC) $(FFLAGS) -c $<
 
-MODULE_OBJECTS = h3kmodule.o startup.o aim2_module.o CFC_Module.o
+MODULE_OBJECTS = h3kmodule.o startup.o aim2_module.o CFC_Module.o CosimShare.o
 
 OBJECTS = res.o arrow.o ascii_mat.o c2fdum.o castyp.o cfdat.o cfgrid.o cfutil.o cgd.o \
 	  comfort.o convect2.o ctread.o design.o dmdrep.o dossupport.o e3dviews.o \
@@ -40,7 +41,7 @@ OBJECTS = res.o arrow.o ascii_mat.o c2fdum.o castyp.o cfdat.o cfgrid.o cfutil.o 
 	  FMIcom.o
 
 MODULES = aim2.mod aim2_calcdata.mod aim2_h2k_dummy.mod aim2_inputdata.mod start_up.mod \
-	parse_command_line.mod h3kmodule.mod CFC_Module.mod
+	parse_command_line.mod h3kmodule.mod CFC_Module.mod cosimshare.mod
 
 $(PROG): $(MODULE_OBJECTS) $(OBJECTS)
 	$(MFC) $(LD_FLAGS) -o $(PROG) $(FFLAGS) $(MODULE_OBJECTS) $(OBJECTS) $(ULIBS)
@@ -81,6 +82,9 @@ cgd.F:
 convect2.F:
 	rm -f convect2.F
 	ln -s $(BLDdir)/convect2.F .
+CosimShare.F:
+	rm -f CosimShare.F
+	ln -s $(COSIMdir)/CosimShare.F .
 ctread.F:
 	rm -f ctread.F
 	ln -s $(COMdir)/ctread.F .
@@ -205,7 +209,7 @@ clean:
 	esystem.F filelist.F fanger.F initalc.F item.F mfcdat.F mfutil.F nwkrewr.F pltcfg.F \
 	psychro.F readTrnsys.F rwipv.F rwsbem.F sort.F spmatl.F spmisc.F startup.F tdfile.F \
 	visgrd.F visual.F visvec.F h3kmodule.f90 \
-	FMIcom.F CFC_Module.f90
+	FMIcom.F CFC_Module.f90 CosimShare.F
 
 distclean: clean
 

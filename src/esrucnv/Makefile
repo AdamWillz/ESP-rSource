@@ -12,6 +12,7 @@ MFSdir = $(SRCdir)/esrumfs
 PRJdir = $(SRCdir)/esruprj
 CETCdir = $(SRCdir)/cetc
 BLDdir = $(SRCdir)/esrubld
+COSIMdir = $(SRCdir)/co-sim
 PROG = ecnv$(EXE)
 default: $(PROG)
 
@@ -22,7 +23,7 @@ default: $(PROG)
 %.o : %.f90
 	$(MCC) $(FFLAGS) -c $<
 
-MODULE_OBJECTS = h3kmodule.o startup.o aim2_module.o CFC_Module.o
+MODULE_OBJECTS = h3kmodule.o startup.o aim2_module.o CFC_Module.o CosimShare.o
 
 OBJECTS = ecnv.o ascii_mat.o c2fdum.o ctread.o \
 	  CDBPlugins.o CDBCommon.o CDBExplore.o dossupport.o \
@@ -34,7 +35,7 @@ OBJECTS = ecnv.o ascii_mat.o c2fdum.o ctread.o \
 	  FMIcom.o
       
 MODULES = aim2.mod aim2_calcdata.mod aim2_h2k_dummy.mod aim2_inputdata.mod start_up.mod \
-	parse_command_line.mod h3kmodule.mod CFC_Module.mod
+	parse_command_line.mod h3kmodule.mod CFC_Module.mod cosimshare.mod
 
 $(PROG): $(MODULE_OBJECTS) $(OBJECTS)
 	$(MFC) $(LD_FLAGS) -o $(PROG) $(FFLAGS) $(MODULE_OBJECTS) $(OBJECTS) $(ULIBS)
@@ -60,6 +61,9 @@ c2fdum.F:
 CFC_Module.f90:
 	rm -f CFC_Module.f90
 	ln -s $(BLDdir)/CFC_Module.f90 .
+CosimShare.F:
+	rm -f CosimShare.F
+	ln -s $(COSIMdir)/CosimShare.F .
 ctread.F:
 	rm -f ctread.F
 	ln -s $(COMdir)/ctread.F .
@@ -149,7 +153,7 @@ clean:
 	emfnetw.F emkcfg.F enetmisc.F enetrewr.F eroper.F esru_misc.F esystem.F \
 	filelist.F item.F mfcdat.F nwkrewr.F pltcfg.F readTrnsys.F rwipv.F rwsbem.F \
 	sort.F startup.F tdfile.F h3kmodule.f90 \
-	FMIcom.F CFC_Module.f90
+	FMIcom.F CFC_Module.f90 CosimShare.F
 
 distclean: clean
 

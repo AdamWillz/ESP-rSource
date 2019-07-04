@@ -26,6 +26,8 @@ C*********************** pcwrt ************************
 C This subroutine writes plant network data to configuration
 C file.
       subroutine pcwrt
+
+      USE COSIMSHARE
 #include "plant.h"
 #include "building.h"
 
@@ -240,6 +242,25 @@ C Write out max 6 items per line. << todo - use names >>
  1011    format(12(6(I4,1x),/))
          if(amod(float(icffs(jj)),6.0).eq.0.0) backspace IFPNF
       endif
+C Write co-simulation surface indices
+      if(coSimNumSurf<=0) then
+         write(IFPNF,'(a)')
+     &     '# No additional co-sim surfaces defined.'
+         write(IFPNF,'(I5)') coSimNumSurf
+      else
+         write(IFPNF,'(a)')
+     &     '# Additional surface temps to be sent to TRNSYS.'
+         write(IFPNF,'(I5)') coSimNumSurf
+         do 42 icont=1, coSimNumSurf
+         	 ! Write zone number 
+             write(IFPNF,'(I5)',advance='no') coSimZones(icont)
+     
+             ! Write surface number
+             write(IFPNF,'(I5)',advance='no') coSimSurfs(icont)
+
+ 42   continue
+         
+      endif      
       close(IFPNF)
       return
       end
