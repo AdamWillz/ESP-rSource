@@ -14,6 +14,7 @@ PDFdir = $(SRCdir)/esrupdf
 VLDdir = $(SRCdir)/esruvld
 PLTdir = $(SRCdir)/esruplt
 CETCdir = $(SRCdir)/cetc
+COSIMdir = $(SRCdir)/co-sim
 INCLdir = $(SRCdir)/include
 PROG = prj$(EXE)
 default: $(PROG)
@@ -25,7 +26,7 @@ default: $(PROG)
 %.o : %.f90
 	$(MCC) $(FFLAGS) -c $<
 
-MODULE_OBJECTS = h3kmodule.o startup.o aim2_module.o aim2_inputs.o CFC_Module.o
+MODULE_OBJECTS = h3kmodule.o startup.o aim2_module.o aim2_inputs.o CFC_Module.o CosimShare.o
 
 OBJECTS = prj.o anlytc.o arrow.o ascii_mat.o basesimp.o \
 	  basesimp_inputs.o blcond.o bnlthp.o bpfcom.o bpfcontrl.o bscoeff.o bscoeff_extended.o \
@@ -50,7 +51,7 @@ OBJECTS = prj.o anlytc.o arrow.o ascii_mat.o basesimp.o \
 
 MODULES = aim2.mod aim2_calcdata.mod aim2_h2k_dummy.mod aim2_inputdata.mod aim2_inputs.mod \
 	  aim2_inputs_inputdata.mod start_up.mod parse_command_line.mod h3kmodule.mod \
-      CFC_Module.mod
+      CFC_Module.mod cosimshare.mod
 
 ifeq ($(FMIarg),enableFMI)
 	FMI_OBJECTS = FMIcom.o FMIprj.o
@@ -120,6 +121,9 @@ common3dv.F:
 commonclm.F:
 	rm -f commonclm.F
 	ln -s $(COMdir)/commonclm.F .
+CosimShare.F:
+	rm -f CosimShare.F
+	ln -s $(COSIMdir)/CosimShare.F .
 ctlexp.F:
 	rm -f ctlexp.F
 	ln -s $(COMdir)/ctlexp.F .
@@ -308,7 +312,7 @@ clean:
 	hvacinput.F item.F mcdbscn.F mfcdat.F mfelst.F mfnmsc.F mfrlst.F MultiYear_climate.F mvalid.F \
 	net2pdf.F newnet.F nwkrewr.F plelevvc.F pltcfg.F psychro.F rcdblist.F rwipv.F rwroam.F \
 	rwsbem.F senrwl.F sort.F spmisc.F stndrds.F startup.F tdfile.F  \
-	readTrnsys.F PltDummy.F qrun.F h3kmodule.f90 FMIcom.F CFC_Module.f90
+	readTrnsys.F PltDummy.F qrun.F h3kmodule.f90 FMIcom.F CFC_Module.f90 CosimShare.F
 
 distclean: clean
 

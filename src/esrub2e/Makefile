@@ -12,6 +12,7 @@ MFSdir = $(SRCdir)/esrumfs
 PRJdir = $(SRCdir)/esruprj
 BLDdir = $(SRCdir)/esrubld
 CETCdir = $(SRCdir)/cetc
+COSIMdir = $(SRCdir)/co-sim
 PROG = b2e$(EXE)
 default: $(PROG)
 
@@ -22,7 +23,7 @@ default: $(PROG)
 %.o : %.f90
 	$(MCC) $(FFLAGS) -c $<
 
-MODULE_OBJECTS = aim2_module.o startup.o
+MODULE_OBJECTS = aim2_module.o startup.o CosimShare.o
 
 OBJECTS = b2e.o CDBPlugins.o CDBCommon.o CDBExplore.o\
 	c2fdum.o clispline.o ctlwrt.o ctread.o daproc.o econtrol.o egeometry.o \
@@ -30,7 +31,8 @@ OBJECTS = b2e.o CDBPlugins.o CDBCommon.o CDBExplore.o\
 	nwkrewr.o pltcfg.o readTrnsys.o rwipv.o rwsbem.o simcomis.o sort.o tdfile.o \
 	FMIcom.o
 
-MODULES = aim2.mod aim2_calcdata.mod aim2_h2k_dummy.mod aim2_inputdata.mod start_up.mod parse_command_line.mod
+MODULES = aim2.mod aim2_calcdata.mod aim2_h2k_dummy.mod aim2_inputdata.mod start_up.mod parse_command_line.mod \
+          cosimshare.mod
 
 $(PROG): $(MODULE_OBJECTS) $(OBJECTS)
 	$(MFC) $(LD_FLAGS) -o $(PROG) $(FFLAGS) $(MODULE_OBJECTS) $(OBJECTS) $(ULIBS)
@@ -50,6 +52,9 @@ CDBExplore.F:
 c2fdum.F:
 	rm -f c2fdum.F
 	ln -s $(COMdir)/c2fdum.F .
+CosimShare.F:
+	rm -f CosimShare.F
+	ln -s $(COSIMdir)/CosimShare.F .
 ctlwrt.F:
 	rm -f ctlwrt.F
 	ln -s $(PRJdir)/ctlwrt.F .
@@ -129,7 +134,7 @@ clean:
 	c2fdum.F ctlwrt.F ctread.F econtrol.F egeometry.F emfnetw.F emkcfg.F esru_misc.F \
 	eroper.F esystem.F filelist.F initalc.F item.F mfcdat.F nwkrewr.F pltcfg.F sort.F startup.F tdfile.F \
 	readTrnsys.F rwipv.F rwsbem.F \
-	FMIcom.F
+	FMIcom.F CosimShare.F
 
 distclean: clean
 

@@ -125,6 +125,7 @@ C CMP??C coefficient generator routine
       SUBROUTINE MZSDAT
       USE TCC, ONLY:TCC_static, HCC, ACC, InitializeCosimDataTypes
       USE DLL_Functions, ONLY:SetArraySizes
+      USE COSIMSHARE
 #include "plant.h"
 
       COMMON/OUTIN/IUOUT,IUIN
@@ -405,7 +406,7 @@ C zones in the model.
       Sizes(2) = HCC_R-1
       Sizes(3) = ACC_S-1
       Sizes(4) = ACC_R-1
-      Sizes(5) = nComp
+      Sizes(5) = nComp+coSimNumSurf
       call SetArraySizes(Sizes)
 
       RETURN

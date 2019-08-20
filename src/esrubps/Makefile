@@ -72,15 +72,15 @@ BPS_OBJECTS = bps.o adaptconf1.o adaptconf2.o adjb.o adjp.o ascii_mat.o \
 	  ncm_overheating.o CFC_opt_props.o CFC_thermal_and_aux.o editCFC.o NCHE.o stratified_tank_1HX.o stratified_tank_2HX.o \
 	  AirFlowModelRoutines.o Res_elec_Ctl.o harmonizer_timing.o qrun.o azalt.o
 
-PREBPS_OBJECTS = ESPrTrnsysData.o harmonizer_dummy.o
+PREBPS_OBJECTS = ESPrTrnsysData.o harmonizer_dummy.o CosimShare.o
 
 $(PROG): $(MODULE_OBJECTS) $(BPS_OBJECTS)
 	$(MFC) $(LD_FLAGS) -o $(PROG) $(FFLAGS) $(MODULE_OBJECTS) $(BPS_OBJECTS) $(ULIBS) $(F_to_C_flags)
-PREBPSDLL_OBJECTS = ESPrTrnsysData.o harmonizer.o
+PREBPSDLL_OBJECTS = ESPrTrnsysData.o harmonizer.o CosimShare.o
 
 MODULES = aim2.mod aim2_calcdata.mod aim2_h2k_dummy.mod aim2_inputdata.mod aim2_timestep.mod \
 	parse_command_line.mod start_up.mod win32interface.mod dll_functions.mod tcc.mod cosimdatatypes.mod \
-	h3kmodule.mod CFC_Module.mod
+	h3kmodule.mod CFC_Module.mod cosimshare.mod
 
 ifeq ($(FMIarg),enableFMI)
 	FMI_OBJECTS = FMIsim.o FMIcom.o FMIc.o
@@ -209,6 +209,9 @@ convect1.F:
 convect2.F:
 	rm -f convect2.F
 	ln -s $(BLDdir)/convect2.F .
+CosimShare.F:
+	rm -f CosimShare.F
+	ln -s $(COSIMdir)/CosimShare.F .
 ctread.F:
 	rm -f ctread.F
 	ln -s $(COMdir)/ctread.F .
@@ -813,7 +816,7 @@ clean:
 	tank_intank_hx.F mains_temp_draw_profiles.F stratified_tank.F \
 	FMIsim.F FMIc.c FMIsim_dummy.F FMIcom.F \
 	CFC_opt_props.F CFC_thermal_and_aux.F editCFC.F NCHE.F stratified_tank_1HX.F stratified_tank_2HX.F \
-	AirFlowModelRoutines.F Res_elec_Ctl.F h3kmodule.f90 qrun.F azalt.F CFC_Module.f90
+	AirFlowModelRoutines.F Res_elec_Ctl.F h3kmodule.f90 qrun.F azalt.F CFC_Module.f90 CosimShare.F
 
 distclean: clean
 
