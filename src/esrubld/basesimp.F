@@ -193,7 +193,7 @@ c-----BASESIMP foundations allow widths from 1 to 20 m and lengths from 1 to 100
         fMaxWaterTable = 15.0   ! meter
       ENDIF
 
-      CALL EGETWR(OUTSTR,K,VAL,1.0,2.5,'F',' basement height',IER)
+      CALL EGETWR(OUTSTR,K,VAL,1.0,2.5,'W',' basement height',IER)
       if(IER.NE.0)then
         t60='Cannot read height of foundation or out of range'
         goto 1000
@@ -204,7 +204,7 @@ C Read foundation depth.
       CALL STRIPC(IUNIT,OUTSTR,1,ND,1,' BASESIMP data',IER)
       IF(IER.NE.0)goto 1000
       K=0
-      CALL EGETWR(OUTSTR,K,VAL,0.05,2.4,'F',' found. depth',IER)
+      CALL EGETWR(OUTSTR,K,VAL,0.05,2.4,'W',' found. depth',IER)
       if(IER.NE.0)then
         t60='Cannot read depth of foundation or of range '
         goto 1000
@@ -227,7 +227,7 @@ C Read foundation length.
       IF(IER.NE.0)goto 1000
       K=0
       CALL EGETWR(OUTSTR,K,VAL,fMinFoundLength,fMaxFoundLength,
-     &            'F',' found. length',IER)
+     &            'W',' found. length',IER)
       if(IER.NE.0)then
         t60='Cannot read length of foundation or out of range '
         goto 1000
@@ -239,7 +239,7 @@ C Read foundation width.
       IF(IER.NE.0)goto 1000
       K=0
       CALL EGETWR(OUTSTR,K,VAL,fMinFoundWidth,fMaxFoundWidth,
-     &            'F',' found. width',IER)
+     &            'W',' found. width',IER)
       if(IER.NE.0)then
         t60='Cannot read width of foundation or out of range '
         goto 1000
@@ -257,7 +257,7 @@ C present, but only used for combination cases, eg. BCCN_1 and BCCN_2.
       CALL STRIPC(IUNIT,OUTSTR,1,ND,1,' BASESIMP data',IER)
       IF(IER.NE.0)goto 1000
       K=0
-      CALL EGETWR(OUTSTR,K,VAL,0.,2.4,'F',' overlap',IER)
+      CALL EGETWR(OUTSTR,K,VAL,0.,2.4,'W',' overlap',IER)
       if(IER.NE.0)then
         t60='Cannot read inside/outside overlap or out of range '
         goto 1000
