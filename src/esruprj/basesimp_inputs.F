@@ -325,35 +325,35 @@ C CONTENT for depth of basement.
       min_bsmtDepth = 0.05                    ! meter
       max_bsmtDepth = 2.4                     ! meter
       CALL EASKR(bsmtDepth,' ',' Depth of the basement (m) ? ',
-     &  min_bsmtDepth,'F',max_bsmtDepth,'F',bsmtDepth,
+     &  min_bsmtDepth,'F',max_bsmtDepth,'W',bsmtDepth,
      & 'depth of the basement',IER,nbhelp)
 
 C CONTENT for height of basement.
       min_bsmtHeight = bsmtDepth+0.1          ! meter
       max_bsmtHeight = 2.5                    ! meter
       CALL EASKR(bsmtHeight,' ',' Height of the basement (m) ? ',
-     &  min_bsmtHeight,'F',max_bsmtHeight,'F',bsmtHeight,
+     &  min_bsmtHeight,'F',max_bsmtHeight,'W',bsmtHeight,
      &  'height of the basement',IER,nbhelp)
 
 C CONTENT for width of basement.
       min_bsmtWidth = 2.                      ! meter
       max_bsmtWidth = 20.                     ! meter
       CALL EASKR(bsmtWidth,' ',' Width of the basement (m) ? ',
-     &  min_bsmtWidth,'F',max_bsmtWidth,'F',bsmtWidth,
+     &  min_bsmtWidth,'F',max_bsmtWidth,'W',bsmtWidth,
      &  'width of the basement',IER,nbhelp)
 
 C CONTENT for length of basement.
       min_bsmtLength = bsmtWidth              ! meter
       max_bsmtLength = 20.                    ! meter
       CALL EASKR(bsmtLength,' ',' Length of the basement (m) ? ',
-     &  min_bsmtLength,'F',max_bsmtLength,'F',bsmtLength,
+     &  min_bsmtLength,'F',max_bsmtLength,'W',bsmtLength,
      &  'width of the basement',IER,nbhelp)
 
 C CONTENT for insulation overlap.
       min_Insul_Overlap = 0.                  ! meter
       max_Insul_Overlap = 2.4                 ! meter
       CALL EASKR(Insul_Overlap,' ',' Insulation overlap (m)? ',
-     &  min_Insul_Overlap,'F',max_Insul_Overlap,'F',Insul_Overlap,
+     &  min_Insul_Overlap,'F',max_Insul_Overlap,'W',Insul_Overlap,
      &  'Insulation overlap',IER,nbhelp)
 
 C CONTENT for insulation RSI.
