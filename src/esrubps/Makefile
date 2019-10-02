@@ -80,7 +80,7 @@ PREBPSDLL_OBJECTS = ESPrTrnsysData.o harmonizer.o CosimShare.o
 
 MODULES = aim2.mod aim2_calcdata.mod aim2_h2k_dummy.mod aim2_inputdata.mod aim2_timestep.mod \
 	parse_command_line.mod start_up.mod win32interface.mod dll_functions.mod tcc.mod cosimdatatypes.mod \
-	h3kmodule.mod CFC_Module.mod cosimshare.mod
+	h3kmodule.mod CFC_Module.mod cosimshare.mod tdrecs.mod
 
 ifeq ($(FMIarg),enableFMI)
 	FMI_OBJECTS = FMIsim.o FMIcom.o FMIc.o

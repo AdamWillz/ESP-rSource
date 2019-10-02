@@ -234,8 +234,9 @@ C Temporal definition commons.
 C For each timestep (assuming 10tsph frequency over a year) iknowrec
 C will be zero if not yet set and a positive number representing the record
 C to read from the temporal file if already known.
-      integer iknowrec,itdflastrec,itdfprevrec
-      common/tdfhash/iknowrec(87600,4),itdflastrec,itdfprevrec
+C 10/02/2019 - Moved to tdrecbps.F
+C      integer iknowrec,itdflastrec,itdfprevrec
+C      common/tdfhash/iknowrec(87600,4),itdflastrec,itdfprevrec
 
       INTEGER :: ispmxist
 
@@ -824,14 +825,15 @@ C simulation and filling the TDFFLG2 commons.
 
 C Set iknowrec array to signal temporal has not been scanned.
 C Documentation of values found in subroutine RCTDFB.
-        do 2 I=1,87600
-          iknowrec(I,1)=0
-          iknowrec(I,2)=0
-          iknowrec(I,3)=0
-          iknowrec(I,4)=0
-          itdflastrec=0
-          itdfprevrec=0
- 2      continue
+C 10/02/2019 - Moved initialization to tdrecbps
+C        do 2 I=1,87600
+C          iknowrec(I,1)=0
+C          iknowrec(I,2)=0
+C          iknowrec(I,3)=0
+C          iknowrec(I,4)=0
+C          itdflastrec=0
+C          itdfprevrec=0
+C 2      continue
       ENDIF
   
 

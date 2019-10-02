@@ -20,7 +20,40 @@ C Boston, MA 02111-1307 USA.
 
 C This file contains subroutines which allow data to be recovered from
 C a TDF binary (scratch) file.
-
+C ************* tdrecs module *****************************************
+C The tdrecs module is primarily used to hold the variable iknowrec
+      module tdrecs  
+        implicit none
+        
+C For each timestep of the simulation iknowrec
+C will be zero if not yet set and a positive number representing the record
+C to read if already known. 1st value is tdf record,
+C  2nd value is day for this timestep,
+C  3rd value is timestep in the day for this timestep,
+C  4th value is whether to interpolate for this timestepX.
+        PUBLIC 
+        integer, dimension (:,:), allocatable :: iknowrec
+        integer  :: itdflastrec, itdfprevrec
+        integer, PRIVATE  :: numTotSteps, i
+        
+        contains
+          subroutine init_iknowrec(isdf,isds,ntstep,itcnst)
+            integer, intent(in)  :: isdf, isds, ntstep, itcnst
+            numTotSteps=(((isdf-isds)+1)*24*NTSTEP)+(itcnst*NTSTEP*24)
+            if(allocated(iknowrec)) deallocate(iknowrec)
+            ! Make sure iknowrec has coverage for all timesteps
+            allocate (iknowrec(numTotSteps,4))
+            do i = 1, numTotSteps
+               iknowrec(i,1)=0
+               iknowrec(i,2)=0
+               iknowrec(i,3)=0
+               iknowrec(i,4)=0
+            end do
+            itdflastrec=0
+            itdfprevrec=0
+          end subroutine init_iknowrec
+        
+      end module tdrecs
 C ************* RCTDFB ************************************************
 C RCTDFB recovers data from the TDF binary (scratch) file for a named instance
 C at a given timestep.
@@ -34,6 +67,7 @@ C ITCC maps fields >> VAL index where VAL(1) is the fractional Julian
 C day and VAL(2...) are timestep fields.
 
       SUBROUTINE RCTDFB(ITRC,time,VAL,ISDAT,IFOC,IER)
+      use tdrecs
 #include "building.h"
 #include "net_flow.h"
 #include "tdf2.h"
@@ -46,6 +80,10 @@ C day and VAL(2...) are timestep fields.
       COMMON/TDATPREV/TABUPREV(MTABC)
       common/spfldat/nsset,isset,isstup,isbnstep,ispnstep,issave,isavgh
       common/tdfrem/ialrdy_warned
+      COMMON/PERS/ISD1,ISM1,ISD2,ISM2,ISDS,ISDF,NTSTEP
+      integer ISD1,ISM1,ISD2,ISM2,ISDS,ISDF,NTSTEP
+      COMMON/PREC7/ITCNST
+      integer ITCNST
 
 C For each timestep (assuming 10 tsph frequency over a year) iknowrec
 C will be zero if not yet set and a positive number representing the record
@@ -53,8 +91,8 @@ C to read if already known. 1st value is tdf record,
 C  2nd value is day for this timestep,
 C  3rd value is timestep in the day for this timestep,
 C  4th value is whether to interpolate for this timestepX.
-      integer iknowrec,itdflastrec,itdfprevrec
-      common/tdfhash/iknowrec(87600,4),itdflastrec,itdfprevrec
+C      integer iknowrec,itdflastrec,itdfprevrec
+C      common/tdfhash/iknowrec(87600,4),itdflastrec,itdfprevrec
 
       dimension VAL(MBITS+2)
       logical traceok,FOUND,closer
@@ -63,6 +101,10 @@ C For help messages
       character helpinsub*24   ! subroutine name
       character helptopic*24 ! string (unique) for topic
       integer nbhelp     ! number of help lines found
+      
+C Check if iknowrec has been allocated
+      if(.not. allocated(iknowrec)) call init_iknowrec(isdf,isds,
+     &  ntstep,itcnst)
 
       helpinsub='RCTDFB'  ! set for cfiles
       idebug=0
@@ -96,6 +138,9 @@ C Work out which record to read for that day, IPRECT
 C first determine fractional part of day to look up against FPTLA
 C if we do not already know this from an earlier call.
       FPTLA=TIME/24.
+      if(TIME>23.0)then
+        FPTLA=TIME/24.
+      endif
 
 C Test whether we need to calculate this again. If we do need to
 C calculate, loop through each timestep in the day (yuck) and
@@ -138,9 +183,11 @@ C day). 1st records refers to all the records during the first hour of
 C the day. These will be missed otherwise because mznuma starts
 C simulation at btimef = 1hour + timestep (argument time to this
 C subroutine is usually set to btimef)
-         IF(IPRECD.NE.ITDEDOY)THEN
-           IF(IPRECT.le.ntsph)THEN
+         IF(IPRECT.le.ntsph)THEN ! Beginning of new day
+           IF(IPRECD.NE.ITDEDOY)THEN
              IPRECD=IPRECD+1
+           ELSE ! Wrap back around
+             IPRECD=ITDBDOY
            ENDIF
          ENDIF
 
@@ -235,6 +282,7 @@ C ITCC maps fields >> VAL index where VAL(1) is the fractional Julian
 C day and VAL(2...) are timestep fields.
 
       SUBROUTINE RCTDFBALL(ITRC,time,VAL,ISDAT,IER)
+      use tdrecs
 #include "building.h"
 #include "net_flow.h"
 #include "tdf2.h"
@@ -247,6 +295,10 @@ C day and VAL(2...) are timestep fields.
       COMMON/TDATPREV/TABUPREV(MTABC)
       common/spfldat/nsset,isset,isstup,isbnstep,ispnstep,issave,isavgh
       common/tdfrem/ialrdy_warned
+      COMMON/PERS/ISD1,ISM1,ISD2,ISM2,ISDS,ISDF,NTSTEP
+      integer ISD1,ISM1,ISD2,ISM2,ISDS,ISDF,NTSTEP
+      COMMON/PREC7/ITCNST
+      integer ITCNST
 
 C For each timestep (assuming 10 tsph frequency over a year) iknowrec
 C will be zero if not yet set and a positive number representing the record
@@ -254,8 +306,8 @@ C to read if already known. 1st value is tdf record,
 C  2nd value is day for this timestep,
 C  3rd value is timestep in the day for this timestep,
 C  4th value is whether to interpolate for this timestepX.
-      integer iknowrec,itdflastrec,itdfprevrec
-      common/tdfhash/iknowrec(87600,4),itdflastrec,itdfprevrec
+C      integer iknowrec,itdflastrec,itdfprevrec
+C      common/tdfhash/iknowrec(87600,4),itdflastrec,itdfprevrec
 
       dimension VAL(MTABC+2)
       logical traceok,FOUND,closer
@@ -264,6 +316,10 @@ C For help messages
       character helpinsub*24   ! subroutine name
       character helptopic*24 ! string (unique) for topic
       integer nbhelp     ! number of help lines found
+
+C Check if iknowrec has been allocated
+      if(.not. allocated(iknowrec)) call init_iknowrec(isdf,isds,
+     &  ntstep,itcnst)
 
       helpinsub='RCTDFBALL'  ! set for cfiles
 
