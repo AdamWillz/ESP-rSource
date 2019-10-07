@@ -100,8 +100,23 @@ C      common/tdfhash/iknowrec(87600,4),itdflastrec,itdfprevrec
 C For help messages
       character helpinsub*24   ! subroutine name
       character helptopic*24 ! string (unique) for topic
+      character outs*124
       integer nbhelp     ! number of help lines found
-      
+
+C Check that the simulation and TDF timesteps are equal
+      if(NTSTEP.ne.NTSPH)then
+        WRITE(outs,*) ' RCTDFB: TDF has timestep ',NTSPH
+        call edisp(iuout,outs)
+        WRITE(outs,*) ' which is not equal to simulation tstep ',NTSTEP
+        call edisp(iuout,outs)
+        call edisp(iuout,'  Currently both must be equal')
+        call epwait
+        call EPAGEND
+        STOP
+      endif
+
+C TODO: Check simulation period
+
 C Check if iknowrec has been allocated
       if(.not. allocated(iknowrec)) call init_iknowrec(isdf,isds,
      &  ntstep,itcnst)
