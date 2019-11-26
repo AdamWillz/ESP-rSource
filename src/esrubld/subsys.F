@@ -2280,6 +2280,7 @@ C RHS contains all the known terms:
 C    present value + all in (present and future) + all out (present).
 C Last line of equation takes into account the effect of a
 C cooling coil on zone moisture balance.
+      IF(GPA(ICOMP).LT.1.0E-35) GPA(ICOMP)=0.
       RHS=GPA(ICOMP)*ZMDAP(ICOMP)+
      &    (VCIF(ICOMP)*GEXTF+VCCF(ICOMP)+VCMF(ICOMP)+VCLGF(ICOMP)+
      &    VSRCF(ICOMP))*3600./real(2*NTSTEP)+
