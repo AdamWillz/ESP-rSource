@@ -2460,6 +2460,7 @@ C Make vector into unit vector.
       vdx=vdx/crowa
       vdy=vdy/crowa
       vdz=vdz/crowa
+      if(vdz<1.0e-10) vdz=0.0
       elev=90.0-(acos(vdz)/RAD)
 
 C Reduce the azimuth calculation to a 2D problem.
