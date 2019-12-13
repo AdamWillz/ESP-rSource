@@ -1727,7 +1727,7 @@ C normalise it (so that a polygon with long and short
 C edges is treated correctly.
         call CROSS(VA,VB,VC)
         SNORM=0.00
-        SNORM=sqrt(VC(1)**2+VC(2)**2+VC(3)**2)
+        SNORM=sqrt(VC(1)**2.d0+VC(2)**2.d0+VC(3)**2.d0)
         close=.false.
         call eclose(SNORM,0.0,0.0001,close)
         if(.not.close)then
@@ -1744,7 +1744,7 @@ C Add to VN the normalised VC.
 
 C Make the surface normal of unit length and build EQN from VN.
       SNORM=0.
-      SNORM=sqrt(VN(1)**2+VN(2)**2+VN(3)**2)
+      SNORM=sqrt(VN(1)**2.d0+VN(2)**2.d0+VN(3)**2.d0)
       close=.false.
       call eclose(SNORM,0.0,0.0001,close)
       if(close)then
@@ -2448,6 +2448,7 @@ C ******* UV2AZ
 C Recover azimuth & elevation from unit vector.
       SUBROUTINE UV2AZ(vdx,vdy,vdz,azim,elev)
       logical clx0,cly0,clx1,cly1,clxm1,clym1
+      if(vdz<1.0e-15) vdz=0.0
       PI = 4.0 * ATAN(1.0)
       RAD = PI/180.
       CROWA = vdx*vdx + vdy*vdy + vdz*vdz
@@ -2460,7 +2461,7 @@ C Make vector into unit vector.
       vdx=vdx/crowa
       vdy=vdy/crowa
       vdz=vdz/crowa
-      if(vdz<1.0e-10) vdz=0.0
+      if(vdz<1.0e-10) vdz=0.d0
       elev=90.0-(acos(vdz)/RAD)
 
 C Reduce the azimuth calculation to a 2D problem.
