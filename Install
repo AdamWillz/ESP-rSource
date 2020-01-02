@@ -394,12 +394,7 @@ if [ "$xml_support" = "yes" ] || [ "$xml_support" = "prompt" ]; then
     # that libraries are available
     #
     # This code has only been tested with GNU ld.
-    #
-    ld_output=`ld -lxslt`
-    case $ld_output in
-      "") xsl_libs_available="yes";;
-      *)  xsl_libs_available="no";;
-    esac
+    xsl_libs_available="yes"
 
    fi
 fi
@@ -1135,7 +1130,7 @@ case $platform in
    linux) case $machine in
           i386)    fDefType="-DLIN";;
           i686)    fDefType="-DLIN";;
-          x86_64)  fDefType="-DLIN";;
+          x86_64)  fDefType="-DLIN -m32";;
           armv6l)  fDefType="-DLIN";;
           armv7l)  fDefType="-DLIN";;
         esac;;
@@ -1213,7 +1208,7 @@ fi
 # set up c compilation flags
 case $compiler in
    sunF90)  CFLAGS="$cINCLUDES $cDefType $debug_flag $ExtendedDebugFlags";;
-   GNU)     CFLAGS="$cINCLUDES $cDefType $debug_flag $ExtendedDebugFlags";;
+   GNU)     CFLAGS="$cINCLUDES $cDefType $debug_flag $ExtendedDebugFlags -m32";;
    intel)     CFLAGS="$cINCLUDES $cDefType -save -zero $debug_flag $ExtendedDebugFlags";;
 esac
 
