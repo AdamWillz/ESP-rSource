@@ -21,7 +21,7 @@ OBJECTS = mfs.o c2fdum.o cntmnt.o ctlexp.o dossupport.o econtrol.o emfnetw.o \
 	  mfinit.o mfmach.o mfmode.o mfplot.o mfrlst.o mfrset.o mftabl.o \
 	  mfutil.o nwkrewr.o psychro.o rnor.o tdfile.o tdrecbps.o
 
-MODULES = start_up.mod parse_command_line.mod
+MODULES = start_up.mod parse_command_line.mod tdrecs.mod
 
 $(PROG): $(MODULE_OBJECTS) $(OBJECTS)
 	$(MFC) $(LD_FLAGS) -o $(PROG) $(FFLAGS) $(MODULE_OBJECTS) $(OBJECTS) $(ULIBS)
