@@ -95,6 +95,7 @@ install_exes="prompt"      #         executables
 delete_temp_files="yes"    # Delete temporary files.
 preserve_espr_dir="yes"    # save existing ESP-r directory by default
 gnu_version="gcc4"         # flag indicating which version of gcc is in use
+iBits="64"                 # flag indicating whether to compile 64 bit or 32 bit application on 64 bit machine
 make_msg_file=".make_msg"  # Dump make messages?
 compiler_version="none"    # append string to compilers?
 xLibs="X11"                # Default x-library
@@ -190,6 +191,7 @@ if [ $# -ne 0 ]; then
         --intel)        use_intel="yes";           shift;;
         --X11)          xLibs="X11";               shift;;
         --GTK)          xLibs="GTK";               shift;;
+        --bits32)       iBits="32";                shift;;
         --noX)          xLibs="noX";               shift;;
         --compiler_version |--compiler-version)
                         shift;
@@ -351,6 +353,10 @@ if [ $help -eq 1 ]; then
   echo "    --xml: Compile bps with support for direct export of results"
   echo "        in xml and csv formats. Requires the GNU libxml2 and"
   echo "        libstdc++ libraries."
+  echo " "
+  echo "    --bits32: Compile ESP-r as a 32-bit application. For use on "
+  echo "        64-bit systems. By default, ESP-r will be compiled as a"
+  echo "        64-bit application on a 64-bit system."
   echo " "
   echo "    --SQLite: Compile bps with support for SQLite export of results"
   echo "        in an SQLite database. Requires the libsqlite3.so library."
@@ -1313,6 +1319,14 @@ case $platform in
         esac;;
    mingw)      fDefType="-DMINGW";;
 esac
+if [ "$platform" = "linux" ] && [ "$iBits" = "32" ]; then
+   if ["$machine" = "x86_64" ] || ["$machine" = "aarch64" ]; then
+      fDefType="$fDefType -m32"
+   fi
+fi
+if [ "$platform" = "mac" ] && [ "$iBits" = "32" ] && ["$machine" = "x86_64" ]; then
+   fDefType="-DOSX -DLIN -m32"
+fi
 
 # Append -DX11 flag as necessary
 if [ "$xLibs" = "X11" ]; then
@@ -1388,6 +1402,14 @@ esac
 
 if [ "$platform" = "mingw" ] && [ "$xLibs" = "GTK" ]; then
    CFLAGS="$CFLAGS -mwindows -mms-bitfields"
+fi
+if [ "$platform" = "linux" ] && [ "$iBits" = "32" ]; then
+   if ["$machine" = "x86_64" ] || ["$machine" = "aarch64" ]; then
+      CFLAGS="$CFLAGS -m32"
+   fi
+fi
+if [ "$platform" = "mac" ] && [ "$iBits" = "32" ] && ["$machine" = "x86_64" ]; then
+   CFLAGS="$CFLAGS -m32"
 fi
 
 #------------- ULIBS -------------------------
