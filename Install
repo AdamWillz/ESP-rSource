@@ -1320,7 +1320,7 @@ case $platform in
    mingw)      fDefType="-DMINGW";;
 esac
 if [ "$platform" = "linux" ] && [ "$iBits" = "32" ]; then
-   if ["$machine" = "x86_64" ] || ["$machine" = "aarch64" ]; then
+   if [ "$machine" = "x86_64" ] || [ "$machine" = "aarch64" ]; then
       fDefType="$fDefType -m32"
    fi
 fi
@@ -1404,7 +1404,7 @@ if [ "$platform" = "mingw" ] && [ "$xLibs" = "GTK" ]; then
    CFLAGS="$CFLAGS -mwindows -mms-bitfields"
 fi
 if [ "$platform" = "linux" ] && [ "$iBits" = "32" ]; then
-   if ["$machine" = "x86_64" ] || ["$machine" = "aarch64" ]; then
+   if [ "$machine" = "x86_64" ] || [ "$machine" = "aarch64" ]; then
       CFLAGS="$CFLAGS -m32"
    fi
 fi
