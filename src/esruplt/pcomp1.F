@@ -813,7 +813,7 @@ C Pass power consumption to Site Utilities facility
          call StorePltCompEnergyUse ( IPCOMP, fSUFuelEnergyUse )
 
 C Now Q is made up of all inefficiencies
-         Q=E
+         Q=E*(1.0-BDATA(IPCOMP,3))
 
 C Establish heat capacity of component mass CM (J/K) and
 C fluid heat capacity rate(s) C (W/K), ie. SUM(mass flow * specific heat)
