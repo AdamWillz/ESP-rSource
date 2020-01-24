@@ -20,7 +20,7 @@ my @sCMDs; # Commands to download existing archive on Google Drive
 my $iExit=0;
 
 # INPUTS
-my $ggID = "17n5VGXBDmR9pmQswVR_m_P1zUsSRE3Ia"; # Google id for archive being retrieved
+my $ggID = "1Dm6je2nk6otYC4r7sdsMMqXywt0n65FK"; # Google id for archive being retrieved
 my $sPathToBin="/usr/esru/test/esp-r/bin/";
 
 # INTERMEDIATES
