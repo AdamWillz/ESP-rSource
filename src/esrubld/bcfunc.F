@@ -1336,9 +1336,9 @@ C control.
       real QFA    ! Zone furure plant injection/extraction (W)
       
       COMMON/SLAVE1/QHB(MCF),QCB(MCF),Qmst(MCF),
-     &              bMasterFreeCoolFlag(MCF)
+     &              bMasterFreeCoolFlag(MCF),bSlaveWarn(MCF)
       real QHB, QCB, Qmst
-      logical bMasterFreeCoolFlag
+      logical bMasterFreeCoolFlag,bSlaveWarn
       
 C Freecooling algorithm.
       real fQFreeCool         ! cooling achieved by ventilation
@@ -1970,9 +1970,9 @@ C A free-float controller.
 
       COMMON/PSTSOL/ICF,IDTYP,IPER,BB1,BB2,BB3,IICOMP,TNP,QFUT,TFUT
       COMMON/SLAVE1/QHB(MCF),QCB(MCF),Qmst(MCF),
-     &      bMasterFreeCoolFlag(MCF)
+     &      bMasterFreeCoolFlag(MCF),bSlaveWarn(MCF)
       
-      logical bMasterFreeCoolFlag
+      logical bMasterFreeCoolFlag,bSlaveWarn
       
       character outs*124
 
@@ -3514,6 +3514,24 @@ C ON condition is reached.
       COMMON/BCL10M/LASTH(MCOM),LASTC(MCOM)
       CHARACTER*3 LASTH,LASTC
       
+      COMMON/SLAVE1/QHB(MCF),QCB(MCF),Qmst(MCF),
+     &              bMasterFreeCoolFlag(MCF),bSlaveWarn(MCF)
+      
+      logical bMasterFreeCoolFlag,bSlaveWarn
+
+C Description of zone control action; these data are used
+C in H3Kreports to determine heating, cooling loads and 
+C to evaluate passive solar design performance. Also used 
+C by BCL25_open_windows below.
+      common/H3KReportsControl/bZoneHeated,   bZoneCooled,
+     &                         fHeatSetpoint, fCoolSetpoint,
+     &                         bSlaveActive
+
+C Flags indicating zone is heated, cooled.
+      logical bZoneHeated(MCOM), bZoneCooled(MCOM), bSlaveActive(MCOM) 
+C Heating and cooling setpoint (oC)
+      real fHeatSetpoint(MCOM), fCoolSetpoint(MCOM)
+      
       character outs*124
 
 c Fatal error test.
@@ -3563,6 +3581,31 @@ C heating/cooling capacity for time step.
       CSPON=BMISCD(ICF,IDTYP,IPER,6)
       CSPOFF=BMISCD(ICF,IDTYP,IPER,7)
 
+C Following lines added to set master zone values for use in slave controller.
+C Each control of type 2 will have values set in case they are referenced
+C as a master control.
+      QHB(ICF)=QHM
+      QCB(ICF)=QCM
+      
+C Save heating/cooling setpoints. (NOT REALLY USED FOR ANYTHING)
+      fHeatSetpoint(iicomp) = HSPON
+      fCoolSetpoint(iicomp) = CSPON
+
+C Set heating flags to true. These are used for reporting passive-solar 
+C performance. 
+      bZoneHeated(iicomp) = .true.
+      bZoneCooled(iicomp) = .true.
+
+C Setpoints must be between 10oC and 30oC for passive solar computations
+      if ( fHeatSetpoint(iicomp).lt.10.0 .or.
+     &     fHeatSetpoint(iicomp).gt.30.0 ) bZoneHeated(iicomp) = .false.
+      if ( fCoolSetpoint(iicomp).lt.10.0 .or.
+     &     fCoolSetpoint(iicomp).gt.30.0 ) bZoneCooled(iicomp) = .false.
+
+C Capacity must be greater than 1 W for passive solar computations.
+       if (  QHM .lt. 1.0 )  bZoneHeated(iicomp) = .false.
+       if (  ABS(QCM) .lt. 1.0 )  bZoneCooled(iicomp) = .false.
+
 C Note that heating and cooling throttling ranges may overlap. In
 C this case simultaneous heating and cooling may result.
 
@@ -3603,6 +3646,10 @@ C Convert from (/m^2) if necessary.
       TCONT=TFUT
       IF(IBAN(ICF,1).EQ.-2)CALL MZRCPL(IICOMP,BB1,BB2,BB3,TCONT,0.05,
      &IPLT,QMX,QMN,TFUT,QFUT)
+     
+C Set QFUT for use by slave controller.
+      Qmst(ICF)=QFUT
+      bMasterFreeCoolFlag(ICF)=.false.
 
 C Trace output.
       IF(ITC.GT.0.AND.NSINC.GE.ITC.AND.NSINC.LE.ITCF.AND.
@@ -5858,9 +5905,9 @@ C deliver proportionally).
       COMMON/BTIME/BTIMEP,BTIMEF
       COMMON/PSTSOL/ICF,IDTYP,IPER,BB1,BB2,BB3,IICOMP,TNP,QFUT,TFUT
       COMMON/SLAVE1/QHB(MCF),QCB(MCF),Qmst(MCF),
-     &              bMasterFreeCoolFlag(MCF)
+     &              bMasterFreeCoolFlag(MCF),bSlaveWarn(MCF)
       
-      logical bMasterFreeCoolFlag
+      logical bMasterFreeCoolFlag,bSlaveWarn
       
       COMMON/FVALA/TFA(MCOM),QFA(MCOM)
       real TFA, QFA
@@ -5887,9 +5934,13 @@ C Commons for identifying wether a zone is heated or cooled.
 
       logical bZoneHeated(MCOM), bZoneCooled(MCOM), bSlaveActive(MCOM) 
       real fHeatSetpoint(MCOM), fCoolSetpoint(MCOM)
-      integer iMasterZone
+      integer iMasterZone, IFUNC
       character outs*124  
       logical close
+C Initialise variables
+      if(NSINC.le.2)then
+        bSlaveWarn(ICF)=.true.
+      endif
 
 C Determine sensed temperatures.
       call CFVAR(TCTL,IER)
@@ -5941,6 +5992,22 @@ C which control law is the master control for that zone.
         call epwait
         call epagend
         STOP      
+      endif
+
+C Determine the control law of the master
+      IFUNC=ABS(IBCLAW(imasctlindex,IDTYP,IPER))
+      if (IFUNC .ne. 1 .and. IFUNC .ne. 2 .and. IFUNC .ne. 0
+     &    .and. IFUNC .ne. 10 .and. IFUNC .ne. 21) then
+        if(bSlaveWarn(ICF)) then
+            write(outs,'(a,i3,a)') 
+     &      ' BCL21: Master zone for slave zone',IBAN(ICF,1),
+     &       ' must have law 0,1,2,10,or 21'
+            call edisp(itu,outs)
+            write(outs,'(a)') 
+     &      '        Slave zone will free-float'
+            call edisp(itu,outs)
+            bSlaveWarn(ICF)=.false.
+        endif
       endif
 
 C Collect heating flags and setpoints from master zone
