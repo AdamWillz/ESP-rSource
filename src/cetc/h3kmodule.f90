@@ -128,7 +128,7 @@ MODULE h3kmodule
          rvClimateDryBulbTemperature, rvClimateRelativeHumidity, rvClimateWindVelocity, &
          rvClimateWindDirection, rvClimateCloudCover, rvClimateSkyTemperature, &
          rvClimateSkyTemperatureDepression, rvClimateAmbientAirTsat, &
-         rvBuildingAllZonesFreeCooling
+         rvBuildingAllZonesFreeCooling, rvBuildingAllZonesEnvelopeVentilationHeatLoss
    Type(ReportVariable) :: rvBuildingTimePresent, rvBuildingTimeFuture,rvBuildingHourPresent, &
          rvBuildingHourFuture,rvBuildingDayNumberPresent, rvBuildingDayNumberFuture,&
          rvBuildingYearPresent,rvBuildingYearFuture, rvBuildingDayPresent,rvBuildingMonth, &
@@ -829,6 +829,12 @@ CONTAINS
       rvBuildingAllZonesEnvelopeInfiltrationHeatLoss%VariableType = '(W)'
       rvBuildingAllZonesEnvelopeInfiltrationHeatLoss%Description = 'Heat loss to surroundings via infiltration (all zones)'
       Call AddVariable(rvBuildingAllZonesEnvelopeInfiltrationHeatLoss)
+      
+      rvBuildingAllZonesEnvelopeVentilationHeatLoss%VariableName = 'building/all_zones/envelope/ventilation/heat_loss'
+      rvBuildingAllZonesEnvelopeVentilationHeatLoss%MetaType = 'units'
+      rvBuildingAllZonesEnvelopeVentilationHeatLoss%VariableType = '(W)'
+      rvBuildingAllZonesEnvelopeVentilationHeatLoss%Description = 'Heat loss to surroundings via ventilation (all zones)'
+      Call AddVariable(rvBuildingAllZonesEnvelopeVentilationHeatLosss)
 
       rvBuildingAllZonesEnvelopeAllComponentsHeatLoss%VariableName = 'building/all_zones/envelope/all_components/heat_loss'
       rvBuildingAllZonesEnvelopeAllComponentsHeatLoss%MetaType = 'units'
