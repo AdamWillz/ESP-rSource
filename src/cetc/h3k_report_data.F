@@ -1940,10 +1940,6 @@ C.....Heat loss disaggregated by envelope components
       call AddToReport(
      &      rvBuildingAllZonesEnvelopeInfiltrationHeatLoss%Identifier,
      &      fSUMHeatLossInfiltration)
-     
-      call AddToReport(
-     &      rvBuildingAllZonesEnvelopeVentilationHeatLoss%Identifier,
-     &      fSUMHeatLossVentilation)
 
       call AddToReport(
      &       rvBuildingAllZonesEnvelopeAllComponentsHeatLoss%Identifier,
