@@ -3586,25 +3586,6 @@ C Each control of type 2 will have values set in case they are referenced
 C as a master control.
       QHB(ICF)=QHM
       QCB(ICF)=QCM
-      
-C Save heating/cooling setpoints. (NOT REALLY USED FOR ANYTHING)
-      fHeatSetpoint(iicomp) = HSPON
-      fCoolSetpoint(iicomp) = CSPON
-
-C Set heating flags to true. These are used for reporting passive-solar 
-C performance. 
-      bZoneHeated(iicomp) = .true.
-      bZoneCooled(iicomp) = .true.
-
-C Setpoints must be between 10oC and 30oC for passive solar computations
-      if ( fHeatSetpoint(iicomp).lt.10.0 .or.
-     &     fHeatSetpoint(iicomp).gt.30.0 ) bZoneHeated(iicomp) = .false.
-      if ( fCoolSetpoint(iicomp).lt.10.0 .or.
-     &     fCoolSetpoint(iicomp).gt.30.0 ) bZoneCooled(iicomp) = .false.
-
-C Capacity must be greater than 1 W for passive solar computations.
-       if (  QHM .lt. 1.0 )  bZoneHeated(iicomp) = .false.
-       if (  ABS(QCM) .lt. 1.0 )  bZoneCooled(iicomp) = .false.
 
 C Note that heating and cooling throttling ranges may overlap. In
 C this case simultaneous heating and cooling may result.

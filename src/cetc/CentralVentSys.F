@@ -1114,7 +1114,7 @@ c Tout|______|              |_______|___________________|       Exhaust
 c
 c NOTE: Location of humidity ratios w1, ... are the same
 c **********************************************************************
-
+c$Message: ' File:ERVOperation.For'
       Subroutine ERVOperation(T_amb,T_3)
 
       ! Module for tracking electrical draws of HVAC equipment that is simulated
