@@ -1225,9 +1225,15 @@ C Debug write out unmet hours.
           if(LTDF(lnts-15:lnts).eq.'.temporalscratch')then
             call usrmsg('Deleting scratch file...',LTDF,'P')
             ier=0
-            call EFOPRAN(iutdf,LTDF,ITWPR,1,IER)
-            CALL EFDELET(iutdf,ISTAT)
-            call usrmsg('Deleting scratch file...done.',LTDF,'P')
+            open(unit=iutdf, iostat=ISTAT, file=LTDF, status='old')
+C             call EFOPRAN(iutdf,LTDF,ITWPR,1,IER)
+C            CALL EFDELET(iutdf,ISTAT)
+            if(ISTAT .ne. 0) then
+                call usrmsg('Could not delete scratch file.',LTDF,'P')
+            else
+                close(iutdf, status='delete')
+                call usrmsg('Deleting scratch file...done.',LTDF,'P')
+            endif
           endif
         endif
 
