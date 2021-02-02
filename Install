@@ -1346,8 +1346,8 @@ case $compiler in
            set -- $GFORTRAN_VERSION
            GFORTRAN_VERSION="$4"
            GFORTRAN_VERSION=$(echo $GFORTRAN_VERSION| cut -d'.' -f 1)
-           if [ "$GFORTRAN_VERSION" -gt "9" ]; then
-             FFLAGS="$FFLAGS  -w -fallow-argument-mismatch -O2"
+           if [ "$GFORTRAN_VERSION" -gt "7" ]; then
+             FFLAGS="$FFLAGS -std=legacy"
            fi
            case $gnu_version in
              gcc4) FFLAGS="$FFLAGS -DGCC4"            ;;
