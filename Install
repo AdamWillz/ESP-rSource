@@ -1341,6 +1341,14 @@ case $compiler in
    # Note '-C' flag causes some grief on older sun F90 compilers (~v5.0)
    sunF90) FFLAGS="$LOCAL_INCLUDES $fDefType -DF90 $debug_flag $ExtendedDebugFlags -C " ;;
    GNU)    FFLAGS="$LOCAL_INCLUDES $fDefType $debug_flag $ExtendedDebugFlags -fno-automatic ";
+           # Additional flag for GCC 10 compatibiltiy
+           GFORTRAN_VERSION=`gfortran --version`
+           set -- $GFORTRAN_VERSION
+           GFORTRAN_VERSION="$4"
+           GFORTRAN_VERSION=$(echo $GFORTRAN_VERSION| cut -d'.' -f 1)
+           if [ "$GFORTRAN_VERSION" -gt "9" ]; then
+             FFLAGS="$FFLAGS  -w -fallow-argument-mismatch -O2"
+           fi
            case $gnu_version in
              gcc4) FFLAGS="$FFLAGS -DGCC4"            ;;
            esac ;;
