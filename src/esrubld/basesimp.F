@@ -357,7 +357,7 @@ C Read phase lag of ground-temperature's annual sine wave.
         CALL STRIPC(IUNIT,OUTSTR,1,ND,1,' BASESIMP data',IER)
         IF(IER.NE.0)goto 1000
         K=0
-        CALL EGETWR(OUTSTR,K,VAL,0.,1.,'F',' Ps ',IER)
+        CALL EGETWR(OUTSTR,K,VAL,0.,7.,'F',' Ps ',IER)
         if(IER.NE.0)then
           t60=' Cannot read phase lag of ground Temp '
           goto 1000
@@ -403,7 +403,7 @@ C Read phase angle (phase).
           CALL STRIPC(IUNIT,OUTSTR,1,ND,1,' BASESIMP data',IER)
           IF(IER.NE.0)goto 1000
           K=0
-          CALL EGETWR(OUTSTR,K,VAL,0.,5.,'F',' phase ',IER)
+          CALL EGETWR(OUTSTR,K,VAL,0.,7.,'F',' phase ',IER)
           if(IER.NE.0)then
             t60='Cannot read phase angle (phase) or out of range'
             goto 1000
@@ -555,8 +555,21 @@ C-------------__0 variables. Map to appropriate uninsulated config.
      &            (iconfig.ge.109 .and. iconfig.le.110) .or.
      &            (iconfig.ge.114 .and. iconfig.le.119) .or.
      &            (iconfig.ge.121 .and. iconfig.le.131) ) then
-C---------------Concrete basement: map to BCNN_1.
-                iconzero=9
+C---------------Concrete basement: map to BCNN_2.
+               iconzero=10
+              endif
+              if( (iconfig.eq.3 ) .or. (iconfig.eq.5) .or.
+     &            (iconfig.eq.7) .or. (iconfig.eq.9) .or.
+     &            (iconfig.eq.11) .or. (iconfig.eq.70) .or.
+     &            (iconfig.eq.72) .or. (iconfig.eq.74) .or.
+     &            (iconfig.eq.76) .or. (iconfig.eq.97) .or.
+     &            (iconfig.eq.109) .or. (iconfig.eq.116) .or.
+     &            (iconfig.eq.118) .or. (iconfig.eq.121) .or.
+     &            (iconfig.eq.122) .or. (iconfig.eq.124) .or.
+     &            (iconfig.eq.126) .or. (iconfig.eq.128) .or.
+     &            (iconfig.eq.126) .or. (iconfig.eq.130)) then
+C---------------Concrete basement with brick on wall: map to BCNN_1.
+                iconzero=9     
               endif
               if( (iconfig.ge.13 .and. iconfig.le.18) .or.
      &            (iconfig.eq.78) .or.
